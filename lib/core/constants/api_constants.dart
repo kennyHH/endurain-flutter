@@ -1,9 +1,9 @@
 /// API endpoint constants
 class ApiConstants {
   // Authentication endpoints
-  static const String tokenEndpoint = '/api/v1/token';
-  static const String mfaVerifyEndpoint = '/api/v1/mfa/verify';
-  static const String refreshEndpoint = '/api/v1/refresh';
+  static const String tokenEndpoint = '/api/v1/auth/login';
+  static const String mfaVerifyEndpoint = '/api/v1/auth/mfa/verify';
+  static const String refreshEndpoint = '/api/v1/auth/refresh';
 
   // Headers
   static const String clientTypeHeader = 'X-Client-Type';

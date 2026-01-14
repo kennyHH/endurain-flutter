@@ -55,19 +55,27 @@ class AuthService {
         }
 
         // Direct login success (no MFA)
-        await _storage.setAccessToken(data['access_token'] as String);
-        await _storage.setRefreshToken(data['refresh_token'] as String);
+        final accessToken = data['access_token'] as String?;
+        final refreshToken = data['refresh_token'] as String?;
+        final sessionId = data['session_id'] as String?;
+
+        if (accessToken != null) {
+          await _storage.setAccessToken(accessToken);
+        }
+        if (refreshToken != null) {
+          await _storage.setRefreshToken(refreshToken);
+        }
         await _storage.setUsername(username);
-        if (data['session_id'] != null) {
-          await _storage.setSessionId(data['session_id'] as String);
+        if (sessionId != null) {
+          await _storage.setSessionId(sessionId);
         }
 
         return AuthResult(
           success: true,
           mfaRequired: false,
-          accessToken: data['access_token'] as String?,
-          refreshToken: data['refresh_token'] as String?,
-          sessionId: data['session_id'] as String?,
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          sessionId: sessionId,
         );
       } else {
         final error = json.decode(response.body);
@@ -101,19 +109,27 @@ class AuthService {
         final data = json.decode(response.body);
 
         // Store tokens
-        await _storage.setAccessToken(data['access_token'] as String);
-        await _storage.setRefreshToken(data['refresh_token'] as String);
+        final accessToken = data['access_token'] as String?;
+        final refreshToken = data['refresh_token'] as String?;
+        final sessionId = data['session_id'] as String?;
+
+        if (accessToken != null) {
+          await _storage.setAccessToken(accessToken);
+        }
+        if (refreshToken != null) {
+          await _storage.setRefreshToken(refreshToken);
+        }
         await _storage.setUsername(username);
-        if (data['session_id'] != null) {
-          await _storage.setSessionId(data['session_id'] as String);
+        if (sessionId != null) {
+          await _storage.setSessionId(sessionId);
         }
 
         return AuthResult(
           success: true,
           mfaRequired: false,
-          accessToken: data['access_token'] as String?,
-          refreshToken: data['refresh_token'] as String?,
-          sessionId: data['session_id'] as String?,
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          sessionId: sessionId,
         );
       } else {
         final error = json.decode(response.body);
@@ -139,15 +155,23 @@ class AuthService {
       final response = await http.post(
         url,
         headers: {
-          ApiConstants.authorizationHeader: 'Bearer $refreshToken',
+          ApiConstants.contentTypeHeader: ApiConstants.contentTypeJson,
           ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue,
         },
+        body: json.encode({'refresh_token': refreshToken}),
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        await _storage.setAccessToken(data['access_token'] as String);
-        await _storage.setRefreshToken(data['refresh_token'] as String);
+        final newAccessToken = data['access_token'] as String?;
+        final newRefreshToken = data['refresh_token'] as String?;
+
+        if (newAccessToken != null) {
+          await _storage.setAccessToken(newAccessToken);
+        }
+        if (newRefreshToken != null) {
+          await _storage.setRefreshToken(newRefreshToken);
+        }
         return true;
       }
 
