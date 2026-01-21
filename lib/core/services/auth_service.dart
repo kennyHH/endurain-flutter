@@ -2,12 +2,16 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/api_constants.dart';
+import 'package:endurain/core/utils/pkce_utils.dart';
 
 class AuthService {
   final SecureStorageService _storage = SecureStorageService();
 
-  /// Login with username and password
-  /// Returns AuthResult with MFA status or tokens
+  // Store PKCE temporarily during auth flow
+  Map<String, String>? _pkce;
+
+  /// Login with username and password using PKCE flow
+  /// Returns AuthResult with MFA status or session ID for token exchange
   Future<AuthResult> login(
     String username,
     String password, {
@@ -28,7 +32,12 @@ class AuthService {
       await _storage.setServerUrl(serverUrl);
     }
 
-    final apiUrl = Uri.parse('$url${ApiConstants.tokenEndpoint}');
+    // Generate PKCE parameters
+    _pkce = PkceUtils.generatePkce();
+
+    final apiUrl = Uri.parse(
+      '$url${ApiConstants.tokenEndpoint}?code_challenge=${_pkce!['challenge']}&code_challenge_method=S256',
+    );
 
     try {
       final response = await http.post(
@@ -46,6 +55,9 @@ class AuthService {
 
         // Check if MFA is required
         if (data['mfa_required'] == true) {
+          // Store username for MFA verification
+          await _storage.setUsername(username);
+
           return AuthResult(
             success: true,
             mfaRequired: true,
@@ -54,46 +66,40 @@ class AuthService {
           );
         }
 
-        // Direct login success (no MFA)
-        final accessToken = data['access_token'] as String?;
-        final refreshToken = data['refresh_token'] as String?;
+        // PKCE flow returns session_id for token exchange
         final sessionId = data['session_id'] as String?;
 
-        if (accessToken != null) {
-          await _storage.setAccessToken(accessToken);
-        }
-        if (refreshToken != null) {
-          await _storage.setRefreshToken(refreshToken);
-        }
-        await _storage.setUsername(username);
         if (sessionId != null) {
-          await _storage.setSessionId(sessionId);
+          // Exchange session for tokens
+          return await _exchangeSessionForTokens(url, sessionId, username);
         }
 
-        return AuthResult(
-          success: true,
-          mfaRequired: false,
-          accessToken: accessToken,
-          refreshToken: refreshToken,
-          sessionId: sessionId,
-        );
+        throw Exception('No session ID received from server');
       } else {
         final error = json.decode(response.body);
         throw Exception(error['detail'] ?? 'Login failed');
       }
     } catch (e) {
+      _pkce = null; // Clear verifier on error
       throw Exception('Login error: $e');
     }
   }
 
-  /// Verify MFA code after initial login
+  /// Verify MFA code after initial login using PKCE flow
   Future<AuthResult> verifyMfa(String username, String mfaCode) async {
     final serverUrl = await _storage.getServerUrl();
     if (serverUrl == null || serverUrl.isEmpty) {
       throw Exception('Server URL not configured');
     }
 
-    final url = Uri.parse('$serverUrl${ApiConstants.mfaVerifyEndpoint}');
+    if (_pkce == null || _pkce!['verifier'] == null) {
+      throw Exception('PKCE verifier not found. Please login again.');
+    }
+
+    // MFA verification with PKCE uses query parameters
+    final url = Uri.parse(
+      '$serverUrl${ApiConstants.mfaVerifyEndpoint}?code_challenge=${_pkce!['challenge']}&code_challenge_method=S256',
+    );
 
     try {
       final response = await http.post(
@@ -108,10 +114,63 @@ class AuthService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
+        // PKCE flow returns session_id for token exchange
+        final sessionId = data['session_id'] as String?;
+
+        if (sessionId != null) {
+          // Exchange session for tokens
+          return await _exchangeSessionForTokens(
+            serverUrl,
+            sessionId,
+            username,
+          );
+        }
+
+        throw Exception('No session ID received from server');
+      } else {
+        final error = json.decode(response.body);
+        throw Exception(error['detail'] ?? 'MFA verification failed');
+      }
+    } catch (e) {
+      _pkce = null; // Clear verifier on error
+      throw Exception('MFA verification error: $e');
+    }
+  }
+
+  /// Exchange session ID for tokens using PKCE code verifier
+  Future<AuthResult> _exchangeSessionForTokens(
+    String serverUrl,
+    String sessionId,
+    String username,
+  ) async {
+    if (_pkce == null || _pkce!['verifier'] == null) {
+      throw Exception('PKCE verifier not found');
+    }
+
+    final url = Uri.parse(
+      '$serverUrl${ApiConstants.sessionTokenExchangeEndpoint}/$sessionId/tokens',
+    );
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          ApiConstants.contentTypeHeader: ApiConstants.contentTypeJson,
+          ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue,
+        },
+        body: json.encode({'code_verifier': _pkce!['verifier']}),
+      );
+
+      // Clear verifier after use (one-time exchange)
+      _pkce = null;
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
         // Store tokens
         final accessToken = data['access_token'] as String?;
         final refreshToken = data['refresh_token'] as String?;
-        final sessionId = data['session_id'] as String?;
+        final returnedSessionId = data['session_id'] as String?;
 
         if (accessToken != null) {
           await _storage.setAccessToken(accessToken);
@@ -120,8 +179,8 @@ class AuthService {
           await _storage.setRefreshToken(refreshToken);
         }
         await _storage.setUsername(username);
-        if (sessionId != null) {
-          await _storage.setSessionId(sessionId);
+        if (returnedSessionId != null) {
+          await _storage.setSessionId(returnedSessionId);
         }
 
         return AuthResult(
@@ -129,14 +188,14 @@ class AuthService {
           mfaRequired: false,
           accessToken: accessToken,
           refreshToken: refreshToken,
-          sessionId: sessionId,
+          sessionId: returnedSessionId,
         );
       } else {
         final error = json.decode(response.body);
-        throw Exception(error['detail'] ?? 'MFA verification failed');
+        throw Exception(error['detail'] ?? 'Token exchange failed');
       }
     } catch (e) {
-      throw Exception('MFA verification error: $e');
+      throw Exception('Token exchange error: $e');
     }
   }
 
