@@ -55,6 +55,36 @@
   "@logoutServerFailedWarning": {
     "description": "Aviso exibido quando o logout do servidor falha mas o logout local é bem-sucedido - Usado em: server_settings_screen.dart"
   },
+  "retry": "Tentar Novamente",
+  "@retry": {
+    "description": "Rótulo do botão de tentar novamente - Usado em: sso_webview_screen.dart"
+  },
+  "ssoWebViewTitle": "Entrar",
+  "@ssoWebViewTitle": {
+    "description": "Título da tela WebView SSO - Usado em: sso_webview_screen.dart"
+  },
+  "ssoCancel": "Cancelar",
+  "@ssoCancel": {
+    "description": "Rótulo do botão de cancelar SSO - Usado em: sso_webview_screen.dart"
+  },
+  "ssoSignInWith": "Entrar com {provider}",
+  "@ssoSignInWith": {
+    "description": "Rótulo do botão de provedor SSO - Usado em: login_screen.dart",
+    "placeholders": {
+      "provider": {
+        "type": "String",
+        "example": "Google"
+      }
+    }
+  },
+  "ssoOrDivider": "OU",
+  "@ssoOrDivider": {
+    "description": "Texto divisor entre SSO e login tradicional - Usado em: login_screen.dart"
+  },
+  "next": "Próximo",
+  "@next": {
+    "description": "Rótulo do botão próximo para fluxos de várias etapas - Usado em: login_screen.dart"
+  },
   "username": "Nome de utilizador",
   "@username": {
     "description": "Rótulo do campo de nome de utilizador - Usado em: login_screen.dart, server_settings_screen.dart"

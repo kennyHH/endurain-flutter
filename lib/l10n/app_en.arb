@@ -55,6 +55,36 @@
   "@logoutServerFailedWarning": {
     "description": "Warning shown when server logout fails but local logout succeeds - Used in: server_settings_screen.dart"
   },
+  "retry": "Retry",
+  "@retry": {
+    "description": "Retry button label - Used in: sso_webview_screen.dart"
+  },
+  "ssoWebViewTitle": "Sign In",
+  "@ssoWebViewTitle": {
+    "description": "SSO WebView screen title - Used in: sso_webview_screen.dart"
+  },
+  "ssoCancel": "Cancel",
+  "@ssoCancel": {
+    "description": "SSO cancel button label - Used in: sso_webview_screen.dart"
+  },
+  "ssoSignInWith": "Sign in with {provider}",
+  "@ssoSignInWith": {
+    "description": "SSO provider button label - Used in: login_screen.dart",
+    "placeholders": {
+      "provider": {
+        "type": "String",
+        "example": "Google"
+      }
+    }
+  },
+  "ssoOrDivider": "OR",
+  "@ssoOrDivider": {
+    "description": "Divider text between SSO and traditional login - Used in: login_screen.dart"
+  },
+  "next": "Next",
+  "@next": {
+    "description": "Next button label for multi-step flows - Used in: login_screen.dart"
+  },
   "username": "Username",
   "@username": {
     "description": "Username field label - Used in: login_screen.dart, server_settings_screen.dart"

@@ -49,6 +49,26 @@ class AppLocalizationsPt extends AppLocalizations {
       'Não foi possível sair do servidor, mas saiu localmente';
 
   @override
+  String get retry => 'Tentar Novamente';
+
+  @override
+  String get ssoWebViewTitle => 'Entrar';
+
+  @override
+  String get ssoCancel => 'Cancelar';
+
+  @override
+  String ssoSignInWith(String provider) {
+    return 'Entrar com $provider';
+  }
+
+  @override
+  String get ssoOrDivider => 'OU';
+
+  @override
+  String get next => 'Próximo';
+
+  @override
   String get username => 'Nome de utilizador';
 
   @override

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/images/logo.png" width="128" height="128">
+  <img src="assets/logo/logo.png" width="128" height="128">
 
   # Endurain Mobile
 
