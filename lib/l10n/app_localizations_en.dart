@@ -49,6 +49,26 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not logout from server, but logged out locally';
 
   @override
+  String get retry => 'Retry';
+
+  @override
+  String get ssoWebViewTitle => 'Sign In';
+
+  @override
+  String get ssoCancel => 'Cancel';
+
+  @override
+  String ssoSignInWith(String provider) {
+    return 'Sign in with $provider';
+  }
+
+  @override
+  String get ssoOrDivider => 'OR';
+
+  @override
+  String get next => 'Next';
+
+  @override
   String get username => 'Username';
 
   @override

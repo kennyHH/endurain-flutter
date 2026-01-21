@@ -176,6 +176,42 @@ abstract class AppLocalizations {
   /// **'Could not logout from server, but logged out locally'**
   String get logoutServerFailedWarning;
 
+  /// Retry button label - Used in: sso_webview_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// SSO WebView screen title - Used in: sso_webview_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Sign In'**
+  String get ssoWebViewTitle;
+
+  /// SSO cancel button label - Used in: sso_webview_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get ssoCancel;
+
+  /// SSO provider button label - Used in: login_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with {provider}'**
+  String ssoSignInWith(String provider);
+
+  /// Divider text between SSO and traditional login - Used in: login_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'OR'**
+  String get ssoOrDivider;
+
+  /// Next button label for multi-step flows - Used in: login_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get next;
+
   /// Username field label - Used in: login_screen.dart, server_settings_screen.dart
   ///
   /// In en, this message translates to:

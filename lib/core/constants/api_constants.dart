@@ -8,6 +8,12 @@ class ApiConstants {
   static const String sessionTokenExchangeEndpoint =
       '/api/v1/public/idp/session';
 
+  // SSO/OAuth endpoints
+  static const String idpListEndpoint = '/api/v1/public/idp';
+  static const String idpLoginEndpoint = '/api/v1/public/idp/login';
+  static const String idpSessionTokenExchangeEndpoint =
+      '/api/v1/public/idp/session';
+
   // Headers
   static const String clientTypeHeader = 'X-Client-Type';
   static const String clientTypeValue = 'mobile';
