@@ -4,7 +4,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/core/services/auth_service.dart';
 import 'package:endurain/core/services/sso_service.dart';
+import 'package:endurain/core/services/server_settings_service.dart';
 import 'package:endurain/core/models/identity_provider.dart';
+import 'package:endurain/core/models/server_settings.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/core/utils/validators.dart';
 import 'package:endurain/core/utils/dialog_utils.dart';
@@ -28,6 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _mfaCodeController = TextEditingController();
   final _authService = AuthService();
   final _ssoService = SsoService();
+  final _serverSettingsService = ServerSettingsService();
 
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -36,6 +39,10 @@ class _LoginScreenState extends State<LoginScreen> {
       false; // Two-step flow: Step 1 = server URL, Step 2 = login/SSO
   String? _mfaUsername;
   List<IdentityProvider> _availableIdPs = [];
+  ServerSettings? _serverSettings;
+
+  /// Whether local login (username/password) is enabled
+  bool get _localLoginEnabled => _serverSettings?.localLoginEnabled ?? true;
 
   @override
   void dispose() {
@@ -46,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  /// Step 1: Validate server URL and fetch available IdPs
+  /// Step 1: Validate server URL, fetch server settings and available IdPs
   Future<void> _handleServerUrlNext() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -57,10 +64,26 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      // Fetch available IdPs from server
-      final idps = await _ssoService.getEnabledProviders(
-        serverUrl: _serverUrlController.text.trim(),
+      final serverUrl = _serverUrlController.text.trim();
+
+      // First, fetch server settings
+      final settings = await _serverSettingsService.getServerSettings(
+        serverUrl: serverUrl,
       );
+
+      // Store settings
+      _serverSettings = settings;
+
+      // Only fetch SSO providers if SSO is enabled
+      List<IdentityProvider> idps = [];
+      if (settings.ssoEnabled) {
+        try {
+          idps = await _ssoService.getEnabledProviders(serverUrl: serverUrl);
+        } catch (e) {
+          // If SSO fetch fails, continue with empty list
+          idps = [];
+        }
+      }
 
       if (mounted) {
         setState(() {
@@ -68,17 +91,28 @@ class _LoginScreenState extends State<LoginScreen> {
           _isStep2 = true;
           _isLoading = false;
         });
+
+        // Auto-redirect to SSO if:
+        // - SSO is enabled
+        // - Only one provider available
+        // - sso_auto_redirect is true
+        if (settings.ssoEnabled &&
+            settings.ssoAutoRedirect &&
+            idps.length == 1) {
+          // Slight delay to show the step 2 briefly before redirecting
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          if (mounted) {
+            _handleSsoLogin(idps.first);
+          }
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
-        // Even if IdP fetch fails, allow traditional login
-        setState(() {
-          _availableIdPs = [];
-          _isStep2 = true;
-        });
+        // If server settings fetch fails, show error
+        _showError(e.toString());
       }
     }
   }
@@ -282,6 +316,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     setState(() {
                       _isStep2 = false;
                       _availableIdPs = [];
+                      _serverSettings = null;
                     });
                   },
                   child: const Icon(CupertinoIcons.back),
@@ -336,84 +371,89 @@ class _LoginScreenState extends State<LoginScreen> {
                         ]
                         // Step 2: SSO providers + username/password
                         else ...[
-                          // Username field
-                          CupertinoListSection.insetGrouped(
-                            header: Text(l10n.username.toUpperCase()),
-                            children: [
-                              CupertinoTextFormFieldRow(
-                                controller: _usernameController,
-                                placeholder: l10n.usernameHint,
-                                textInputAction: TextInputAction.next,
-                                validator: (value) =>
-                                    Validators.validateRequired(
-                                      value,
-                                      l10n,
-                                      l10n.username,
-                                    ),
-                              ),
-                            ],
-                          ),
-                          // Password field
-                          CupertinoListSection.insetGrouped(
-                            header: Text(l10n.password.toUpperCase()),
-                            children: [
-                              CupertinoTextFormFieldRow(
-                                controller: _passwordController,
-                                placeholder: l10n.passwordHint,
-                                obscureText: _obscurePassword,
-                                textInputAction: TextInputAction.done,
-                                validator: (value) =>
-                                    Validators.validateRequired(
-                                      value,
-                                      l10n,
-                                      l10n.password,
-                                    ),
-                                onFieldSubmitted: (_) => _handleLogin(),
-                              ),
-                              CupertinoListTile(
-                                title: Text(l10n.showPassword),
-                                trailing: CupertinoSwitch(
-                                  value: !_obscurePassword,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _obscurePassword = !value;
-                                    });
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                            ),
-                            child: CupertinoButton.filled(
-                              onPressed: _handleLogin,
-                              child: Text(l10n.login),
-                            ),
-                          ),
-                          // SSO providers (if available)
-                          if (_availableIdPs.isNotEmpty) ...[
-                            const SizedBox(height: 24),
-                            // OR divider
-                            Row(
+                          // Local login (username/password) - only if enabled
+                          if (_localLoginEnabled) ...[
+                            // Username field
+                            CupertinoListSection.insetGrouped(
+                              header: Text(l10n.username.toUpperCase()),
                               children: [
-                                const Expanded(child: Divider()),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16.0,
-                                  ),
-                                  child: Text(
-                                    l10n.ssoOrDivider,
-                                    style: const TextStyle(
-                                      color: CupertinoColors.systemGrey,
-                                    ),
-                                  ),
+                                CupertinoTextFormFieldRow(
+                                  controller: _usernameController,
+                                  placeholder: l10n.usernameHint,
+                                  textInputAction: TextInputAction.next,
+                                  validator: (value) =>
+                                      Validators.validateRequired(
+                                        value,
+                                        l10n,
+                                        l10n.username,
+                                      ),
                                 ),
-                                const Expanded(child: Divider()),
                               ],
                             ),
+                            // Password field
+                            CupertinoListSection.insetGrouped(
+                              header: Text(l10n.password.toUpperCase()),
+                              children: [
+                                CupertinoTextFormFieldRow(
+                                  controller: _passwordController,
+                                  placeholder: l10n.passwordHint,
+                                  obscureText: _obscurePassword,
+                                  textInputAction: TextInputAction.done,
+                                  validator: (value) =>
+                                      Validators.validateRequired(
+                                        value,
+                                        l10n,
+                                        l10n.password,
+                                      ),
+                                  onFieldSubmitted: (_) => _handleLogin(),
+                                ),
+                                CupertinoListTile(
+                                  title: Text(l10n.showPassword),
+                                  trailing: CupertinoSwitch(
+                                    value: !_obscurePassword,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _obscurePassword = !value;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                              ),
+                              child: CupertinoButton.filled(
+                                onPressed: _handleLogin,
+                                child: Text(l10n.login),
+                              ),
+                            ),
+                          ],
+                          // SSO providers (if available)
+                          if (_availableIdPs.isNotEmpty) ...[
+                            // OR divider - only show if local login is also enabled
+                            if (_localLoginEnabled) ...[
+                              const SizedBox(height: 24),
+                              Row(
+                                children: [
+                                  const Expanded(child: Divider()),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16.0,
+                                    ),
+                                    child: Text(
+                                      l10n.ssoOrDivider,
+                                      style: const TextStyle(
+                                        color: CupertinoColors.systemGrey,
+                                      ),
+                                    ),
+                                  ),
+                                  const Expanded(child: Divider()),
+                                ],
+                              ),
+                            ],
                             const SizedBox(height: 16),
                             for (final idp in _availableIdPs)
                               Padding(
@@ -510,6 +550,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   setState(() {
                     _isStep2 = false;
                     _availableIdPs = [];
+                    _serverSettings = null;
                   });
                 },
               )
@@ -560,84 +601,89 @@ class _LoginScreenState extends State<LoginScreen> {
                     ]
                     // Step 2: SSO providers + username/password
                     else ...[
-                      // Username field
-                      TextFormField(
-                        controller: _usernameController,
-                        decoration: InputDecoration(
-                          labelText: l10n.username,
-                          hintText: l10n.usernameHint,
-                          border: const OutlineInputBorder(),
-                          prefixIcon: const Icon(Icons.person),
-                        ),
-                        textInputAction: TextInputAction.next,
-                        validator: (value) => Validators.validateRequired(
-                          value,
-                          l10n,
-                          l10n.username,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      // Password field
-                      TextFormField(
-                        controller: _passwordController,
-                        decoration: InputDecoration(
-                          labelText: l10n.password,
-                          hintText: l10n.passwordHint,
-                          border: const OutlineInputBorder(),
-                          prefixIcon: const Icon(Icons.lock),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility
-                                  : Icons.visibility_off,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
+                      // Local login (username/password) - only if enabled
+                      if (_localLoginEnabled) ...[
+                        // Username field
+                        TextFormField(
+                          controller: _usernameController,
+                          decoration: InputDecoration(
+                            labelText: l10n.username,
+                            hintText: l10n.usernameHint,
+                            border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.person),
+                          ),
+                          textInputAction: TextInputAction.next,
+                          validator: (value) => Validators.validateRequired(
+                            value,
+                            l10n,
+                            l10n.username,
                           ),
                         ),
-                        obscureText: _obscurePassword,
-                        textInputAction: TextInputAction.done,
-                        validator: (value) => Validators.validateRequired(
-                          value,
-                          l10n,
-                          l10n.password,
+                        const SizedBox(height: 16),
+                        // Password field
+                        TextFormField(
+                          controller: _passwordController,
+                          decoration: InputDecoration(
+                            labelText: l10n.password,
+                            hintText: l10n.passwordHint,
+                            border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.lock),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                            ),
+                          ),
+                          obscureText: _obscurePassword,
+                          textInputAction: TextInputAction.done,
+                          validator: (value) => Validators.validateRequired(
+                            value,
+                            l10n,
+                            l10n.password,
+                          ),
+                          onFieldSubmitted: (_) => _handleLogin(),
                         ),
-                        onFieldSubmitted: (_) => _handleLogin(),
-                      ),
-                      const SizedBox(height: 24),
-                      FilledButton(
-                        onPressed: _handleLogin,
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        const SizedBox(height: 24),
+                        FilledButton(
+                          onPressed: _handleLogin,
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          child: Text(l10n.login),
                         ),
-                        child: Text(l10n.login),
-                      ),
+                      ],
                       // SSO providers (if available)
                       if (_availableIdPs.isNotEmpty) ...[
-                        const SizedBox(height: 24),
-                        // OR divider
-                        Row(
-                          children: [
-                            const Expanded(child: Divider()),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16.0,
-                              ),
-                              child: Text(
-                                l10n.ssoOrDivider,
-                                style: TextStyle(
-                                  color: Theme.of(
-                                    context,
-                                  ).textTheme.bodySmall?.color,
+                        // OR divider - only show if local login is also enabled
+                        if (_localLoginEnabled) ...[
+                          const SizedBox(height: 24),
+                          Row(
+                            children: [
+                              const Expanded(child: Divider()),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                ),
+                                child: Text(
+                                  l10n.ssoOrDivider,
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall?.color,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const Expanded(child: Divider()),
-                          ],
-                        ),
+                              const Expanded(child: Divider()),
+                            ],
+                          ),
+                        ],
                         const SizedBox(height: 16),
                         for (final idp in _availableIdPs)
                           Padding(

@@ -148,7 +148,7 @@ class AuthService {
     }
 
     final url = Uri.parse(
-      '$serverUrl${ApiConstants.sessionTokenExchangeEndpoint}/$sessionId/tokens',
+      '$serverUrl${ApiConstants.idpSessionTokenExchangeEndpoint}/$sessionId/tokens',
     );
 
     try {
