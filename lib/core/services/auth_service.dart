@@ -182,8 +182,35 @@ class AuthService {
   }
 
   /// Logout and clear all tokens
-  Future<void> logout() async {
+  /// Returns true if server logout succeeded, false if it failed
+  /// Local tokens are always cleared regardless of server response
+  Future<bool> logout() async {
+    final serverUrl = await _storage.getServerUrl();
+    final refreshToken = await _storage.getRefreshToken();
+
+    bool serverLogoutSuccess = true;
+
+    // Call server-side logout if we have credentials
+    if (serverUrl != null && refreshToken != null && refreshToken.isNotEmpty) {
+      try {
+        final url = Uri.parse('$serverUrl${ApiConstants.logoutEndpoint}');
+        final headers = {
+          ApiConstants.authorizationHeader: 'Bearer $refreshToken',
+          ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue,
+        };
+        final response = await http.post(url, headers: headers);
+
+        serverLogoutSuccess = response.statusCode == 200;
+      } catch (e) {
+        // Server logout failed (network error, server down, token expired)
+        serverLogoutSuccess = false;
+      }
+    }
+
+    // Always clear local tokens
     await _storage.clearAuthTokens();
+
+    return serverLogoutSuccess;
   }
 
   /// Check if user is authenticated

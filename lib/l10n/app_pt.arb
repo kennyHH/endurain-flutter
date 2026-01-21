@@ -1,7 +1,6 @@
 {
   "@@locale": "pt",
   "@@context": "Endurain Mobile - Traduções em português organizadas por funcionalidade",
-
   "@sectionCommon": "=== COMUM / PARTILHADO (core/utils/dialog_utils.dart, core/utils/validators.dart) ===",
   "error": "Erro",
   "@error": {
@@ -31,7 +30,6 @@
   "@invalidUrl": {
     "description": "Mensagem de validação para URL inválido - Usado em: validators.dart"
   },
-
   "@sectionAuth": "=== AUTENTICAÇÃO (features/auth/login_screen.dart) ===",
   "loginTitle": "Login",
   "@loginTitle": {
@@ -52,6 +50,10 @@
   "logoutConfirmMessage": "Tem certeza que deseja sair?",
   "@logoutConfirmMessage": {
     "description": "Mensagem do diálogo de confirmação de logout - Usado em: server_settings_screen.dart"
+  },
+  "logoutServerFailedWarning": "Não foi possível sair do servidor, mas saiu localmente",
+  "@logoutServerFailedWarning": {
+    "description": "Aviso exibido quando o logout do servidor falha mas o logout local é bem-sucedido - Usado em: server_settings_screen.dart"
   },
   "username": "Nome de utilizador",
   "@username": {
@@ -93,13 +95,11 @@
   "@verify": {
     "description": "Rótulo do botão de verificação MFA"
   },
-
   "@sectionMap": "=== MAPA (features/map/map_screen.dart) ===",
   "mapTab": "Mapa",
   "@mapTab": {
     "description": "Rótulo da aba do mapa - Usado em: app_bottom_nav.dart"
   },
-
   "@sectionSettings": "=== CONFIGURAÇÕES (features/settings/) ===",
   "settingsTab": "Configurações",
   "@settingsTab": {

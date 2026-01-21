@@ -1,7 +1,6 @@
 {
   "@@locale": "en",
   "@@context": "Endurain Mobile - English translations organized by feature",
-
   "@sectionCommon": "=== COMMON / SHARED (core/utils/dialog_utils.dart, core/utils/validators.dart) ===",
   "error": "Error",
   "@error": {
@@ -31,7 +30,6 @@
   "@invalidUrl": {
     "description": "Validation message for invalid URL - Used in: validators.dart"
   },
-
   "@sectionAuth": "=== AUTH (features/auth/login_screen.dart) ===",
   "loginTitle": "Login",
   "@loginTitle": {
@@ -52,6 +50,10 @@
   "logoutConfirmMessage": "Are you sure you want to logout?",
   "@logoutConfirmMessage": {
     "description": "Logout confirmation dialog message - Used in: server_settings_screen.dart"
+  },
+  "logoutServerFailedWarning": "Could not logout from server, but logged out locally",
+  "@logoutServerFailedWarning": {
+    "description": "Warning shown when server logout fails but local logout succeeds - Used in: server_settings_screen.dart"
   },
   "username": "Username",
   "@username": {
@@ -93,13 +95,11 @@
   "@verify": {
     "description": "MFA verification button label"
   },
-
   "@sectionMap": "=== MAP (features/map/map_screen.dart) ===",
   "mapTab": "Map",
   "@mapTab": {
     "description": "Map tab label - Used in: app_bottom_nav.dart"
   },
-
   "@sectionSettings": "=== SETTINGS (features/settings/) ===",
   "settingsTab": "Settings",
   "@settingsTab": {

@@ -45,6 +45,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logoutConfirmMessage => 'Are you sure you want to logout?';
 
   @override
+  String get logoutServerFailedWarning =>
+      'Could not logout from server, but logged out locally';
+
+  @override
   String get username => 'Username';
 
   @override
