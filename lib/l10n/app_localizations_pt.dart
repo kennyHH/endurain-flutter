@@ -45,6 +45,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get logoutConfirmMessage => 'Tem certeza que deseja sair?';
 
   @override
+  String get logoutServerFailedWarning =>
+      'Não foi possível sair do servidor, mas saiu localmente';
+
+  @override
   String get username => 'Nome de utilizador';
 
   @override

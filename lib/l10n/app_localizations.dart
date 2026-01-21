@@ -170,6 +170,12 @@ abstract class AppLocalizations {
   /// **'Are you sure you want to logout?'**
   String get logoutConfirmMessage;
 
+  /// Warning shown when server logout fails but local logout succeeds - Used in: server_settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not logout from server, but logged out locally'**
+  String get logoutServerFailedWarning;
+
   /// Username field label - Used in: login_screen.dart, server_settings_screen.dart
   ///
   /// In en, this message translates to:

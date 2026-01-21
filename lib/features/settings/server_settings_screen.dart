@@ -90,8 +90,35 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
     );
 
     if (confirmed && mounted) {
-      await _authService.logout();
+      final serverLogoutSuccess = await _authService.logout();
       if (mounted) {
+        // Show warning if server logout failed
+        if (!serverLogoutSuccess) {
+          if (PlatformUtils.isApplePlatform) {
+            // iOS/macOS: Show banner
+            await showCupertinoDialog<void>(
+              context: context,
+              barrierDismissible: true,
+              builder: (context) => CupertinoAlertDialog(
+                content: Text(l10n.logoutServerFailedWarning),
+                actions: [
+                  CupertinoDialogAction(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(l10n.ok),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            // Android: Show snackbar
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(l10n.logoutServerFailedWarning),
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        }
         // Pop back to settings screen and trigger logout
         Navigator.pop(context);
         widget.onLogout?.call();
