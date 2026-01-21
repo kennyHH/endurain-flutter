@@ -5,6 +5,8 @@ class ApiConstants {
   static const String mfaVerifyEndpoint = '/api/v1/auth/mfa/verify';
   static const String refreshEndpoint = '/api/v1/auth/refresh';
   static const String logoutEndpoint = '/api/v1/auth/logout';
+  static const String sessionTokenExchangeEndpoint =
+      '/api/v1/public/idp/session';
 
   // Headers
   static const String clientTypeHeader = 'X-Client-Type';
