@@ -36,8 +36,10 @@ The app is designed with privacy in mind, connecting directly to your self-hoste
 
 ✅ **Authentication**
 - Secure login to your Endurain server
+- SSO/OAuth support with PKCE (Authentik, Keycloak, Authelia, PocketID, Casdoor, etc.)
 - Two-factor authentication (MFA) support
-- Server URL configuration
+- Auto-redirect for single SSO provider configurations
+- Server URL configuration with automatic settings detection
 
 ✅ **Map Integration**
 - Real-time location display on OpenStreetMap
@@ -71,7 +73,7 @@ The app is designed with privacy in mind, connecting directly to your self-hoste
 
 ## Tech Stack
 
-- **Framework:** Flutter 3.38+ (Dart 3.10.3+)
+- **Framework:** Flutter 3.38+ (Dart 3.10+)
 - **Platforms:** iOS, Android, macOS
 - **State Management:** setState (may evolve to Provider/Riverpod)
 - **Map Provider:** OpenStreetMap (flutter_map + latlong2)
@@ -79,6 +81,8 @@ The app is designed with privacy in mind, connecting directly to your self-hoste
 - **Secure Storage:** flutter_secure_storage
 - **Compass:** flutter_compass (mobile only)
 - **HTTP Client:** http package for API communication
+- **SSO/OAuth:** webview_flutter for OAuth flow, flutter_svg for provider icons
+- **Security:** crypto package for PKCE challenge generation
 
 **All dependencies are open-source (FOSS) to ensure F-Droid compatibility.**
 
