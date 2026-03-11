@@ -12,6 +12,10 @@ All notable changes to Endurain mobile app are documented in this file.
 - `Auto by activity` now acts as intelligent default GPS behavior: stricter for Walk/Run, balanced for Ride.
 - GPS filter mode is now persisted and applied live to tracking logic without requiring app restart.
 
+### Fixed
+- Resolved CI `Analyze` failure by removing remaining analyzer findings in map tracking flow, validators, location settings, and tracking controls.
+- Updated async handling in tracking actions/snackbar flows to satisfy `unawaited_futures`/context-safety analyzer checks.
+
 ### Documentation
 - Reduced `ROADMAP.md` to a lightweight support backlog to reflect maintenance-focused workflow.
 - Simplified `DOCS/OWNER_HANDOVER.md` into a compact maintainer note for faster PR review.

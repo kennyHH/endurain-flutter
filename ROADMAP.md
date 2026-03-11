@@ -32,3 +32,4 @@ For permanent release history, use `CHANGELOG.md` as the single long-term source
 - Added `GPS filter mode` (`Auto by activity`, `Normal`, `Strict`) with persistent setting and live engine updates.
 - Kept server API compatibility unchanged for upload/auth contracts.
 - Added maintainer handover note for review and merge clarity.
+- Fixed CI analyzer findings so `Analyze` can pass together with existing test/build smoke jobs.

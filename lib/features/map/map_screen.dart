@@ -465,12 +465,12 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _handlePauseTracking() async {
     await _trackingSessionEngine.pause();
-    HapticFeedback.lightImpact();
+    await HapticFeedback.lightImpact();
   }
 
   Future<void> _handleResumeTracking() async {
     await _trackingSessionEngine.resume();
-    HapticFeedback.lightImpact();
+    await HapticFeedback.lightImpact();
   }
 
   Future<void> _handleStopTracking() async {
@@ -487,17 +487,19 @@ class _MapScreenState extends State<MapScreen> {
       );
       return;
     }
-    HapticFeedback.mediumImpact();
+    await HapticFeedback.mediumImpact();
+    if (!mounted) return;
     _showSaveCelebration();
 
     try {
       final uploadService = widget.uploadService;
       if (uploadService == null) return;
+      final l10n = AppLocalizations.of(context)!;
+      final messenger = ScaffoldMessenger.maybeOf(context);
 
       final result = await uploadService.uploadActivity(activity);
       if (!mounted) return;
       await widget.onUploadFinished?.call(activity, result.success);
-      final l10n = AppLocalizations.of(context)!;
       final baseMessage = ActivityUploadFeedbackMapper.toUserMessage(
         result,
         l10n,
@@ -510,10 +512,9 @@ class _MapScreenState extends State<MapScreen> {
           ? '$messageWithStatus - $detail'
           : messageWithStatus;
 
-      final messenger = ScaffoldMessenger.maybeOf(context);
       if (messenger == null) return;
       if (!result.success) {
-        HapticFeedback.heavyImpact();
+        await HapticFeedback.heavyImpact();
         messenger.showSnackBar(
           SnackBar(
             content: Text(message),
@@ -526,7 +527,7 @@ class _MapScreenState extends State<MapScreen> {
           ),
         );
       } else {
-        HapticFeedback.lightImpact();
+        await HapticFeedback.lightImpact();
         messenger.showSnackBar(SnackBar(content: Text(message)));
       }
     } finally {
@@ -579,10 +580,11 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _retryUploadInBackground(Activity activity) async {
     final uploadService = widget.uploadService;
     if (uploadService == null) return;
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.maybeOf(context);
     final result = await uploadService.uploadActivity(activity);
     if (!mounted) return;
     await widget.onUploadFinished?.call(activity, result.success);
-    final l10n = AppLocalizations.of(context)!;
     final baseMessage = ActivityUploadFeedbackMapper.toUserMessage(
       result,
       l10n,
@@ -591,10 +593,9 @@ class _MapScreenState extends State<MapScreen> {
     final message = (detail != null && detail.isNotEmpty)
         ? '$baseMessage - $detail'
         : baseMessage;
-    final messenger = ScaffoldMessenger.maybeOf(context);
     if (messenger == null) return;
     if (result.success) {
-      HapticFeedback.lightImpact();
+      await HapticFeedback.lightImpact();
     }
     messenger.showSnackBar(SnackBar(content: Text(message)));
   }
@@ -695,13 +696,13 @@ class _MapScreenState extends State<MapScreen> {
                       startCountdownSeconds: _startCountdownRemaining,
                       onStart: _handleStartTracking,
                       onPause: () {
-                        _handlePauseTracking();
+                        unawaited(_handlePauseTracking());
                       },
                       onResume: () {
-                        _handleResumeTracking();
+                        unawaited(_handleResumeTracking());
                       },
                       onStop: () {
-                        _handleStopTracking();
+                        unawaited(_handleStopTracking());
                       },
                     ),
                   ),
@@ -789,13 +790,13 @@ class _MapScreenState extends State<MapScreen> {
                     startCountdownSeconds: _startCountdownRemaining,
                     onStart: _handleStartTracking,
                     onPause: () {
-                      _handlePauseTracking();
+                      unawaited(_handlePauseTracking());
                     },
                     onResume: () {
-                      _handleResumeTracking();
+                      unawaited(_handleResumeTracking());
                     },
                     onStop: () {
-                      _handleStopTracking();
+                      unawaited(_handleStopTracking());
                     },
                   ),
                 ),

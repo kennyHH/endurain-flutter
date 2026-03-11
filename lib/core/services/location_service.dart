@@ -11,7 +11,7 @@ class LocationService {
       return AndroidSettings(
         accuracy: LocationAccuracy.bestForNavigation,
         distanceFilter: 3,
-        intervalDuration: Duration(seconds: 1),
+        intervalDuration: const Duration(seconds: 1),
       );
     }
     if (defaultTargetPlatform == TargetPlatform.iOS) {

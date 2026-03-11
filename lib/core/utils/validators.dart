@@ -55,7 +55,7 @@ class Validators {
     final parts = normalized.split('.');
     if (parts.length == 4) {
       final octets = parts.map(int.tryParse).toList();
-      if (octets.any((part) => part == null || part! < 0 || part > 255)) {
+      if (octets.any((part) => part == null || part < 0 || part > 255)) {
         return false;
       }
       final a = octets[0]!;
