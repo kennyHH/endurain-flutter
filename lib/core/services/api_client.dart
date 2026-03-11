@@ -1,12 +1,21 @@
-import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/services/auth_service.dart';
+import 'package:endurain/core/services/api_request_executor.dart';
 import 'package:endurain/core/constants/api_constants.dart';
 
 class ApiClient {
-  final SecureStorageService _storage = SecureStorageService();
-  final AuthService _authService = AuthService();
+  ApiClient({
+    SecureStorageService? storage,
+    AuthService? authService,
+    ApiRequestExecutor? requestExecutor,
+  }) : _storage = storage ?? SecureStorageService(),
+       _authService = authService ?? AuthService(),
+       _requestExecutor = requestExecutor ?? ApiRequestExecutor();
+
+  final SecureStorageService _storage;
+  final AuthService _authService;
+  final ApiRequestExecutor _requestExecutor;
 
   /// Make an authenticated GET request
   Future<http.Response> get(String endpoint) {
@@ -56,35 +65,6 @@ class ApiClient {
     return request.send();
   }
 
-  /// Execute an HTTP request with the given method, URL, headers, and optional body
-  Future<http.Response> _executeRequest(
-    String method,
-    Uri url,
-    Map<String, String> headers, {
-    Map<String, dynamic>? body,
-  }) async {
-    switch (method) {
-      case 'GET':
-        return http.get(url, headers: headers);
-      case 'POST':
-        return http.post(
-          url,
-          headers: headers,
-          body: body != null ? json.encode(body) : null,
-        );
-      case 'PUT':
-        return http.put(
-          url,
-          headers: headers,
-          body: body != null ? json.encode(body) : null,
-        );
-      case 'DELETE':
-        return http.delete(url, headers: headers);
-      default:
-        throw Exception('Unsupported HTTP method: $method');
-    }
-  }
-
   /// Make an HTTP request with automatic token refresh
   Future<http.Response> _makeRequest(
     String method,
@@ -101,18 +81,19 @@ class ApiClient {
       throw Exception('Not authenticated');
     }
 
-    final url = Uri.parse('$serverUrl$endpoint');
     final headers = {
       ApiConstants.authorizationHeader: 'Bearer $accessToken',
       ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue,
       ApiConstants.contentTypeHeader: ApiConstants.contentTypeJson,
     };
 
-    http.Response response = await _executeRequest(
-      method,
-      url,
-      headers,
+    http.Response response = await _requestExecutor.request(
+      method: method,
+      serverUrl: serverUrl,
+      endpoint: endpoint,
+      headers: headers,
       body: body,
+      encodeBodyAsJson: true,
     );
 
     // If token expired (401), try to refresh and retry once
@@ -122,7 +103,14 @@ class ApiClient {
         // Retry the request with new token
         final newAccessToken = await _storage.getAccessToken();
         headers[ApiConstants.authorizationHeader] = 'Bearer $newAccessToken';
-        response = await _executeRequest(method, url, headers, body: body);
+        response = await _requestExecutor.request(
+          method: method,
+          serverUrl: serverUrl,
+          endpoint: endpoint,
+          headers: headers,
+          body: body,
+          encodeBodyAsJson: true,
+        );
       } else {
         throw Exception('Session expired. Please login again.');
       }

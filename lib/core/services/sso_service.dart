@@ -3,12 +3,22 @@ import 'package:http/http.dart' as http;
 import 'package:endurain/core/models/identity_provider.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/api_constants.dart';
+import 'package:endurain/core/services/api_request_executor.dart';
 import 'package:endurain/core/utils/pkce_utils.dart';
 import 'package:endurain/core/services/auth_service.dart';
 
 /// Service for SSO/OAuth authentication
 class SsoService {
-  final SecureStorageService _storage = SecureStorageService();
+  SsoService({
+    SecureStorageService? storage,
+    http.Client? httpClient,
+    ApiRequestExecutor? requestExecutor,
+  }) : _storage = storage ?? SecureStorageService(),
+       _requestExecutor =
+           requestExecutor ?? ApiRequestExecutor(httpClient: httpClient);
+
+  final SecureStorageService _storage;
+  final ApiRequestExecutor _requestExecutor;
 
   // Store PKCE temporarily during SSO flow
   Map<String, String>? _ssoPicke;
@@ -27,12 +37,11 @@ class SsoService {
       throw Exception('Server URL not configured');
     }
 
-    final apiUrl = Uri.parse('$url${ApiConstants.idpListEndpoint}');
-
     try {
-      final response = await http.get(
-        apiUrl,
-        headers: {ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue},
+      final response = await _requestExecutor.request(
+        method: 'GET',
+        serverUrl: url,
+        endpoint: ApiConstants.idpListEndpoint,
       );
 
       if (response.statusCode == 200) {
@@ -58,6 +67,8 @@ class SsoService {
         final error = json.decode(response.body);
         throw Exception(error['detail'] ?? 'Failed to fetch providers');
       }
+    } on ApiRequestException {
+      rethrow;
     } catch (e) {
       throw Exception('Failed to fetch identity providers: $e');
     }
@@ -77,14 +88,18 @@ class SsoService {
     }
 
     // Generate PKCE parameters
-    _ssoPicke = PkceUtils.generatePkce();
+    final pkce = PkceUtils.generatePkce();
+    _ssoPicke = pkce;
+    final codeChallenge = pkce['challenge'];
+    if (codeChallenge == null) {
+      throw Exception('Failed to generate PKCE challenge');
+    }
 
     // Build OAuth URL with PKCE challenge
-    final pkce = _ssoPicke!; // Null check here for better readability
     final oauthUrl = Uri.parse('$url${ApiConstants.idpLoginEndpoint}/$idpSlug')
         .replace(
           queryParameters: {
-            'code_challenge': pkce['challenge']!,
+            'code_challenge': codeChallenge,
             'code_challenge_method': 'S256',
             'redirect': '/dashboard', // Frontend path after successful login
           },
@@ -105,18 +120,18 @@ class SsoService {
       throw Exception('PKCE verifier not found. Please restart SSO login.');
     }
 
-    final url = Uri.parse(
-      '$serverUrl${ApiConstants.idpSessionTokenExchangeEndpoint}/$sessionId/tokens',
-    );
-
     try {
-      final response = await http.post(
-        url,
+      final response = await _requestExecutor.request(
+        method: 'POST',
+        serverUrl: serverUrl,
+        endpoint:
+            '${ApiConstants.idpSessionTokenExchangeEndpoint}/$sessionId/tokens',
         headers: {
           ApiConstants.contentTypeHeader: ApiConstants.contentTypeJson,
           ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue,
         },
-        body: json.encode({'code_verifier': _ssoPicke!['verifier']}),
+        body: {'code_verifier': _ssoPicke!['verifier']},
+        encodeBodyAsJson: true,
       );
 
       // Clear verifier after use (one-time exchange)
@@ -151,6 +166,9 @@ class SsoService {
         final error = json.decode(response.body);
         throw Exception(error['detail'] ?? 'Token exchange failed');
       }
+    } on ApiRequestException {
+      _ssoPicke = null; // Clear verifier on error
+      rethrow;
     } catch (e) {
       _ssoPicke = null; // Clear verifier on error
       throw Exception('SSO token exchange error: $e');

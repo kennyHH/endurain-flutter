@@ -10,13 +10,25 @@ import 'package:endurain/core/models/server_settings.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/core/utils/validators.dart';
 import 'package:endurain/core/utils/dialog_utils.dart';
+import 'package:endurain/core/utils/error_mapper.dart';
+import 'package:endurain/core/services/api_request_executor.dart';
 import 'package:endurain/core/constants/ui_constants.dart';
 import 'package:endurain/features/auth/sso_webview_screen.dart';
+import 'package:endurain/shared/widgets/brand_logo.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key, this.onLoginSuccess});
+  const LoginScreen({
+    super.key,
+    this.onLoginSuccess,
+    this.authService,
+    this.ssoService,
+    this.serverSettingsService,
+  });
 
   final VoidCallback? onLoginSuccess;
+  final AuthService? authService;
+  final SsoService? ssoService;
+  final ServerSettingsService? serverSettingsService;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -28,9 +40,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _mfaCodeController = TextEditingController();
-  final _authService = AuthService();
-  final _ssoService = SsoService();
-  final _serverSettingsService = ServerSettingsService();
+  AuthService? _authServiceInstance;
+  SsoService? _ssoServiceInstance;
+  ServerSettingsService? _serverSettingsServiceInstance;
 
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -43,6 +55,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
   /// Whether local login (username/password) is enabled
   bool get _localLoginEnabled => _serverSettings?.localLoginEnabled ?? true;
+  AuthService get _authService =>
+      widget.authService ?? (_authServiceInstance ??= AuthService());
+  SsoService get _ssoService =>
+      widget.ssoService ?? (_ssoServiceInstance ??= SsoService());
+  ServerSettingsService get _serverSettingsService =>
+      widget.serverSettingsService ??
+      (_serverSettingsServiceInstance ??= ServerSettingsService());
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -102,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // Slight delay to show the step 2 briefly before redirecting
           await Future<void>.delayed(const Duration(milliseconds: 100));
           if (mounted) {
-            _handleSsoLogin(idps.first);
+            await _handleSsoLogin(idps.first);
           }
         }
       }
@@ -112,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
           _isLoading = false;
         });
         // If server settings fetch fails, show error
-        _showError(e.toString());
+        _showMappedError(e);
       }
     }
   }
@@ -149,7 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   }
                 } catch (e) {
                   if (mounted) {
-                    _showError(e.toString());
+                    _showMappedError(e);
                   }
                 }
               },
@@ -167,7 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() {
           _isLoading = false;
         });
-        _showError(e.toString());
+        _showMappedError(e);
       }
     }
   }
@@ -207,7 +231,7 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() {
           _isLoading = false;
         });
-        _showError(e.toString());
+        _showMappedError(e);
       }
     }
   }
@@ -237,13 +261,31 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() {
           _isLoading = false;
         });
-        _showError(e.toString());
+        _showMappedError(e);
       }
     }
   }
 
   void _showError(String message) {
     DialogUtils.showErrorDialog(context, message);
+  }
+
+  void _showMappedError(Object error) {
+    final l10n = AppLocalizations.of(context)!;
+    var message = AppErrorMapper.toUserMessage(error, l10n);
+    final raw = error.toString();
+    final rawLower = raw.toLowerCase();
+    final looksTls =
+        (error is ApiRequestException &&
+            error.type == ApiRequestExceptionType.tls) ||
+        rawLower.contains('tls') ||
+        rawLower.contains('certificate') ||
+        rawLower.contains('handshake') ||
+        rawLower.contains('cert_verify_failed');
+    if (looksTls && raw.isNotEmpty) {
+      message = '$message\n\n$raw';
+    }
+    _showError(message);
   }
 
   /// Build SSO provider icon widget
@@ -333,13 +375,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       const SizedBox(height: 40),
                       // App logo or title
-                      Center(
-                        child: Image.asset(
-                          'assets/logo/logo.png',
-                          width: 120,
-                          height: 120,
-                        ),
-                      ),
+                      const Center(child: BrandLogo(size: 120)),
                       const SizedBox(height: 40),
                       if (!_showMfaInput) ...[
                         // Step 1: Server URL only
@@ -353,7 +389,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 keyboardType: TextInputType.url,
                                 textInputAction: TextInputAction.done,
                                 validator: (value) =>
-                                    Validators.validateUrl(value, l10n),
+                                    Validators.validateServerUrl(value, l10n),
                                 onFieldSubmitted: (_) => _handleServerUrlNext(),
                               ),
                             ],
@@ -363,9 +399,23 @@ class _LoginScreenState extends State<LoginScreen> {
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16.0,
                             ),
-                            child: CupertinoButton.filled(
-                              onPressed: _handleServerUrlNext,
-                              child: Text(l10n.next),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: CupertinoButton.filled(
+                                onPressed: _handleServerUrlNext,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(l10n.next),
+                                    const SizedBox(width: 6),
+                                    const Icon(
+                                      CupertinoIcons.arrow_right,
+                                      size: 16,
+                                      color: CupertinoColors.white,
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ]
@@ -565,13 +615,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   const SizedBox(height: 40),
                   // App logo or title
-                  Center(
-                    child: Image.asset(
-                      'assets/logo/logo.png',
-                      width: 120,
-                      height: 120,
-                    ),
-                  ),
+                  const Center(child: BrandLogo(size: 120)),
                   const SizedBox(height: 40),
                   if (!_showMfaInput) ...[
                     // Step 1: Server URL only
@@ -587,16 +631,29 @@ class _LoginScreenState extends State<LoginScreen> {
                         keyboardType: TextInputType.url,
                         textInputAction: TextInputAction.done,
                         validator: (value) =>
-                            Validators.validateUrl(value, l10n),
+                            Validators.validateServerUrl(value, l10n),
                         onFieldSubmitted: (_) => _handleServerUrlNext(),
                       ),
                       const SizedBox(height: 24),
-                      ElevatedButton(
+                      FilledButton.icon(
                         onPressed: _handleServerUrlNext,
-                        style: ElevatedButton.styleFrom(
+                        icon: const Icon(Icons.arrow_forward_rounded),
+                        label: Text(l10n.next),
+                        style: FilledButton.styleFrom(
+                          elevation: 3,
                           padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.onPrimary,
+                          textStyle: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text(l10n.next),
                       ),
                     ]
                     // Step 2: SSO providers + username/password

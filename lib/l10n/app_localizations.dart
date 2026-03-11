@@ -140,6 +140,54 @@ abstract class AppLocalizations {
   /// **'Please enter a valid URL'**
   String get invalidUrl;
 
+  /// Generic fallback error shown when no specific mapping exists - Used in: error_mapper.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get errorGeneric;
+
+  /// Error shown for connectivity/timeouts - Used in: error_mapper.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Network error. Please check your connection and try again.'**
+  String get errorNetwork;
+
+  /// Error shown for TLS handshake/certificate validation failures - Used in: error_mapper.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Secure connection failed (TLS/SSL). Please verify certificate chain, hostname, and trusted CA.'**
+  String get errorTls;
+
+  /// Error shown for login/authentication failures - Used in: error_mapper.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication failed. Please check your credentials.'**
+  String get errorAuthentication;
+
+  /// Error shown for server-side failures - Used in: error_mapper.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Server error. Please try again later.'**
+  String get errorServer;
+
+  /// Error shown for invalid/missing server configuration - Used in: error_mapper.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Server configuration is invalid. Please verify your settings.'**
+  String get errorConfiguration;
+
+  /// Error shown for SSO specific failures - Used in: error_mapper.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Single sign-on failed. Please try again.'**
+  String get errorSso;
+
+  /// Validation message when HTTP URL is not allowed for server login - Used in: validators.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Please use an HTTPS URL'**
+  String get httpsRequiredUrl;
+
   /// Title for login screen
   ///
   /// In en, this message translates to:
@@ -193,6 +241,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancel'**
   String get ssoCancel;
+
+  /// Generic SSO authentication error message - Used in: sso_webview_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'SSO authentication failed. Please try again.'**
+  String get ssoAuthenticationFailed;
+
+  /// Message shown when user cancels SSO flow - Used in: sso_webview_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'SSO authentication was cancelled.'**
+  String get ssoAuthenticationCancelled;
+
+  /// Message shown when WebView navigation host is not allowed - Used in: sso_webview_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation was blocked for security reasons.'**
+  String get ssoBlockedNavigation;
 
   /// SSO provider button label - Used in: login_screen.dart
   ///
@@ -266,6 +332,30 @@ abstract class AppLocalizations {
   /// **'Please enter MFA code'**
   String get mfaCodeRequired;
 
+  /// Generic title for help/info dialogs - Used in login/settings screens
+  ///
+  /// In en, this message translates to:
+  /// **'Info'**
+  String get helpTitle;
+
+  /// Helper text for server URL input in login step 1
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the exact base URL of your Endurain server, including https:// and matching the certificate hostname. Example: https://train.example.com'**
+  String get loginServerUrlHelp;
+
+  /// Helper text explaining what the Next button does in login step 1
+  ///
+  /// In en, this message translates to:
+  /// **'Next checks server settings and available login providers. If this step fails with TLS, verify full certificate chain, hostname/SAN, and Android trust.'**
+  String get loginNextHelp;
+
+  /// Helper text for insecure TLS toggle in login/settings
+  ///
+  /// In en, this message translates to:
+  /// **'Test-only mode. If enabled, certificate validation is bypassed for diagnostics. If login only works with this mode, your server TLS trust chain or hostname setup must be fixed.'**
+  String get loginTlsToggleHelp;
+
   /// MFA verification button label
   ///
   /// In en, this message translates to:
@@ -277,6 +367,450 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Map'**
   String get mapTab;
+
+  /// History tab label - Used in: app_bottom_nav.dart
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get historyTab;
+
+  /// Title for activity history screen - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Activity history'**
+  String get historyTitle;
+
+  /// Title for activity detail screen - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Activity details'**
+  String get historyDetailTitle;
+
+  /// Empty state title for history - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'No activities yet'**
+  String get historyEmptyTitle;
+
+  /// Empty state body text for history - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Start and stop a tracking session to see your activities here.'**
+  String get historyEmptyBody;
+
+  /// Primary CTA in history empty state that jumps to tracking map - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Start first activity'**
+  String get historyEmptyCtaStart;
+
+  /// Error message for failed history loading - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load activities. Please try again.'**
+  String get historyLoadError;
+
+  /// Label for track point count in activity details - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Track points'**
+  String get historyTrackPoints;
+
+  /// Hint below detail map to open full route/metrics view - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the map to open full route overview'**
+  String get historyTapMapForOverview;
+
+  /// Section header for activities from current day - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get historyGroupToday;
+
+  /// Section header for activities from previous day - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get historyGroupYesterday;
+
+  /// Section header for activities from current week - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get historyGroupThisWeek;
+
+  /// Section header for older activities - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Older'**
+  String get historyGroupOlder;
+
+  /// Filter chip label to show all activity types - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get historyFilterAll;
+
+  /// History date range filter chip label for last 7 days - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'7d'**
+  String get historyRange7d;
+
+  /// History date range filter chip label for last 30 days - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'30d'**
+  String get historyRange30d;
+
+  /// History date range filter chip label for last 90 days - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'90d'**
+  String get historyRange90d;
+
+  /// History date range filter chip label for last year - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'1y'**
+  String get historyRange1y;
+
+  /// History date range filter chip label for all time - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'All time'**
+  String get historyRangeAllTime;
+
+  /// Button title to open history filter and sort bottom sheet - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Filter & sort'**
+  String get historyFilterSort;
+
+  /// Section label for history date range filters - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Date range'**
+  String get historyDateRange;
+
+  /// Section label for history sorting options - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by'**
+  String get historySortBy;
+
+  /// Sort option for newest activities first - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Newest'**
+  String get historySortNewest;
+
+  /// Sort option for oldest activities first - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest'**
+  String get historySortOldest;
+
+  /// Sort option for longest activities first - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Longest'**
+  String get historySortLongest;
+
+  /// Sort option for shortest activities first - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Shortest'**
+  String get historySortShortest;
+
+  /// Toggle label to filter history by not yet uploaded activities - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Only unuploaded activities'**
+  String get historyOnlyUnuploaded;
+
+  /// Badge for activities that are not uploaded yet - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Upload pending'**
+  String get historyUploadPending;
+
+  /// Dialog title to rename an activity - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Name activity'**
+  String get historyRenameTitle;
+
+  /// Input hint for activity naming - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Evening ride'**
+  String get historyRenameHint;
+
+  /// Action label for deleting an activity - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get historyDeleteAction;
+
+  /// Confirmation dialog title before deleting an activity - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Delete activity?'**
+  String get historyDeleteTitle;
+
+  /// Confirmation dialog message for deleting an activity - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the activity from the app and (if uploaded) from the server.'**
+  String get historyDeleteMessage;
+
+  /// Snackbar text after successfully deleting an activity - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Activity deleted'**
+  String get historyDeletedSuccess;
+
+  /// Tooltip for map location lock/center button - Used in: map_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Center on my location'**
+  String get mapCenterOnLocation;
+
+  /// Label for activity type selector - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Activity type'**
+  String get activityTypeLabel;
+
+  /// Activity type label for running - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Run'**
+  String get activityTypeRun;
+
+  /// Activity type label for riding - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Ride'**
+  String get activityTypeRide;
+
+  /// Activity type label for walking - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Walk'**
+  String get activityTypeWalk;
+
+  /// Tracking status when session has not started - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Idle'**
+  String get trackingIdle;
+
+  /// Tracking status while session is active - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Recording'**
+  String get trackingRecording;
+
+  /// Tracking status while session is paused - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get trackingPaused;
+
+  /// Tracking status after session stops - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get trackingStopped;
+
+  /// Button label to start tracking - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Start tracking'**
+  String get trackingStart;
+
+  /// Button label to stop tracking - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Stop tracking'**
+  String get trackingStop;
+
+  /// Label for tracking duration metric - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get trackingDuration;
+
+  /// Label for tracking distance metric - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Distance'**
+  String get trackingDistance;
+
+  /// Distance unit abbreviation used in tracking metrics - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'km'**
+  String get trackingDistanceUnitKm;
+
+  /// Label for average pace metric - Used in: tracking_controls.dart, activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Pace'**
+  String get trackingPace;
+
+  /// Pace unit used for average pace metric - Used in: tracking_controls.dart, activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'min/km'**
+  String get trackingPaceUnitMinKm;
+
+  /// Label for average speed metric (used for cycling activities) - Used in: tracking_controls.dart, activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Avg speed'**
+  String get trackingAverageSpeed;
+
+  /// Speed unit for cycling metrics - Used in: tracking_controls.dart, activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'km/h'**
+  String get trackingSpeedUnitKmh;
+
+  /// Label for elevation gain metric - Used in: tracking_controls.dart, activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Elevation gain'**
+  String get trackingElevationGain;
+
+  /// Elevation unit abbreviation - Used in: tracking_controls.dart, activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'m'**
+  String get trackingElevationUnitM;
+
+  /// Label for elevation loss metric in activity details - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Elevation loss'**
+  String get historyElevationLoss;
+
+  /// Title for altitude chart in activity details - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Elevation profile'**
+  String get historyElevationProfile;
+
+  /// Fallback text when no altitude samples exist for an activity - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'No altitude data available'**
+  String get historyNoAltitudeData;
+
+  /// Error message when tracking starts without location permission - Used in: map_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is required to start tracking.'**
+  String get trackingPermissionRequired;
+
+  /// Warning banner while tracking when GPS signal is temporarily unavailable - Used in: map_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'No GPS signal. Recording continues and sync resumes automatically when signal returns.'**
+  String get trackingGpsSignalLost;
+
+  /// Status label when recent GPS fix is available before tracking start - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'GPS fix available'**
+  String get trackingGpsReady;
+
+  /// Status label when GPS fix is not yet available before tracking start - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Searching GPS fix'**
+  String get trackingGpsSearching;
+
+  /// Hint shown when user starts tracking without stable GPS quality lock - Used in: map_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Wait for a stable GPS fix (3 consecutive good fixes) before starting.'**
+  String get trackingGpsNeedStableFix;
+
+  /// Countdown hint shown while app prepares tracking start and waits for GPS fix - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Starting in {seconds}s - {status}'**
+  String trackingGpsPreparingCountdown(int seconds, String status);
+
+  /// Action label in snackbar to retry failed upload in the background - Used in: map_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Retry in background'**
+  String get trackingRetryInBackground;
+
+  /// Dialog title shown for very short or unusual activities before keeping them - Used in: map_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Save this activity?'**
+  String get trackingSuspiciousSaveTitle;
+
+  /// Dialog message shown when activity quality check flags unusual data - Used in: map_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'This activity looks very short or unusual ({duration}, {distance}). Save anyway?'**
+  String trackingSuspiciousSaveMessage(String duration, String distance);
+
+  /// Action label to discard suspicious activity instead of saving - Used in: map_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get trackingDiscardAction;
+
+  /// Snackbar shown after discarding suspicious activity - Used in: map_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Activity discarded'**
+  String get trackingDiscardedActivity;
+
+  /// Quick action label to start a new activity with last used type - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat last: {activity}'**
+  String trackingRepeatLast(String activity);
+
+  /// Short celebration toast shown right after a session is saved locally - Used in: map_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Activity saved'**
+  String get trackingActivitySavedCelebration;
+
+  /// Status label when route is matched via OSRM - Used in: map_screen.dart, activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Route: matched'**
+  String get routeStatusMatched;
+
+  /// Status label when route matching fell back to local/raw smoothing - Used in: map_screen.dart, activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Route: raw fallback'**
+  String get routeStatusFallback;
+
+  /// Status label when route display mode is raw GPS - Used in: map_screen.dart, activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Route: raw GPS'**
+  String get routeStatusRaw;
+
+  /// Generic button label to apply current filters/settings - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get apply;
 
   /// Settings tab label - Used in: app_bottom_nav.dart
   ///
@@ -337,6 +871,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Settings saved successfully'**
   String get savedSuccessfully;
+
+  /// Label for theme mode setting selector - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get settingsThemeMode;
+
+  /// Theme option label for system mode - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Follow system'**
+  String get settingsThemeSystem;
+
+  /// Theme option label for light mode - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get settingsThemeLight;
+
+  /// Theme option label for dark mode - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get settingsThemeDark;
+
+  /// Label for choosing a color preset theme - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Color preset'**
+  String get settingsThemePreset;
+
+  /// Color preset option for default Endurain palette - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Endurain'**
+  String get settingsThemePresetEndurain;
+
+  /// Color preset option for ocean palette - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Ocean'**
+  String get settingsThemePresetOcean;
+
+  /// Color preset option for forest palette - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Forest'**
+  String get settingsThemePresetForest;
+
+  /// Toggle label for high contrast colors - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'High contrast'**
+  String get settingsHighContrast;
+
+  /// Settings section title for route matching preview - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Route matching'**
+  String get settingsRouteMatchingTitle;
+
+  /// Toggle label to switch raw vs matched route preview - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Enable route matching (MVP)'**
+  String get settingsRouteMatchingToggle;
+
+  /// Explanation below route matching toggle - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Uses road matching when available and automatically falls back to smoothed/raw GPS when matching is not possible.'**
+  String get settingsRouteMatchingDescription;
+
+  /// Title for selecting how route should be displayed - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Route display mode'**
+  String get settingsRouteDisplayModeTitle;
+
+  /// Route display mode option that uses matching with fallback - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Auto (recommended)'**
+  String get settingsRouteDisplayModeAuto;
+
+  /// Route display mode option that prefers matched route - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Matched preferred'**
+  String get settingsRouteDisplayModeMatched;
+
+  /// Route display mode option that always uses raw GPS - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Raw GPS'**
+  String get settingsRouteDisplayModeRaw;
+
+  /// Title for selecting the GPS quality filter preset - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'GPS filter mode'**
+  String get settingsGpsFilterModeTitle;
+
+  /// GPS filter mode option that automatically adjusts by activity type - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Auto by activity'**
+  String get settingsGpsFilterModeAuto;
+
+  /// Description for automatic GPS filtering mode - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Walk/Run use stricter filtering, Ride stays balanced. Best default.'**
+  String get settingsGpsFilterModeAutoDescription;
+
+  /// GPS filter mode option with less strict filtering - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Normal (less strict)'**
+  String get settingsGpsFilterModeNormal;
+
+  /// Description for normal GPS filtering mode - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Accepts more GPS points in difficult signal areas. Can include more noise.'**
+  String get settingsGpsFilterModeNormalDescription;
+
+  /// GPS filter mode option with strict filtering for urban environments - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Strict (urban)'**
+  String get settingsGpsFilterModeStrict;
+
+  /// Description for strict GPS filtering mode - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Rejects noisy points more aggressively. Useful in dense city areas.'**
+  String get settingsGpsFilterModeStrictDescription;
+
+  /// Small in-map label when matched route preview is enabled - Used in: map_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Matched preview active'**
+  String get settingsRouteMatchingEnabledLabel;
+
+  /// Settings toggle label to bypass TLS certificate validation for self-hosted testing - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Allow insecure TLS (test only)'**
+  String get settingsAllowInsecureTls;
+
+  /// Settings warning text for insecure TLS toggle - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Use only for diagnostics on self-hosted servers. Disables certificate trust checks and is not recommended for normal use.'**
+  String get settingsAllowInsecureTlsDescription;
 }
 
 class _AppLocalizationsDelegate

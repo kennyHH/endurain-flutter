@@ -1,6 +1,33 @@
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter/foundation.dart';
 
 class LocationService {
+  static const LocationSettings _singleFixSettings = LocationSettings(
+    accuracy: LocationAccuracy.bestForNavigation,
+  );
+
+  LocationSettings _streamSettings() {
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return AndroidSettings(
+        accuracy: LocationAccuracy.bestForNavigation,
+        distanceFilter: 3,
+        intervalDuration: Duration(seconds: 1),
+      );
+    }
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      return AppleSettings(
+        accuracy: LocationAccuracy.bestForNavigation,
+        distanceFilter: 3,
+        activityType: ActivityType.fitness,
+        pauseLocationUpdatesAutomatically: false,
+      );
+    }
+    return const LocationSettings(
+      accuracy: LocationAccuracy.bestForNavigation,
+      distanceFilter: 3,
+    );
+  }
+
   /// Check if location services are enabled
   Future<bool> isLocationServiceEnabled() async {
     return Geolocator.isLocationServiceEnabled();
@@ -41,10 +68,7 @@ class LocationService {
     // Get position
     try {
       return await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 10,
-        ),
+        locationSettings: _singleFixSettings,
       );
     } catch (e) {
       return null;
@@ -54,10 +78,7 @@ class LocationService {
   /// Get position stream for continuous tracking
   Stream<Position> getPositionStream() {
     return Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
-      ),
+      locationSettings: _streamSettings(),
     );
   }
 
@@ -66,9 +87,7 @@ class LocationService {
   Future<double?> getHeading() async {
     try {
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
+        locationSettings: _singleFixSettings,
       );
       return position.heading;
     } catch (e) {

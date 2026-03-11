@@ -6,20 +6,46 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:endurain/app.dart';
+import 'package:endurain/features/auth/login_screen.dart';
 
 void main() {
-  testWidgets('App loads with bottom navigation', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const App());
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-    // Verify that bottom navigation exists.
-    expect(find.byType(BottomNavigationBar), findsOneWidget);
+  const secureStorageChannel = MethodChannel(
+    'plugins.it_nomads.com/flutter_secure_storage',
+  );
 
-    // Verify that Map and Settings tabs exist (2 instances each: one in app bar, one in bottom nav).
-    expect(find.text('Map'), findsNWidgets(2));
-    expect(find.text('Settings'), findsAtLeastNWidgets(1));
+  setUp(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(secureStorageChannel, (call) async {
+          if (call.method == 'read') {
+            return null; // No stored token => unauthenticated
+          }
+          return null;
+        });
   });
+
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(secureStorageChannel, null);
+  });
+
+  testWidgets(
+    'App startet nicht-authentifiziert im Login-Screen',
+    (WidgetTester tester) async {
+      // Build app and allow auth check to complete.
+      await tester.pumpWidget(const App());
+      await tester.pump();
+
+      // In unauthenticated state, the login screen is shown.
+      expect(find.byType(LoginScreen), findsOneWidget);
+
+      // Bottom navigation is only visible after successful authentication.
+      expect(find.byType(BottomNavigationBar), findsNothing);
+    },
+  );
 }

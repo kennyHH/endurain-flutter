@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SecureStorageService {
@@ -15,6 +17,13 @@ class SecureStorageService {
   static const _accessTokenKey = 'access_token';
   static const _refreshTokenKey = 'refresh_token';
   static const _sessionIdKey = 'session_id';
+  static const _themeModeKey = 'theme_mode';
+  static const _themePresetKey = 'theme_preset';
+  static const _highContrastKey = 'high_contrast';
+  static const _routeDisplayModeKey = 'route_display_mode';
+  static const _gpsFilterModeKey = 'gps_filter_mode';
+  static const _mapMatchingPreviewEnabledKey = 'map_matching_preview_enabled';
+  static const _allowInsecureTlsKey = 'allow_insecure_tls';
 
   // Read a value
   Future<String?> read({required String key}) async {
@@ -101,6 +110,55 @@ class SecureStorageService {
   Future<void> setSessionId(String sessionId) =>
       write(key: _sessionIdKey, value: sessionId);
   Future<void> deleteSessionId() => delete(key: _sessionIdKey);
+
+  // Appearance-specific methods
+  Future<String?> getThemeMode() => read(key: _themeModeKey);
+  Future<void> setThemeMode(String mode) =>
+      write(key: _themeModeKey, value: mode);
+  Future<void> deleteThemeMode() => delete(key: _themeModeKey);
+
+  Future<String?> getThemePreset() => read(key: _themePresetKey);
+  Future<void> setThemePreset(String preset) =>
+      write(key: _themePresetKey, value: preset);
+  Future<void> deleteThemePreset() => delete(key: _themePresetKey);
+
+  Future<bool> getHighContrast() async {
+    final raw = await read(key: _highContrastKey);
+    return raw == 'true';
+  }
+
+  Future<void> setHighContrast(bool enabled) =>
+      write(key: _highContrastKey, value: enabled.toString());
+  Future<void> deleteHighContrast() => delete(key: _highContrastKey);
+
+  Future<bool> getMapMatchingPreviewEnabled() async {
+    final raw = await read(key: _mapMatchingPreviewEnabledKey);
+    return raw == 'true';
+  }
+
+  Future<void> setMapMatchingPreviewEnabled(bool enabled) =>
+      write(key: _mapMatchingPreviewEnabledKey, value: enabled.toString());
+  Future<void> deleteMapMatchingPreviewEnabled() =>
+      delete(key: _mapMatchingPreviewEnabledKey);
+
+  Future<String?> getRouteDisplayMode() => read(key: _routeDisplayModeKey);
+  Future<void> setRouteDisplayMode(String mode) =>
+      write(key: _routeDisplayModeKey, value: mode);
+  Future<void> deleteRouteDisplayMode() => delete(key: _routeDisplayModeKey);
+
+  Future<String?> getGpsFilterMode() => read(key: _gpsFilterModeKey);
+  Future<void> setGpsFilterMode(String mode) =>
+      write(key: _gpsFilterModeKey, value: mode);
+  Future<void> deleteGpsFilterMode() => delete(key: _gpsFilterModeKey);
+
+  Future<bool> getAllowInsecureTls() async {
+    final raw = await read(key: _allowInsecureTlsKey);
+    return raw == 'true';
+  }
+
+  Future<void> setAllowInsecureTls(bool enabled) =>
+      write(key: _allowInsecureTlsKey, value: enabled.toString());
+  Future<void> deleteAllowInsecureTls() => delete(key: _allowInsecureTlsKey);
 
   // Check if user is authenticated
   Future<bool> isAuthenticated() async {
