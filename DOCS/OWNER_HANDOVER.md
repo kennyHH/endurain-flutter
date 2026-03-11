@@ -27,6 +27,7 @@ No server API contract changes:
 
 ## Verification
 
+- `flutter analyze` passed (no issues)
 - `flutter gen-l10n` passed
 - `flutter test` passed
 - Manual checks:

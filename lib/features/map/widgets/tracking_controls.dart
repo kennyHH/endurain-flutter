@@ -312,15 +312,21 @@ class _TrackingControlsState extends State<TrackingControls> {
         ? l10n.trackingStop
         : l10n.trackingStart;
     final canQuickRepeat = widget.suggestedActivityType != null && !canPauseOrResume;
-    final pausePressed = isRecording ? widget.onPause : widget.onResume;
-    final stopPressed = () {
+    void pausePressed() {
+      if (isRecording) {
+        widget.onPause();
+      } else {
+        widget.onResume();
+      }
+    }
+    void stopPressed() {
       if (widget.isPreparingStart) return;
       if (isRecording || isPaused) {
         widget.onStop();
       } else {
         widget.onStart(_selectedType);
       }
-    };
+    }
 
     if (isCompact && canPauseOrResume) {
       if (PlatformUtils.isApplePlatform) {
@@ -536,10 +542,6 @@ class _TrackingControlsState extends State<TrackingControls> {
         ),
       ],
     );
-  }
-
-  Widget _segmentLabel(String text) {
-    return _segmentLabelWithIcon(text, null);
   }
 
   Widget _segmentLabelWithIcon(String text, IconData? icon) {
