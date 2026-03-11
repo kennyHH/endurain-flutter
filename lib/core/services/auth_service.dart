@@ -2,10 +2,20 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/api_constants.dart';
+import 'package:endurain/core/services/api_request_executor.dart';
 import 'package:endurain/core/utils/pkce_utils.dart';
 
 class AuthService {
-  final SecureStorageService _storage = SecureStorageService();
+  AuthService({
+    SecureStorageService? storage,
+    http.Client? httpClient,
+    ApiRequestExecutor? requestExecutor,
+  }) : _storage = storage ?? SecureStorageService(),
+       _requestExecutor =
+           requestExecutor ?? ApiRequestExecutor(httpClient: httpClient);
+
+  final SecureStorageService _storage;
+  final ApiRequestExecutor _requestExecutor;
 
   // Store PKCE temporarily during auth flow
   Map<String, String>? _pkce;
@@ -35,13 +45,12 @@ class AuthService {
     // Generate PKCE parameters
     _pkce = PkceUtils.generatePkce();
 
-    final apiUrl = Uri.parse(
-      '$url${ApiConstants.tokenEndpoint}?code_challenge=${_pkce!['challenge']}&code_challenge_method=S256',
-    );
-
     try {
-      final response = await http.post(
-        apiUrl,
+      final response = await _requestExecutor.request(
+        method: 'POST',
+        serverUrl: url,
+        endpoint:
+            '${ApiConstants.tokenEndpoint}?code_challenge=${_pkce!['challenge']}&code_challenge_method=S256',
         headers: {
           ApiConstants.contentTypeHeader:
               ApiConstants.contentTypeFormUrlEncoded,
@@ -79,6 +88,9 @@ class AuthService {
         final error = json.decode(response.body);
         throw Exception(error['detail'] ?? 'Login failed');
       }
+    } on ApiRequestException {
+      _pkce = null; // Clear verifier on error
+      rethrow;
     } catch (e) {
       _pkce = null; // Clear verifier on error
       throw Exception('Login error: $e');
@@ -97,18 +109,18 @@ class AuthService {
     }
 
     // MFA verification with PKCE uses query parameters
-    final url = Uri.parse(
-      '$serverUrl${ApiConstants.mfaVerifyEndpoint}?code_challenge=${_pkce!['challenge']}&code_challenge_method=S256',
-    );
-
     try {
-      final response = await http.post(
-        url,
+      final response = await _requestExecutor.request(
+        method: 'POST',
+        serverUrl: serverUrl,
+        endpoint:
+            '${ApiConstants.mfaVerifyEndpoint}?code_challenge=${_pkce!['challenge']}&code_challenge_method=S256',
         headers: {
           ApiConstants.contentTypeHeader: ApiConstants.contentTypeJson,
           ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue,
         },
-        body: json.encode({'username': username, 'mfa_code': mfaCode}),
+        body: {'username': username, 'mfa_code': mfaCode},
+        encodeBodyAsJson: true,
       );
 
       if (response.statusCode == 200) {
@@ -131,6 +143,9 @@ class AuthService {
         final error = json.decode(response.body);
         throw Exception(error['detail'] ?? 'MFA verification failed');
       }
+    } on ApiRequestException {
+      _pkce = null; // Clear verifier on error
+      rethrow;
     } catch (e) {
       _pkce = null; // Clear verifier on error
       throw Exception('MFA verification error: $e');
@@ -147,18 +162,18 @@ class AuthService {
       throw Exception('PKCE verifier not found');
     }
 
-    final url = Uri.parse(
-      '$serverUrl${ApiConstants.idpSessionTokenExchangeEndpoint}/$sessionId/tokens',
-    );
-
     try {
-      final response = await http.post(
-        url,
+      final response = await _requestExecutor.request(
+        method: 'POST',
+        serverUrl: serverUrl,
+        endpoint:
+            '${ApiConstants.idpSessionTokenExchangeEndpoint}/$sessionId/tokens',
         headers: {
           ApiConstants.contentTypeHeader: ApiConstants.contentTypeJson,
           ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue,
         },
-        body: json.encode({'code_verifier': _pkce!['verifier']}),
+        body: {'code_verifier': _pkce!['verifier']},
+        encodeBodyAsJson: true,
       );
 
       // Clear verifier after use (one-time exchange)
@@ -194,6 +209,8 @@ class AuthService {
         final error = json.decode(response.body);
         throw Exception(error['detail'] ?? 'Token exchange failed');
       }
+    } on ApiRequestException {
+      rethrow;
     } catch (e) {
       throw Exception('Token exchange error: $e');
     }
@@ -208,16 +225,17 @@ class AuthService {
       return false;
     }
 
-    final url = Uri.parse('$serverUrl${ApiConstants.refreshEndpoint}');
-
     try {
-      final response = await http.post(
-        url,
+      final response = await _requestExecutor.request(
+        method: 'POST',
+        serverUrl: serverUrl,
+        endpoint: ApiConstants.refreshEndpoint,
         headers: {
           ApiConstants.contentTypeHeader: ApiConstants.contentTypeJson,
           ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue,
         },
-        body: json.encode({'refresh_token': refreshToken}),
+        body: {'refresh_token': refreshToken},
+        encodeBodyAsJson: true,
       );
 
       if (response.statusCode == 200) {
@@ -252,12 +270,16 @@ class AuthService {
     // Call server-side logout if we have credentials
     if (serverUrl != null && refreshToken != null && refreshToken.isNotEmpty) {
       try {
-        final url = Uri.parse('$serverUrl${ApiConstants.logoutEndpoint}');
         final headers = {
           ApiConstants.authorizationHeader: 'Bearer $refreshToken',
           ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue,
         };
-        final response = await http.post(url, headers: headers);
+        final response = await _requestExecutor.request(
+          method: 'POST',
+          serverUrl: serverUrl,
+          endpoint: ApiConstants.logoutEndpoint,
+          headers: headers,
+        );
 
         serverLogoutSuccess = response.statusCode == 200;
       } catch (e) {

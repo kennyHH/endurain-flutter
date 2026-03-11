@@ -3,6 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
+import 'package:endurain/core/utils/sso_navigation_security.dart';
+import 'package:endurain/core/utils/error_mapper.dart';
 
 /// Screen for SSO/OAuth authentication via WebView
 class SsoWebViewScreen extends StatefulWidget {
@@ -23,12 +25,16 @@ class SsoWebViewScreen extends StatefulWidget {
 
 class _SsoWebViewScreenState extends State<SsoWebViewScreen> {
   late final WebViewController _controller;
+  late final Set<String> _allowedHosts;
   bool _isLoading = true;
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
+    _allowedHosts = SsoNavigationSecurity.allowedHostsForOauthUrl(
+      widget.oauthUrl,
+    );
     _initializeWebView();
   }
 
@@ -42,7 +48,6 @@ class _SsoWebViewScreenState extends State<SsoWebViewScreen> {
               _isLoading = true;
               _errorMessage = null;
             });
-            _checkForCallback(url);
           },
           onPageFinished: (String url) {
             setState(() {
@@ -50,54 +55,81 @@ class _SsoWebViewScreenState extends State<SsoWebViewScreen> {
             });
           },
           onWebResourceError: (WebResourceError error) {
+            final l10n = AppLocalizations.of(context)!;
             setState(() {
               _isLoading = false;
-              _errorMessage = error.description;
+              _errorMessage = AppErrorMapper.toUserMessage(
+                error.description,
+                l10n,
+              );
             });
           },
           onNavigationRequest: (NavigationRequest request) {
-            _checkForCallback(request.url);
-            return NavigationDecision.navigate;
+            return _handleNavigationRequest(request.url);
           },
         ),
       )
       ..loadRequest(Uri.parse(widget.oauthUrl));
   }
 
-  void _checkForCallback(String url) {
-    final uri = Uri.parse(url);
+  NavigationDecision _handleNavigationRequest(String url) {
+    final callbackResult = SsoNavigationSecurity.evaluateCallback(
+      url: url,
+      allowedHosts: _allowedHosts,
+    );
 
-    // Check for success callback pattern: /login?sso=success&session_id={uuid}
-    if (uri.path.contains('/login') &&
-        uri.queryParameters.containsKey('sso') &&
-        uri.queryParameters['sso'] == 'success') {
-      final sessionId = uri.queryParameters['session_id'];
-
-      if (sessionId != null && sessionId.isNotEmpty) {
-        // Session ID found - close WebView and return to app
-        widget.onSessionIdReceived(sessionId);
-        if (mounted) {
-          Navigator.pop(context);
+    switch (callbackResult.type) {
+      case SsoCallbackType.blockedHost:
+        _handleBlockedNavigation();
+        return NavigationDecision.prevent;
+      case SsoCallbackType.success:
+        if (callbackResult.sessionId != null) {
+          widget.onSessionIdReceived(callbackResult.sessionId!);
+          if (mounted) {
+            Navigator.pop(context);
+          }
+          return NavigationDecision.prevent;
         }
-        return;
-      }
+        return NavigationDecision.navigate;
+      case SsoCallbackType.error:
+        _handleSsoError();
+        return NavigationDecision.prevent;
+      case SsoCallbackType.none:
+        break;
     }
 
-    // Check for error callback pattern: /login?sso=error&message={error}
-    if (uri.path.contains('/login') &&
-        uri.queryParameters.containsKey('sso') &&
-        uri.queryParameters['sso'] == 'error') {
-      final errorMessage =
-          uri.queryParameters['message'] ?? 'SSO authentication failed';
-      widget.onError(errorMessage);
-      if (mounted) {
-        Navigator.pop(context);
-      }
+    if (SsoNavigationSecurity.shouldBlockNavigation(
+      url: url,
+      allowedHosts: _allowedHosts,
+    )) {
+      _handleBlockedNavigation();
+      return NavigationDecision.prevent;
+    }
+
+    return NavigationDecision.navigate;
+  }
+
+  void _handleBlockedNavigation() {
+    final l10n = AppLocalizations.of(context)!;
+    final message = l10n.ssoBlockedNavigation;
+    widget.onError(message);
+    if (mounted) {
+      Navigator.pop(context);
+    }
+  }
+
+  void _handleSsoError() {
+    final l10n = AppLocalizations.of(context)!;
+    final message = l10n.ssoAuthenticationFailed;
+    widget.onError(message);
+    if (mounted) {
+      Navigator.pop(context);
     }
   }
 
   void _handleCancel() {
-    widget.onError('User cancelled SSO authentication');
+    final l10n = AppLocalizations.of(context)!;
+    widget.onError(l10n.ssoAuthenticationCancelled);
     Navigator.pop(context);
   }
 

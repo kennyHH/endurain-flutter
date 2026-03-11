@@ -6,12 +6,20 @@ import 'package:endurain/core/services/auth_service.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/core/utils/validators.dart';
 import 'package:endurain/core/utils/dialog_utils.dart';
+import 'package:endurain/core/utils/error_mapper.dart';
 import 'package:endurain/core/constants/ui_constants.dart';
 
 class ServerSettingsScreen extends StatefulWidget {
-  const ServerSettingsScreen({super.key, this.onLogout});
+  const ServerSettingsScreen({
+    super.key,
+    this.onLogout,
+    this.storage,
+    this.authService,
+  });
 
   final VoidCallback? onLogout;
+  final SecureStorageService? storage;
+  final AuthService? authService;
 
   @override
   State<ServerSettingsScreen> createState() => _ServerSettingsScreenState();
@@ -20,11 +28,14 @@ class ServerSettingsScreen extends StatefulWidget {
 class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
   final _formKey = GlobalKey<FormState>();
   final _tileServerUrlController = TextEditingController();
-  final _storage = SecureStorageService();
-  final _authService = AuthService();
+  final _defaultStorage = SecureStorageService();
+  final _defaultAuthService = AuthService();
   bool _isLoading = true;
   String _serverUrl = '';
   String _username = '';
+
+  SecureStorageService get _storage => widget.storage ?? _defaultStorage;
+  AuthService get _authService => widget.authService ?? _defaultAuthService;
 
   @override
   void initState() {
@@ -64,17 +75,18 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
     try {
       await _storage.setTileServerUrl(_tileServerUrlController.text.trim());
 
-      if (mounted) {
-        await DialogUtils.showSuccessDialog(
-          context,
-          l10n.savedSuccessfully,
-          onDismiss: () => Navigator.pop(context),
-        );
-      }
+      if (!mounted) return;
+      await DialogUtils.showSuccessDialog(
+        context,
+        l10n.savedSuccessfully,
+        onDismiss: () => Navigator.pop(context),
+      );
     } catch (e) {
-      if (mounted) {
-        await DialogUtils.showErrorDialog(context, e.toString());
-      }
+      if (!mounted) return;
+      await DialogUtils.showErrorDialog(
+        context,
+        AppErrorMapper.toUserMessage(e, l10n),
+      );
     }
   }
 
@@ -89,41 +101,43 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
       isDestructive: true,
     );
 
-    if (confirmed && mounted) {
-      final serverLogoutSuccess = await _authService.logout();
-      if (mounted) {
-        // Show warning if server logout failed
-        if (!serverLogoutSuccess) {
-          if (PlatformUtils.isApplePlatform) {
-            // iOS/macOS: Show banner
-            await showCupertinoDialog<void>(
-              context: context,
-              barrierDismissible: true,
-              builder: (context) => CupertinoAlertDialog(
-                content: Text(l10n.logoutServerFailedWarning),
-                actions: [
-                  CupertinoDialogAction(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(l10n.ok),
-                  ),
-                ],
+    if (!mounted || !confirmed) return;
+
+    final serverLogoutSuccess = await _authService.logout();
+    if (!mounted) return;
+
+    // Show warning if server logout failed
+    if (!serverLogoutSuccess) {
+      if (PlatformUtils.isApplePlatform) {
+        // iOS/macOS: Show banner
+        await showCupertinoDialog<void>(
+          context: context,
+          barrierDismissible: true,
+          builder: (context) => CupertinoAlertDialog(
+            content: Text(l10n.logoutServerFailedWarning),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () => Navigator.pop(context),
+                child: Text(l10n.ok),
               ),
-            );
-          } else {
-            // Android: Show snackbar
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(l10n.logoutServerFailedWarning),
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
-        }
-        // Pop back to settings screen and trigger logout
-        Navigator.pop(context);
-        widget.onLogout?.call();
+            ],
+          ),
+        );
+        if (!mounted) return;
+      } else {
+        // Android: Show snackbar
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.logoutServerFailedWarning),
+            duration: const Duration(seconds: 3),
+          ),
+        );
       }
     }
+
+    // Pop back to settings screen and trigger logout
+    Navigator.pop(context);
+    widget.onLogout?.call();
   }
 
   @override

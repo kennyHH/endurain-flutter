@@ -30,6 +30,38 @@
   "@invalidUrl": {
     "description": "Validation message for invalid URL - Used in: validators.dart"
   },
+  "errorGeneric": "Something went wrong. Please try again.",
+  "@errorGeneric": {
+    "description": "Generic fallback error shown when no specific mapping exists - Used in: error_mapper.dart"
+  },
+  "errorNetwork": "Network error. Please check your connection and try again.",
+  "@errorNetwork": {
+    "description": "Error shown for connectivity/timeouts - Used in: error_mapper.dart"
+  },
+  "errorTls": "Secure connection failed (TLS/SSL). Please verify certificate chain, hostname, and trusted CA.",
+  "@errorTls": {
+    "description": "Error shown for TLS handshake/certificate validation failures - Used in: error_mapper.dart"
+  },
+  "errorAuthentication": "Authentication failed. Please check your credentials.",
+  "@errorAuthentication": {
+    "description": "Error shown for login/authentication failures - Used in: error_mapper.dart"
+  },
+  "errorServer": "Server error. Please try again later.",
+  "@errorServer": {
+    "description": "Error shown for server-side failures - Used in: error_mapper.dart"
+  },
+  "errorConfiguration": "Server configuration is invalid. Please verify your settings.",
+  "@errorConfiguration": {
+    "description": "Error shown for invalid/missing server configuration - Used in: error_mapper.dart"
+  },
+  "errorSso": "Single sign-on failed. Please try again.",
+  "@errorSso": {
+    "description": "Error shown for SSO specific failures - Used in: error_mapper.dart"
+  },
+  "httpsRequiredUrl": "Please use an HTTPS URL",
+  "@httpsRequiredUrl": {
+    "description": "Validation message when HTTP URL is not allowed for server login - Used in: validators.dart"
+  },
   "@sectionAuth": "=== AUTH (features/auth/login_screen.dart) ===",
   "loginTitle": "Login",
   "@loginTitle": {
@@ -66,6 +98,18 @@
   "ssoCancel": "Cancel",
   "@ssoCancel": {
     "description": "SSO cancel button label - Used in: sso_webview_screen.dart"
+  },
+  "ssoAuthenticationFailed": "SSO authentication failed. Please try again.",
+  "@ssoAuthenticationFailed": {
+    "description": "Generic SSO authentication error message - Used in: sso_webview_screen.dart"
+  },
+  "ssoAuthenticationCancelled": "SSO authentication was cancelled.",
+  "@ssoAuthenticationCancelled": {
+    "description": "Message shown when user cancels SSO flow - Used in: sso_webview_screen.dart"
+  },
+  "ssoBlockedNavigation": "Navigation was blocked for security reasons.",
+  "@ssoBlockedNavigation": {
+    "description": "Message shown when WebView navigation host is not allowed - Used in: sso_webview_screen.dart"
   },
   "ssoSignInWith": "Sign in with {provider}",
   "@ssoSignInWith": {
@@ -121,6 +165,22 @@
   "@mfaCodeRequired": {
     "description": "MFA code validation error message"
   },
+  "helpTitle": "Info",
+  "@helpTitle": {
+    "description": "Generic title for help/info dialogs - Used in login/settings screens"
+  },
+  "loginServerUrlHelp": "Enter the exact base URL of your Endurain server, including https:// and matching the certificate hostname. Example: https://train.example.com",
+  "@loginServerUrlHelp": {
+    "description": "Helper text for server URL input in login step 1"
+  },
+  "loginNextHelp": "Next checks server settings and available login providers. If this step fails with TLS, verify full certificate chain, hostname/SAN, and Android trust.",
+  "@loginNextHelp": {
+    "description": "Helper text explaining what the Next button does in login step 1"
+  },
+  "loginTlsToggleHelp": "Test-only mode. If enabled, certificate validation is bypassed for diagnostics. If login only works with this mode, your server TLS trust chain or hostname setup must be fixed.",
+  "@loginTlsToggleHelp": {
+    "description": "Helper text for insecure TLS toggle in login/settings"
+  },
   "verify": "Verify",
   "@verify": {
     "description": "MFA verification button label"
@@ -129,6 +189,328 @@
   "mapTab": "Map",
   "@mapTab": {
     "description": "Map tab label - Used in: app_bottom_nav.dart"
+  },
+  "historyTab": "History",
+  "@historyTab": {
+    "description": "History tab label - Used in: app_bottom_nav.dart"
+  },
+  "historyTitle": "Activity history",
+  "@historyTitle": {
+    "description": "Title for activity history screen - Used in: activity_history_screen.dart"
+  },
+  "historyDetailTitle": "Activity details",
+  "@historyDetailTitle": {
+    "description": "Title for activity detail screen - Used in: activity_history_screen.dart"
+  },
+  "historyEmptyTitle": "No activities yet",
+  "@historyEmptyTitle": {
+    "description": "Empty state title for history - Used in: activity_history_screen.dart"
+  },
+  "historyEmptyBody": "Start and stop a tracking session to see your activities here.",
+  "@historyEmptyBody": {
+    "description": "Empty state body text for history - Used in: activity_history_screen.dart"
+  },
+  "historyEmptyCtaStart": "Start first activity",
+  "@historyEmptyCtaStart": {
+    "description": "Primary CTA in history empty state that jumps to tracking map - Used in: activity_history_screen.dart"
+  },
+  "historyLoadError": "Could not load activities. Please try again.",
+  "@historyLoadError": {
+    "description": "Error message for failed history loading - Used in: activity_history_screen.dart"
+  },
+  "historyTrackPoints": "Track points",
+  "@historyTrackPoints": {
+    "description": "Label for track point count in activity details - Used in: activity_history_screen.dart"
+  },
+  "historyTapMapForOverview": "Tap the map to open full route overview",
+  "@historyTapMapForOverview": {
+    "description": "Hint below detail map to open full route/metrics view - Used in: activity_history_screen.dart"
+  },
+  "historyGroupToday": "Today",
+  "@historyGroupToday": {
+    "description": "Section header for activities from current day - Used in: activity_history_screen.dart"
+  },
+  "historyGroupYesterday": "Yesterday",
+  "@historyGroupYesterday": {
+    "description": "Section header for activities from previous day - Used in: activity_history_screen.dart"
+  },
+  "historyGroupThisWeek": "This week",
+  "@historyGroupThisWeek": {
+    "description": "Section header for activities from current week - Used in: activity_history_screen.dart"
+  },
+  "historyGroupOlder": "Older",
+  "@historyGroupOlder": {
+    "description": "Section header for older activities - Used in: activity_history_screen.dart"
+  },
+  "historyFilterAll": "All",
+  "@historyFilterAll": {
+    "description": "Filter chip label to show all activity types - Used in: activity_history_screen.dart"
+  },
+  "historyRange7d": "7d",
+  "@historyRange7d": {
+    "description": "History date range filter chip label for last 7 days - Used in: activity_history_screen.dart"
+  },
+  "historyRange30d": "30d",
+  "@historyRange30d": {
+    "description": "History date range filter chip label for last 30 days - Used in: activity_history_screen.dart"
+  },
+  "historyRange90d": "90d",
+  "@historyRange90d": {
+    "description": "History date range filter chip label for last 90 days - Used in: activity_history_screen.dart"
+  },
+  "historyRange1y": "1y",
+  "@historyRange1y": {
+    "description": "History date range filter chip label for last year - Used in: activity_history_screen.dart"
+  },
+  "historyRangeAllTime": "All time",
+  "@historyRangeAllTime": {
+    "description": "History date range filter chip label for all time - Used in: activity_history_screen.dart"
+  },
+  "historyFilterSort": "Filter & sort",
+  "@historyFilterSort": {
+    "description": "Button title to open history filter and sort bottom sheet - Used in: activity_history_screen.dart"
+  },
+  "historyDateRange": "Date range",
+  "@historyDateRange": {
+    "description": "Section label for history date range filters - Used in: activity_history_screen.dart"
+  },
+  "historySortBy": "Sort by",
+  "@historySortBy": {
+    "description": "Section label for history sorting options - Used in: activity_history_screen.dart"
+  },
+  "historySortNewest": "Newest",
+  "@historySortNewest": {
+    "description": "Sort option for newest activities first - Used in: activity_history_screen.dart"
+  },
+  "historySortOldest": "Oldest",
+  "@historySortOldest": {
+    "description": "Sort option for oldest activities first - Used in: activity_history_screen.dart"
+  },
+  "historySortLongest": "Longest",
+  "@historySortLongest": {
+    "description": "Sort option for longest activities first - Used in: activity_history_screen.dart"
+  },
+  "historySortShortest": "Shortest",
+  "@historySortShortest": {
+    "description": "Sort option for shortest activities first - Used in: activity_history_screen.dart"
+  },
+  "historyOnlyUnuploaded": "Only unuploaded activities",
+  "@historyOnlyUnuploaded": {
+    "description": "Toggle label to filter history by not yet uploaded activities - Used in: activity_history_screen.dart"
+  },
+  "historyUploadPending": "Upload pending",
+  "@historyUploadPending": {
+    "description": "Badge for activities that are not uploaded yet - Used in: activity_history_screen.dart"
+  },
+  "historyRenameTitle": "Name activity",
+  "@historyRenameTitle": {
+    "description": "Dialog title to rename an activity - Used in: activity_history_screen.dart"
+  },
+  "historyRenameHint": "e.g. Evening ride",
+  "@historyRenameHint": {
+    "description": "Input hint for activity naming - Used in: activity_history_screen.dart"
+  },
+  "historyDeleteAction": "Delete",
+  "@historyDeleteAction": {
+    "description": "Action label for deleting an activity - Used in: activity_history_screen.dart"
+  },
+  "historyDeleteTitle": "Delete activity?",
+  "@historyDeleteTitle": {
+    "description": "Confirmation dialog title before deleting an activity - Used in: activity_history_screen.dart"
+  },
+  "historyDeleteMessage": "This removes the activity from the app and (if uploaded) from the server.",
+  "@historyDeleteMessage": {
+    "description": "Confirmation dialog message for deleting an activity - Used in: activity_history_screen.dart"
+  },
+  "historyDeletedSuccess": "Activity deleted",
+  "@historyDeletedSuccess": {
+    "description": "Snackbar text after successfully deleting an activity - Used in: activity_history_screen.dart"
+  },
+  "mapCenterOnLocation": "Center on my location",
+  "@mapCenterOnLocation": {
+    "description": "Tooltip for map location lock/center button - Used in: map_screen.dart"
+  },
+  "activityTypeLabel": "Activity type",
+  "@activityTypeLabel": {
+    "description": "Label for activity type selector - Used in: tracking_controls.dart"
+  },
+  "activityTypeRun": "Run",
+  "@activityTypeRun": {
+    "description": "Activity type label for running - Used in: tracking_controls.dart"
+  },
+  "activityTypeRide": "Ride",
+  "@activityTypeRide": {
+    "description": "Activity type label for riding - Used in: tracking_controls.dart"
+  },
+  "activityTypeWalk": "Walk",
+  "@activityTypeWalk": {
+    "description": "Activity type label for walking - Used in: tracking_controls.dart"
+  },
+  "trackingIdle": "Idle",
+  "@trackingIdle": {
+    "description": "Tracking status when session has not started - Used in: tracking_controls.dart"
+  },
+  "trackingRecording": "Recording",
+  "@trackingRecording": {
+    "description": "Tracking status while session is active - Used in: tracking_controls.dart"
+  },
+  "trackingPaused": "Paused",
+  "@trackingPaused": {
+    "description": "Tracking status while session is paused - Used in: tracking_controls.dart"
+  },
+  "trackingStopped": "Stopped",
+  "@trackingStopped": {
+    "description": "Tracking status after session stops - Used in: tracking_controls.dart"
+  },
+  "trackingStart": "Start tracking",
+  "@trackingStart": {
+    "description": "Button label to start tracking - Used in: tracking_controls.dart"
+  },
+  "trackingStop": "Stop tracking",
+  "@trackingStop": {
+    "description": "Button label to stop tracking - Used in: tracking_controls.dart"
+  },
+  "trackingDuration": "Duration",
+  "@trackingDuration": {
+    "description": "Label for tracking duration metric - Used in: tracking_controls.dart"
+  },
+  "trackingDistance": "Distance",
+  "@trackingDistance": {
+    "description": "Label for tracking distance metric - Used in: tracking_controls.dart"
+  },
+  "trackingDistanceUnitKm": "km",
+  "@trackingDistanceUnitKm": {
+    "description": "Distance unit abbreviation used in tracking metrics - Used in: tracking_controls.dart"
+  },
+  "trackingPace": "Pace",
+  "@trackingPace": {
+    "description": "Label for average pace metric - Used in: tracking_controls.dart, activity_history_screen.dart"
+  },
+  "trackingPaceUnitMinKm": "min/km",
+  "@trackingPaceUnitMinKm": {
+    "description": "Pace unit used for average pace metric - Used in: tracking_controls.dart, activity_history_screen.dart"
+  },
+  "trackingAverageSpeed": "Avg speed",
+  "@trackingAverageSpeed": {
+    "description": "Label for average speed metric (used for cycling activities) - Used in: tracking_controls.dart, activity_history_screen.dart"
+  },
+  "trackingSpeedUnitKmh": "km/h",
+  "@trackingSpeedUnitKmh": {
+    "description": "Speed unit for cycling metrics - Used in: tracking_controls.dart, activity_history_screen.dart"
+  },
+  "trackingElevationGain": "Elevation gain",
+  "@trackingElevationGain": {
+    "description": "Label for elevation gain metric - Used in: tracking_controls.dart, activity_history_screen.dart"
+  },
+  "trackingElevationUnitM": "m",
+  "@trackingElevationUnitM": {
+    "description": "Elevation unit abbreviation - Used in: tracking_controls.dart, activity_history_screen.dart"
+  },
+  "historyElevationLoss": "Elevation loss",
+  "@historyElevationLoss": {
+    "description": "Label for elevation loss metric in activity details - Used in: activity_history_screen.dart"
+  },
+  "historyElevationProfile": "Elevation profile",
+  "@historyElevationProfile": {
+    "description": "Title for altitude chart in activity details - Used in: activity_history_screen.dart"
+  },
+  "historyNoAltitudeData": "No altitude data available",
+  "@historyNoAltitudeData": {
+    "description": "Fallback text when no altitude samples exist for an activity - Used in: activity_history_screen.dart"
+  },
+  "trackingPermissionRequired": "Location permission is required to start tracking.",
+  "@trackingPermissionRequired": {
+    "description": "Error message when tracking starts without location permission - Used in: map_screen.dart"
+  },
+  "trackingGpsSignalLost": "No GPS signal. Recording continues and sync resumes automatically when signal returns.",
+  "@trackingGpsSignalLost": {
+    "description": "Warning banner while tracking when GPS signal is temporarily unavailable - Used in: map_screen.dart"
+  },
+  "trackingGpsReady": "GPS fix available",
+  "@trackingGpsReady": {
+    "description": "Status label when recent GPS fix is available before tracking start - Used in: tracking_controls.dart"
+  },
+  "trackingGpsSearching": "Searching GPS fix",
+  "@trackingGpsSearching": {
+    "description": "Status label when GPS fix is not yet available before tracking start - Used in: tracking_controls.dart"
+  },
+  "trackingGpsNeedStableFix": "Wait for a stable GPS fix (3 consecutive good fixes) before starting.",
+  "@trackingGpsNeedStableFix": {
+    "description": "Hint shown when user starts tracking without stable GPS quality lock - Used in: map_screen.dart"
+  },
+  "trackingGpsPreparingCountdown": "Starting in {seconds}s - {status}",
+  "@trackingGpsPreparingCountdown": {
+    "description": "Countdown hint shown while app prepares tracking start and waits for GPS fix - Used in: tracking_controls.dart",
+    "placeholders": {
+      "seconds": {
+        "type": "int",
+        "example": "6"
+      },
+      "status": {
+        "type": "String",
+        "example": "GPS fix available"
+      }
+    }
+  },
+  "trackingRetryInBackground": "Retry in background",
+  "@trackingRetryInBackground": {
+    "description": "Action label in snackbar to retry failed upload in the background - Used in: map_screen.dart"
+  },
+  "trackingSuspiciousSaveTitle": "Save this activity?",
+  "@trackingSuspiciousSaveTitle": {
+    "description": "Dialog title shown for very short or unusual activities before keeping them - Used in: map_screen.dart"
+  },
+  "trackingSuspiciousSaveMessage": "This activity looks very short or unusual ({duration}, {distance}). Save anyway?",
+  "@trackingSuspiciousSaveMessage": {
+    "description": "Dialog message shown when activity quality check flags unusual data - Used in: map_screen.dart",
+    "placeholders": {
+      "duration": {
+        "type": "String",
+        "example": "0m 08s"
+      },
+      "distance": {
+        "type": "String",
+        "example": "0.03 km"
+      }
+    }
+  },
+  "trackingDiscardAction": "Discard",
+  "@trackingDiscardAction": {
+    "description": "Action label to discard suspicious activity instead of saving - Used in: map_screen.dart"
+  },
+  "trackingDiscardedActivity": "Activity discarded",
+  "@trackingDiscardedActivity": {
+    "description": "Snackbar shown after discarding suspicious activity - Used in: map_screen.dart"
+  },
+  "trackingRepeatLast": "Repeat last: {activity}",
+  "@trackingRepeatLast": {
+    "description": "Quick action label to start a new activity with last used type - Used in: tracking_controls.dart",
+    "placeholders": {
+      "activity": {
+        "type": "String",
+        "example": "Run"
+      }
+    }
+  },
+  "trackingActivitySavedCelebration": "Activity saved",
+  "@trackingActivitySavedCelebration": {
+    "description": "Short celebration toast shown right after a session is saved locally - Used in: map_screen.dart"
+  },
+  "routeStatusMatched": "Route: matched",
+  "@routeStatusMatched": {
+    "description": "Status label when route is matched via OSRM - Used in: map_screen.dart, activity_history_screen.dart"
+  },
+  "routeStatusFallback": "Route: raw fallback",
+  "@routeStatusFallback": {
+    "description": "Status label when route matching fell back to local/raw smoothing - Used in: map_screen.dart, activity_history_screen.dart"
+  },
+  "routeStatusRaw": "Route: raw GPS",
+  "@routeStatusRaw": {
+    "description": "Status label when route display mode is raw GPS - Used in: map_screen.dart, activity_history_screen.dart"
+  },
+  "apply": "Apply",
+  "@apply": {
+    "description": "Generic button label to apply current filters/settings - Used in: activity_history_screen.dart"
   },
   "@sectionSettings": "=== SETTINGS (features/settings/) ===",
   "settingsTab": "Settings",
@@ -170,5 +552,109 @@
   "savedSuccessfully": "Settings saved successfully",
   "@savedSuccessfully": {
     "description": "Settings save success message - Used in: server_settings_screen.dart"
+  },
+  "settingsThemeMode": "Theme",
+  "@settingsThemeMode": {
+    "description": "Label for theme mode setting selector - Used in: settings_screen.dart"
+  },
+  "settingsThemeSystem": "Follow system",
+  "@settingsThemeSystem": {
+    "description": "Theme option label for system mode - Used in: settings_screen.dart"
+  },
+  "settingsThemeLight": "Light",
+  "@settingsThemeLight": {
+    "description": "Theme option label for light mode - Used in: settings_screen.dart"
+  },
+  "settingsThemeDark": "Dark",
+  "@settingsThemeDark": {
+    "description": "Theme option label for dark mode - Used in: settings_screen.dart"
+  },
+  "settingsThemePreset": "Color preset",
+  "@settingsThemePreset": {
+    "description": "Label for choosing a color preset theme - Used in: settings_screen.dart"
+  },
+  "settingsThemePresetEndurain": "Endurain",
+  "@settingsThemePresetEndurain": {
+    "description": "Color preset option for default Endurain palette - Used in: settings_screen.dart"
+  },
+  "settingsThemePresetOcean": "Ocean",
+  "@settingsThemePresetOcean": {
+    "description": "Color preset option for ocean palette - Used in: settings_screen.dart"
+  },
+  "settingsThemePresetForest": "Forest",
+  "@settingsThemePresetForest": {
+    "description": "Color preset option for forest palette - Used in: settings_screen.dart"
+  },
+  "settingsHighContrast": "High contrast",
+  "@settingsHighContrast": {
+    "description": "Toggle label for high contrast colors - Used in: settings_screen.dart"
+  },
+  "settingsRouteMatchingTitle": "Route matching",
+  "@settingsRouteMatchingTitle": {
+    "description": "Settings section title for route matching preview - Used in: settings_screen.dart"
+  },
+  "settingsRouteMatchingToggle": "Enable route matching (MVP)",
+  "@settingsRouteMatchingToggle": {
+    "description": "Toggle label to switch raw vs matched route preview - Used in: settings_screen.dart"
+  },
+  "settingsRouteMatchingDescription": "Uses road matching when available and automatically falls back to smoothed/raw GPS when matching is not possible.",
+  "@settingsRouteMatchingDescription": {
+    "description": "Explanation below route matching toggle - Used in: settings_screen.dart"
+  },
+  "settingsRouteDisplayModeTitle": "Route display mode",
+  "@settingsRouteDisplayModeTitle": {
+    "description": "Title for selecting how route should be displayed - Used in: settings_screen.dart"
+  },
+  "settingsRouteDisplayModeAuto": "Auto (recommended)",
+  "@settingsRouteDisplayModeAuto": {
+    "description": "Route display mode option that uses matching with fallback - Used in: settings_screen.dart"
+  },
+  "settingsRouteDisplayModeMatched": "Matched preferred",
+  "@settingsRouteDisplayModeMatched": {
+    "description": "Route display mode option that prefers matched route - Used in: settings_screen.dart"
+  },
+  "settingsRouteDisplayModeRaw": "Raw GPS",
+  "@settingsRouteDisplayModeRaw": {
+    "description": "Route display mode option that always uses raw GPS - Used in: settings_screen.dart"
+  },
+  "settingsGpsFilterModeTitle": "GPS filter mode",
+  "@settingsGpsFilterModeTitle": {
+    "description": "Title for selecting the GPS quality filter preset - Used in: settings_screen.dart"
+  },
+  "settingsGpsFilterModeAuto": "Auto by activity",
+  "@settingsGpsFilterModeAuto": {
+    "description": "GPS filter mode option that automatically adjusts by activity type - Used in: settings_screen.dart"
+  },
+  "settingsGpsFilterModeAutoDescription": "Walk/Run use stricter filtering, Ride stays balanced. Best default.",
+  "@settingsGpsFilterModeAutoDescription": {
+    "description": "Description for automatic GPS filtering mode - Used in: settings_screen.dart"
+  },
+  "settingsGpsFilterModeNormal": "Normal (less strict)",
+  "@settingsGpsFilterModeNormal": {
+    "description": "GPS filter mode option with less strict filtering - Used in: settings_screen.dart"
+  },
+  "settingsGpsFilterModeNormalDescription": "Accepts more GPS points in difficult signal areas. Can include more noise.",
+  "@settingsGpsFilterModeNormalDescription": {
+    "description": "Description for normal GPS filtering mode - Used in: settings_screen.dart"
+  },
+  "settingsGpsFilterModeStrict": "Strict (urban)",
+  "@settingsGpsFilterModeStrict": {
+    "description": "GPS filter mode option with strict filtering for urban environments - Used in: settings_screen.dart"
+  },
+  "settingsGpsFilterModeStrictDescription": "Rejects noisy points more aggressively. Useful in dense city areas.",
+  "@settingsGpsFilterModeStrictDescription": {
+    "description": "Description for strict GPS filtering mode - Used in: settings_screen.dart"
+  },
+  "settingsRouteMatchingEnabledLabel": "Matched preview active",
+  "@settingsRouteMatchingEnabledLabel": {
+    "description": "Small in-map label when matched route preview is enabled - Used in: map_screen.dart"
+  },
+  "settingsAllowInsecureTls": "Allow insecure TLS (test only)",
+  "@settingsAllowInsecureTls": {
+    "description": "Settings toggle label to bypass TLS certificate validation for self-hosted testing - Used in: settings_screen.dart"
+  },
+  "settingsAllowInsecureTlsDescription": "Use only for diagnostics on self-hosted servers. Disables certificate trust checks and is not recommended for normal use.",
+  "@settingsAllowInsecureTlsDescription": {
+    "description": "Settings warning text for insecure TLS toggle - Used in: settings_screen.dart"
   }
 }

@@ -27,4 +27,45 @@ class Validators {
     }
     return null;
   }
+
+  /// Validate server URL format and enforce HTTPS for production flows.
+  static String? validateServerUrl(String? value, AppLocalizations l10n) {
+    final baseValidation = validateUrl(value, l10n);
+    if (baseValidation != null) {
+      return baseValidation;
+    }
+
+    final uri = Uri.parse(value!.trim());
+    if (uri.isScheme('http')) {
+      if (_isLocalOrPrivateHost(uri.host)) {
+        return null;
+      }
+      return l10n.httpsRequiredUrl;
+    }
+
+    return null;
+  }
+
+  static bool _isLocalOrPrivateHost(String host) {
+    final normalized = host.trim().toLowerCase();
+    if (normalized.isEmpty) return false;
+    if (normalized == 'localhost' || normalized.endsWith('.local')) {
+      return true;
+    }
+    final parts = normalized.split('.');
+    if (parts.length == 4) {
+      final octets = parts.map(int.tryParse).toList();
+      if (octets.any((part) => part == null || part! < 0 || part > 255)) {
+        return false;
+      }
+      final a = octets[0]!;
+      final b = octets[1]!;
+      if (a == 10) return true;
+      if (a == 127) return true;
+      if (a == 192 && b == 168) return true;
+      if (a == 172 && b >= 16 && b <= 31) return true;
+      if (a == 169 && b == 254) return true;
+    }
+    return false;
+  }
 }

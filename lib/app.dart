@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:endurain/core/network/endurain_http_overrides.dart';
+import 'package:endurain/core/models/gps_filter_mode.dart';
+import 'package:endurain/core/models/route_display_mode.dart';
 import 'package:endurain/core/theme/app_theme.dart';
 import 'package:endurain/shared/widgets/app_bottom_nav.dart';
 import 'package:endurain/features/auth/login_screen.dart';
@@ -19,6 +22,12 @@ class _AppState extends State<App> {
   final _storage = SecureStorageService();
   bool _isLoading = true;
   bool _isAuthenticated = false;
+  ThemeMode _themeMode = ThemeMode.system;
+  bool _highContrast = false;
+  RouteDisplayMode _routeDisplayMode = RouteDisplayMode.auto;
+  GpsFilterMode _gpsFilterMode = GpsFilterMode.auto;
+  bool _allowInsecureTls = false;
+  AppThemePreset _themePreset = AppThemePreset.endurain;
 
   @override
   void initState() {
@@ -27,12 +36,94 @@ class _AppState extends State<App> {
   }
 
   Future<void> _checkAuthentication() async {
-    final isAuth = await _storage.isAuthenticated();
+    bool isAuth = false;
+    ThemeMode nextThemeMode = ThemeMode.system;
+    var nextHighContrast = false;
+    var nextRouteDisplayMode = RouteDisplayMode.auto;
+    var nextGpsFilterMode = GpsFilterMode.auto;
+    var nextAllowInsecureTls = false;
+    var nextThemePreset = AppThemePreset.endurain;
+    try {
+      isAuth = await _storage.isAuthenticated();
+      final savedThemeMode = await _storage.getThemeMode();
+      nextThemeMode = _themeModeFromStorage(savedThemeMode);
+      nextHighContrast = await _storage.getHighContrast();
+      final storedRouteMode = await _storage.getRouteDisplayMode();
+      if (storedRouteMode == null || storedRouteMode.isEmpty) {
+        final legacyMapMatching = await _storage.getMapMatchingPreviewEnabled();
+        nextRouteDisplayMode = legacyMapMatching
+            ? RouteDisplayMode.auto
+            : RouteDisplayMode.raw;
+      } else {
+        nextRouteDisplayMode = routeDisplayModeFromStorage(storedRouteMode);
+      }
+      nextGpsFilterMode = gpsFilterModeFromStorage(
+        await _storage.getGpsFilterMode(),
+      );
+      nextAllowInsecureTls = await _storage.getAllowInsecureTls();
+      nextThemePreset = _themePresetFromStorage(await _storage.getThemePreset());
+    } catch (_) {
+      // Fall back to unauthenticated when secure storage is unavailable.
+      isAuth = false;
+    }
     if (mounted) {
       setState(() {
         _isAuthenticated = isAuth;
+        _themeMode = nextThemeMode;
+        _highContrast = nextHighContrast;
+        _routeDisplayMode = nextRouteDisplayMode;
+        _gpsFilterMode = nextGpsFilterMode;
+        _allowInsecureTls = nextAllowInsecureTls;
+        _themePreset = nextThemePreset;
         _isLoading = false;
       });
+      EndurainHttpOverrides.allowInsecureTls = nextAllowInsecureTls;
+    }
+  }
+
+  ThemeMode _themeModeFromStorage(String? value) {
+    switch (value) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      case 'system':
+      default:
+        return ThemeMode.system;
+    }
+  }
+
+  String _themeModeToStorage(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return 'light';
+      case ThemeMode.dark:
+        return 'dark';
+      case ThemeMode.system:
+        return 'system';
+    }
+  }
+
+  AppThemePreset _themePresetFromStorage(String? value) {
+    switch (value) {
+      case 'ocean':
+        return AppThemePreset.ocean;
+      case 'forest':
+        return AppThemePreset.forest;
+      case 'endurain':
+      default:
+        return AppThemePreset.endurain;
+    }
+  }
+
+  String _themePresetToStorage(AppThemePreset preset) {
+    switch (preset) {
+      case AppThemePreset.endurain:
+        return 'endurain';
+      case AppThemePreset.ocean:
+        return 'ocean';
+      case AppThemePreset.forest:
+        return 'forest';
     }
   }
 
@@ -46,6 +137,49 @@ class _AppState extends State<App> {
     setState(() {
       _isAuthenticated = false;
     });
+  }
+
+  Future<void> _onThemeModeChanged(ThemeMode mode) async {
+    setState(() {
+      _themeMode = mode;
+    });
+    await _storage.setThemeMode(_themeModeToStorage(mode));
+  }
+
+  Future<void> _onHighContrastChanged(bool enabled) async {
+    setState(() {
+      _highContrast = enabled;
+    });
+    await _storage.setHighContrast(enabled);
+  }
+
+  Future<void> _onRouteDisplayModeChanged(RouteDisplayMode mode) async {
+    setState(() {
+      _routeDisplayMode = mode;
+    });
+    await _storage.setRouteDisplayMode(routeDisplayModeToStorage(mode));
+  }
+
+  Future<void> _onAllowInsecureTlsChanged(bool enabled) async {
+    setState(() {
+      _allowInsecureTls = enabled;
+    });
+    EndurainHttpOverrides.allowInsecureTls = enabled;
+    await _storage.setAllowInsecureTls(enabled);
+  }
+
+  Future<void> _onGpsFilterModeChanged(GpsFilterMode mode) async {
+    setState(() {
+      _gpsFilterMode = mode;
+    });
+    await _storage.setGpsFilterMode(gpsFilterModeToStorage(mode));
+  }
+
+  Future<void> _onThemePresetChanged(AppThemePreset preset) async {
+    setState(() {
+      _themePreset = preset;
+    });
+    await _storage.setThemePreset(_themePresetToStorage(preset));
   }
 
   @override
@@ -65,15 +199,29 @@ class _AppState extends State<App> {
     if (PlatformUtils.isApplePlatform) {
       return CupertinoApp(
         title: 'Endurain',
-        theme: AppTheme.cupertinoLightTheme,
+        theme: AppTheme.cupertinoLightTheme(
+          highContrast: _highContrast,
+          preset: _themePreset,
+        ),
         // Cupertino automatically switches to dark theme based on system settings
         // when we provide a dark theme with matching brightness
         builder: (context, child) {
-          final brightness = MediaQuery.platformBrightnessOf(context);
+          final systemBrightness = MediaQuery.platformBrightnessOf(context);
+          final brightness = switch (_themeMode) {
+            ThemeMode.light => Brightness.light,
+            ThemeMode.dark => Brightness.dark,
+            ThemeMode.system => systemBrightness,
+          };
           return CupertinoTheme(
             data: brightness == Brightness.dark
-                ? AppTheme.cupertinoDarkTheme
-                : AppTheme.cupertinoLightTheme,
+                ? AppTheme.cupertinoDarkTheme(
+                    highContrast: _highContrast,
+                    preset: _themePreset,
+                  )
+                : AppTheme.cupertinoLightTheme(
+                    highContrast: _highContrast,
+                    preset: _themePreset,
+                  ),
             child: child!,
           );
         },
@@ -85,15 +233,35 @@ class _AppState extends State<App> {
         ],
         supportedLocales: const [Locale('en'), Locale('pt')],
         home: _isAuthenticated
-            ? AppBottomNav(onLogout: _onLogout)
+            ? AppBottomNav(
+                onLogout: _onLogout,
+                themeMode: _themeMode,
+                highContrast: _highContrast,
+                onThemeModeChanged: _onThemeModeChanged,
+                onHighContrastChanged: _onHighContrastChanged,
+                routeDisplayMode: _routeDisplayMode,
+                onRouteDisplayModeChanged: _onRouteDisplayModeChanged,
+                gpsFilterMode: _gpsFilterMode,
+                onGpsFilterModeChanged: _onGpsFilterModeChanged,
+                allowInsecureTls: _allowInsecureTls,
+                onAllowInsecureTlsChanged: _onAllowInsecureTlsChanged,
+                selectedThemePreset: _themePreset,
+                onThemePresetChanged: _onThemePresetChanged,
+              )
             : LoginScreen(onLoginSuccess: _onLoginSuccess),
       );
     } else {
       return MaterialApp(
         title: 'Endurain',
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
+        theme: AppTheme.lightTheme(
+          highContrast: _highContrast,
+          preset: _themePreset,
+        ),
+        darkTheme: AppTheme.darkTheme(
+          highContrast: _highContrast,
+          preset: _themePreset,
+        ),
+        themeMode: _themeMode,
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
@@ -102,7 +270,21 @@ class _AppState extends State<App> {
         ],
         supportedLocales: const [Locale('en'), Locale('pt')],
         home: _isAuthenticated
-            ? AppBottomNav(onLogout: _onLogout)
+            ? AppBottomNav(
+                onLogout: _onLogout,
+                themeMode: _themeMode,
+                highContrast: _highContrast,
+                onThemeModeChanged: _onThemeModeChanged,
+                onHighContrastChanged: _onHighContrastChanged,
+                routeDisplayMode: _routeDisplayMode,
+                onRouteDisplayModeChanged: _onRouteDisplayModeChanged,
+                gpsFilterMode: _gpsFilterMode,
+                onGpsFilterModeChanged: _onGpsFilterModeChanged,
+                allowInsecureTls: _allowInsecureTls,
+                onAllowInsecureTlsChanged: _onAllowInsecureTlsChanged,
+                selectedThemePreset: _themePreset,
+                onThemePresetChanged: _onThemePresetChanged,
+              )
             : LoginScreen(onLoginSuccess: _onLoginSuccess),
       );
     }

@@ -31,7 +31,7 @@ class LocationMarkerConstants {
   static const double coneArcRadiusMultiplier = 5.0;
 
   // Colors
-  static const int markerBlue = 0xFF4285F4; // Google Blue
+  static const int markerBlue = 0xFF2E6EA6; // Endurain brand blue
   static const double coneOpacity = 0.3;
 
   // Button padding

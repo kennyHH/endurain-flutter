@@ -7,7 +7,7 @@ class UIConstants {
   static const double paddingLarge = 24.0;
 
   // Tab bar
-  static const double tabBarHeight = 60.0;
+  static const double tabBarHeight = 68.0;
 
   // Common layout values
   static const double elevationNone = 0.0;

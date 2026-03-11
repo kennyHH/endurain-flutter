@@ -1,12 +1,19 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:endurain/core/models/server_settings.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/api_constants.dart';
+import 'package:endurain/core/services/api_request_executor.dart';
 
 /// Service for fetching and managing server settings
 class ServerSettingsService {
-  final SecureStorageService _storage = SecureStorageService();
+  ServerSettingsService({
+    SecureStorageService? storage,
+    ApiRequestExecutor? requestExecutor,
+  }) : _storage = storage ?? SecureStorageService(),
+       _requestExecutor = requestExecutor ?? ApiRequestExecutor();
+
+  final SecureStorageService _storage;
+  final ApiRequestExecutor _requestExecutor;
 
   /// Fetch server settings from the server
   Future<ServerSettings> getServerSettings({String? serverUrl}) async {
@@ -20,12 +27,11 @@ class ServerSettingsService {
       throw Exception('Server URL not configured');
     }
 
-    final apiUrl = Uri.parse('$url${ApiConstants.serverSettingsEndpoint}');
-
     try {
-      final response = await http.get(
-        apiUrl,
-        headers: {ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue},
+      final response = await _requestExecutor.request(
+        method: 'GET',
+        serverUrl: url,
+        endpoint: ApiConstants.serverSettingsEndpoint,
       );
 
       if (response.statusCode == 200) {
@@ -53,6 +59,8 @@ class ServerSettingsService {
         final error = json.decode(response.body);
         throw Exception(error['detail'] ?? 'Failed to fetch server settings');
       }
+    } on ApiRequestException {
+      rethrow;
     } catch (e) {
       throw Exception('Failed to fetch server settings: $e');
     }
