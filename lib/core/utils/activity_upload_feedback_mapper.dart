@@ -7,7 +7,7 @@ class ActivityUploadFeedbackMapper {
     AppLocalizations l10n,
   ) {
     if (result.success) {
-      return l10n.savedSuccessfully;
+      return l10n.trackingUploadSuccess;
     }
 
     switch (result.failureType) {

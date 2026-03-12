@@ -33,6 +33,8 @@ class AppBottomNav extends StatefulWidget {
     this.onAllowInsecureTlsChanged,
     required this.selectedThemePreset,
     this.onThemePresetChanged,
+    
+    
   });
 
   final VoidCallback? onLogout;
@@ -48,6 +50,8 @@ class AppBottomNav extends StatefulWidget {
   final ValueChanged<bool>? onAllowInsecureTlsChanged;
   final AppThemePreset selectedThemePreset;
   final ValueChanged<AppThemePreset>? onThemePresetChanged;
+  
+  
 
   @override
   State<AppBottomNav> createState() => _AppBottomNavState();
@@ -156,6 +160,8 @@ class _AppBottomNavState extends State<AppBottomNav> {
       onGpsFilterModeChanged: widget.onGpsFilterModeChanged,
       selectedThemePreset: widget.selectedThemePreset,
       onThemePresetChanged: widget.onThemePresetChanged,
+      
+      
     ),
   ];
 

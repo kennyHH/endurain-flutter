@@ -302,6 +302,10 @@
   "@historyUploadPending": {
     "description": "Badge for activities that are not uploaded yet - Used in: activity_history_screen.dart"
   },
+  "historyUploadDone": "Uploaded",
+  "@historyUploadDone": {
+    "description": "Badge for activities already uploaded to server - Used in: activity_history_screen.dart"
+  },
   "historyRenameTitle": "Name activity",
   "@historyRenameTitle": {
     "description": "Dialog title to rename an activity - Used in: activity_history_screen.dart"
@@ -343,6 +347,182 @@
     "description": "Activity type label for riding - Used in: tracking_controls.dart"
   },
   "activityTypeWalk": "Walk",
+  "activityTypeTrailRun": "Trail run",
+  "@activityTypeTrailRun": {
+    "description": "Activity type label for trail run - Used in: tracking_controls.dart"
+  },
+  "activityTypeTrackRun": "Track run",
+  "@activityTypeTrackRun": {
+    "description": "Activity type label for track run - Used in: tracking_controls.dart"
+  },
+  "activityTypeTreadmillRun": "Treadmill run",
+  "@activityTypeTreadmillRun": {
+    "description": "Activity type label for treadmill run - Used in: tracking_controls.dart"
+  },
+  "activityTypeVirtualRun": "Virtual run",
+  "@activityTypeVirtualRun": {
+    "description": "Activity type label for virtual run - Used in: tracking_controls.dart"
+  },
+  "activityTypeRoadCycling": "Road cycling",
+  "@activityTypeRoadCycling": {
+    "description": "Activity type label for road cycling - Used in: tracking_controls.dart"
+  },
+  "activityTypeGravelCycling": "Gravel cycling",
+  "@activityTypeGravelCycling": {
+    "description": "Activity type label for gravel cycling - Used in: tracking_controls.dart"
+  },
+  "activityTypeMtbCycling": "MTB cycling",
+  "@activityTypeMtbCycling": {
+    "description": "Activity type label for mtb cycling - Used in: tracking_controls.dart"
+  },
+  "activityTypeCommutingCycling": "Commuting cycling",
+  "@activityTypeCommutingCycling": {
+    "description": "Activity type label for commuting cycling - Used in: tracking_controls.dart"
+  },
+  "activityTypeMixedSurfaceCycling": "Mixed surface cycling",
+  "@activityTypeMixedSurfaceCycling": {
+    "description": "Activity type label for mixed surface cycling - Used in: tracking_controls.dart"
+  },
+  "activityTypeVirtualCycling": "Virtual cycling",
+  "@activityTypeVirtualCycling": {
+    "description": "Activity type label for virtual cycling - Used in: tracking_controls.dart"
+  },
+  "activityTypeIndoorCycling": "Indoor cycling",
+  "@activityTypeIndoorCycling": {
+    "description": "Activity type label for indoor cycling - Used in: tracking_controls.dart"
+  },
+  "activityTypeEBikeCycling": "E-Bike cycling",
+  "@activityTypeEBikeCycling": {
+    "description": "Activity type label for e-bike cycling - Used in: tracking_controls.dart"
+  },
+  "activityTypeEBikeMountainCycling": "E-Bike mountain cycling",
+  "@activityTypeEBikeMountainCycling": {
+    "description": "Activity type label for e-bike mountain cycling - Used in: tracking_controls.dart"
+  },
+  "activityTypeIndoorSwimming": "Indoor swimming",
+  "@activityTypeIndoorSwimming": {
+    "description": "Activity type label for indoor swimming - Used in: tracking_controls.dart"
+  },
+  "activityTypeOpenWaterSwimming": "Open water swimming",
+  "@activityTypeOpenWaterSwimming": {
+    "description": "Activity type label for open water swimming - Used in: tracking_controls.dart"
+  },
+  "activityTypeGeneralWorkout": "General workout",
+  "@activityTypeGeneralWorkout": {
+    "description": "Activity type label for general workout - Used in: tracking_controls.dart"
+  },
+  "activityTypeIndoorWalk": "Indoor walk",
+  "@activityTypeIndoorWalk": {
+    "description": "Activity type label for indoor walk - Used in: tracking_controls.dart"
+  },
+  "activityTypeHike": "Hike",
+  "@activityTypeHike": {
+    "description": "Activity type label for hike - Used in: tracking_controls.dart"
+  },
+  "activityTypeRowing": "Rowing",
+  "@activityTypeRowing": {
+    "description": "Activity type label for rowing - Used in: tracking_controls.dart"
+  },
+  "activityTypeYoga": "Yoga",
+  "@activityTypeYoga": {
+    "description": "Activity type label for yoga - Used in: tracking_controls.dart"
+  },
+  "activityTypeAlpineSki": "Alpine ski",
+  "@activityTypeAlpineSki": {
+    "description": "Activity type label for alpine ski - Used in: tracking_controls.dart"
+  },
+  "activityTypeNordicSki": "Nordic ski",
+  "@activityTypeNordicSki": {
+    "description": "Activity type label for nordic ski - Used in: tracking_controls.dart"
+  },
+  "activityTypeSnowboard": "Snowboard",
+  "@activityTypeSnowboard": {
+    "description": "Activity type label for snowboard - Used in: tracking_controls.dart"
+  },
+  "activityTypeIceSkate": "Ice skate",
+  "@activityTypeIceSkate": {
+    "description": "Activity type label for ice skate - Used in: tracking_controls.dart"
+  },
+  "activityTypeTransition": "Transition",
+  "@activityTypeTransition": {
+    "description": "Activity type label for transition - Used in: tracking_controls.dart"
+  },
+  "activityTypeStrengthTraining": "Strength training",
+  "@activityTypeStrengthTraining": {
+    "description": "Activity type label for strength training - Used in: tracking_controls.dart"
+  },
+  "activityTypeCrossfit": "Crossfit",
+  "@activityTypeCrossfit": {
+    "description": "Activity type label for crossfit - Used in: tracking_controls.dart"
+  },
+  "activityTypeTennis": "Tennis",
+  "@activityTypeTennis": {
+    "description": "Activity type label for tennis - Used in: tracking_controls.dart"
+  },
+  "activityTypeTableTennis": "Table tennis",
+  "@activityTypeTableTennis": {
+    "description": "Activity type label for table tennis - Used in: tracking_controls.dart"
+  },
+  "activityTypeBadminton": "Badminton",
+  "@activityTypeBadminton": {
+    "description": "Activity type label for badminton - Used in: tracking_controls.dart"
+  },
+  "activityTypeSquash": "Squash",
+  "@activityTypeSquash": {
+    "description": "Activity type label for squash - Used in: tracking_controls.dart"
+  },
+  "activityTypeRacquetball": "Racquetball",
+  "@activityTypeRacquetball": {
+    "description": "Activity type label for racquetball - Used in: tracking_controls.dart"
+  },
+  "activityTypePickleball": "Pickleball",
+  "@activityTypePickleball": {
+    "description": "Activity type label for pickleball - Used in: tracking_controls.dart"
+  },
+  "activityTypePadel": "Padel",
+  "@activityTypePadel": {
+    "description": "Activity type label for padel - Used in: tracking_controls.dart"
+  },
+  "activityTypeWindsurf": "Windsurf",
+  "@activityTypeWindsurf": {
+    "description": "Activity type label for windsurf - Used in: tracking_controls.dart"
+  },
+  "activityTypeStandUpPaddling": "Stand up paddling",
+  "@activityTypeStandUpPaddling": {
+    "description": "Activity type label for stand up paddling - Used in: tracking_controls.dart"
+  },
+  "activityTypeSurf": "Surf",
+  "@activityTypeSurf": {
+    "description": "Activity type label for surf - Used in: tracking_controls.dart"
+  },
+  "activityTypeSoccer": "Soccer",
+  "@activityTypeSoccer": {
+    "description": "Activity type label for soccer - Used in: tracking_controls.dart"
+  },
+  "activityTypeCardioTraining": "Cardio training",
+  "@activityTypeCardioTraining": {
+    "description": "Activity type label for cardio training - Used in: tracking_controls.dart"
+  },
+  "activityTypeKayaking": "Kayaking",
+  "@activityTypeKayaking": {
+    "description": "Activity type label for kayaking - Used in: tracking_controls.dart"
+  },
+  "activityTypeSailing": "Sailing",
+  "@activityTypeSailing": {
+    "description": "Activity type label for sailing - Used in: tracking_controls.dart"
+  },
+  "activityTypeSnowShoeing": "Snow shoeing",
+  "@activityTypeSnowShoeing": {
+    "description": "Activity type label for snow shoeing - Used in: tracking_controls.dart"
+  },
+  "activityTypeInlineSkating": "Inline skating",
+  "@activityTypeInlineSkating": {
+    "description": "Activity type label for inline skating - Used in: tracking_controls.dart"
+  },
+  "activityTypeHiit": "HIIT",
+  "@activityTypeHiit": {
+    "description": "Activity type label for hiit - Used in: tracking_controls.dart"
+  },
   "@activityTypeWalk": {
     "description": "Activity type label for walking - Used in: tracking_controls.dart"
   },
@@ -393,6 +573,10 @@
   "trackingAverageSpeed": "Avg speed",
   "@trackingAverageSpeed": {
     "description": "Label for average speed metric (used for cycling activities) - Used in: tracking_controls.dart, activity_history_screen.dart"
+  },
+  "trackingCurrentSpeed": "Current speed",
+  "@trackingCurrentSpeed": {
+    "description": "Label for live current speed metric in tracking controls - Used in: tracking_controls.dart"
   },
   "trackingSpeedUnitKmh": "km/h",
   "@trackingSpeedUnitKmh": {
@@ -496,6 +680,10 @@
   "@trackingActivitySavedCelebration": {
     "description": "Short celebration toast shown right after a session is saved locally - Used in: map_screen.dart"
   },
+  "trackingUploadSuccess": "Activity uploaded successfully",
+  "@trackingUploadSuccess": {
+    "description": "Success message after uploading activity from map screen"
+  },
   "routeStatusMatched": "Route: matched",
   "@routeStatusMatched": {
     "description": "Status label when route is matched via OSRM - Used in: map_screen.dart, activity_history_screen.dart"
@@ -588,6 +776,34 @@
   "settingsHighContrast": "High contrast",
   "@settingsHighContrast": {
     "description": "Toggle label for high contrast colors - Used in: settings_screen.dart"
+  },
+  "settingsSectionTheme": "Theme",
+  "@settingsSectionTheme": {
+    "description": "Settings section header for theme controls - Used in: settings_screen.dart"
+  },
+  "settingsSectionRouteDisplay": "Route display",
+  "@settingsSectionRouteDisplay": {
+    "description": "Settings section header for route display options - Used in: settings_screen.dart"
+  },
+  "settingsSectionServer": "Server",
+  "@settingsSectionServer": {
+    "description": "Settings section header for server configuration - Used in: settings_screen.dart"
+  },
+  "settingsSectionAboutApp": "About app",
+  "@settingsSectionAboutApp": {
+    "description": "Settings section header for app metadata - Used in: settings_screen.dart"
+  },
+  "settingsThemePreviewTitle": "Theme preview",
+  "@settingsThemePreviewTitle": {
+    "description": "Label for miniature current theme preview card - Used in: settings_screen.dart"
+  },
+  "settingsThemePreviewSubtitle": "High contrast strengthens text and borders in key UI surfaces.",
+  "@settingsThemePreviewSubtitle": {
+    "description": "Explanation for high contrast toggle impact - Used in: settings_screen.dart"
+  },
+  "settingsAppVersionTitle": "App version",
+  "@settingsAppVersionTitle": {
+    "description": "Label for app version/build info tile - Used in: settings_screen.dart"
   },
   "settingsRouteMatchingTitle": "Route matching",
   "@settingsRouteMatchingTitle": {

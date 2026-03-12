@@ -42,7 +42,8 @@ class _TrackingControlsHarness extends StatefulWidget {
   final ActivityType? suggestedActivityType;
 
   @override
-  State<_TrackingControlsHarness> createState() => _TrackingControlsHarnessState();
+  State<_TrackingControlsHarness> createState() =>
+      _TrackingControlsHarnessState();
 }
 
 class _TrackingControlsHarnessState extends State<_TrackingControlsHarness> {
@@ -83,7 +84,9 @@ class _TrackingControlsHarnessState extends State<_TrackingControlsHarness> {
           },
           onResume: () {
             setState(() {
-              snapshot = snapshot.copyWith(state: TrackingSessionState.recording);
+              snapshot = snapshot.copyWith(
+                state: TrackingSessionState.recording,
+              );
             });
           },
           onStop: () {
@@ -120,7 +123,10 @@ void main() {
         ),
       );
 
-      expect(find.byKey(const Key('tracking-start-stop-button')), findsOneWidget);
+      expect(
+        find.byKey(const Key('tracking-start-stop-button')),
+        findsOneWidget,
+      );
       expect(find.byType(FilledButton), findsOneWidget);
       expect(find.text('Start tracking'), findsOneWidget);
       expect(find.text('Stop tracking'), findsNothing);
@@ -145,14 +151,17 @@ void main() {
       expect(find.text('Recording'), findsOneWidget);
       expect(find.text('Stop tracking'), findsOneWidget);
       expect(find.text('Start tracking'), findsNothing);
-      expect(find.byKey(const Key('tracking-pause-resume-button')), findsOneWidget);
+      expect(
+        find.byKey(const Key('tracking-pause-resume-button')),
+        findsOneWidget,
+      );
       expect(find.text('Pace'), findsOneWidget);
       expect(find.text('Elevation gain'), findsOneWidget);
 
-      final rideChip = tester.widget<ChoiceChip>(
-        find.byKey(const Key('tracking-type-ride')),
+      expect(
+        find.byKey(const Key('tracking-activity-type-selector')),
+        findsOneWidget,
       );
-      expect(rideChip.onSelected, isNull);
     });
 
     testWidgets('stopped state: Session abgeschlossen, Statuswechsel korrekt', (
@@ -173,7 +182,10 @@ void main() {
       expect(find.text('Stopped'), findsOneWidget);
       expect(find.text('Start tracking'), findsOneWidget);
       expect(find.text('Stop tracking'), findsNothing);
-      expect(find.byKey(const Key('tracking-pause-resume-button')), findsNothing);
+      expect(
+        find.byKey(const Key('tracking-pause-resume-button')),
+        findsNothing,
+      );
     });
 
     testWidgets('idle -> recording -> stopped über Start/Stop Button', (
@@ -189,7 +201,10 @@ void main() {
       await tester.tap(find.byKey(const Key('tracking-start-stop-button')));
       await tester.pump();
       expect(find.text('Recording'), findsOneWidget);
-      expect(find.byKey(const Key('tracking-pause-resume-button')), findsOneWidget);
+      expect(
+        find.byKey(const Key('tracking-pause-resume-button')),
+        findsOneWidget,
+      );
 
       await tester.tap(find.byKey(const Key('tracking-pause-resume-button')));
       await tester.pump();
@@ -205,49 +220,35 @@ void main() {
     });
 
     testWidgets(
-      'aktivitaetstyp run/ride/walk waehlt korrekt und reagiert im UI',
+      'aktivitaetstypauswahl oeffnet liste und aktualisiert starttyp',
       (tester) async {
-      ActivityType? startedType;
-      await tester.pumpWidget(
-        _TrackingControlsHarness(
-          onStart: (type) {
-            startedType = type;
-          },
-        ),
-      );
+        ActivityType? startedType;
+        await tester.pumpWidget(
+          _TrackingControlsHarness(
+            onStart: (type) {
+              startedType = type;
+            },
+          ),
+        );
 
-      await tester.tap(find.byKey(const Key('tracking-type-walk')));
-      await tester.pump();
-      final walkChip = tester.widget<ChoiceChip>(
-        find.byKey(const Key('tracking-type-walk')),
-      );
-      expect(walkChip.selected, isTrue);
+        await tester.tap(
+          find.byKey(const Key('tracking-activity-type-selector')),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('activity-type-option-4')), findsOneWidget);
 
-      await tester.tap(find.byKey(const Key('tracking-type-ride')));
-      await tester.pump();
+        await tester.tap(find.byKey(const Key('activity-type-option-4')));
+        await tester.pumpAndSettle();
 
-      final rideChip = tester.widget<ChoiceChip>(
-        find.byKey(const Key('tracking-type-ride')),
-      );
-      expect(rideChip.selected, isTrue);
+        await tester.tap(find.byKey(const Key('tracking-start-stop-button')));
+        await tester.pump();
 
-      await tester.tap(find.byKey(const Key('tracking-type-run')));
-      await tester.pump();
+        expect(startedType, ActivityType.ride);
+        expect(find.text('Recording'), findsOneWidget);
+      },
+    );
 
-      final runChip = tester.widget<ChoiceChip>(
-        find.byKey(const Key('tracking-type-run')),
-      );
-      expect(runChip.selected, isTrue);
-
-      await tester.tap(find.byKey(const Key('tracking-type-ride')));
-      await tester.pump();
-      await tester.tap(find.byKey(const Key('tracking-start-stop-button')));
-      await tester.pump();
-
-      expect(startedType, ActivityType.ride);
-    });
-
-    testWidgets('zeigt Repeat-Shortcut und startet mit letztem Typ', (
+    testWidgets('startet ohne Repeat-Shortcut mit vorgeschlagenem Typ', (
       tester,
     ) async {
       ActivityType? startedType;
@@ -258,10 +259,12 @@ void main() {
         ),
       );
 
-      expect(find.byKey(const Key('tracking-repeat-last-button')), findsOneWidget);
-      expect(find.textContaining('Repeat last'), findsOneWidget);
+      expect(
+        find.byKey(const Key('tracking-repeat-last-button')),
+        findsNothing,
+      );
 
-      await tester.tap(find.byKey(const Key('tracking-repeat-last-button')));
+      await tester.tap(find.byKey(const Key('tracking-start-stop-button')));
       await tester.pump();
       expect(startedType, ActivityType.walk);
       expect(find.text('Recording'), findsOneWidget);

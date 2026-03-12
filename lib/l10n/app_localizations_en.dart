@@ -242,6 +242,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get historyUploadPending => 'Upload pending';
 
   @override
+  String get historyUploadDone => 'Uploaded';
+
+  @override
   String get historyRenameTitle => 'Name activity';
 
   @override
@@ -274,6 +277,138 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activityTypeWalk => 'Walk';
+
+  @override
+  String get activityTypeTrailRun => 'Trail run';
+
+  @override
+  String get activityTypeTrackRun => 'Track run';
+
+  @override
+  String get activityTypeTreadmillRun => 'Treadmill run';
+
+  @override
+  String get activityTypeVirtualRun => 'Virtual run';
+
+  @override
+  String get activityTypeRoadCycling => 'Road cycling';
+
+  @override
+  String get activityTypeGravelCycling => 'Gravel cycling';
+
+  @override
+  String get activityTypeMtbCycling => 'MTB cycling';
+
+  @override
+  String get activityTypeCommutingCycling => 'Commuting cycling';
+
+  @override
+  String get activityTypeMixedSurfaceCycling => 'Mixed surface cycling';
+
+  @override
+  String get activityTypeVirtualCycling => 'Virtual cycling';
+
+  @override
+  String get activityTypeIndoorCycling => 'Indoor cycling';
+
+  @override
+  String get activityTypeEBikeCycling => 'E-Bike cycling';
+
+  @override
+  String get activityTypeEBikeMountainCycling => 'E-Bike mountain cycling';
+
+  @override
+  String get activityTypeIndoorSwimming => 'Indoor swimming';
+
+  @override
+  String get activityTypeOpenWaterSwimming => 'Open water swimming';
+
+  @override
+  String get activityTypeGeneralWorkout => 'General workout';
+
+  @override
+  String get activityTypeIndoorWalk => 'Indoor walk';
+
+  @override
+  String get activityTypeHike => 'Hike';
+
+  @override
+  String get activityTypeRowing => 'Rowing';
+
+  @override
+  String get activityTypeYoga => 'Yoga';
+
+  @override
+  String get activityTypeAlpineSki => 'Alpine ski';
+
+  @override
+  String get activityTypeNordicSki => 'Nordic ski';
+
+  @override
+  String get activityTypeSnowboard => 'Snowboard';
+
+  @override
+  String get activityTypeIceSkate => 'Ice skate';
+
+  @override
+  String get activityTypeTransition => 'Transition';
+
+  @override
+  String get activityTypeStrengthTraining => 'Strength training';
+
+  @override
+  String get activityTypeCrossfit => 'Crossfit';
+
+  @override
+  String get activityTypeTennis => 'Tennis';
+
+  @override
+  String get activityTypeTableTennis => 'Table tennis';
+
+  @override
+  String get activityTypeBadminton => 'Badminton';
+
+  @override
+  String get activityTypeSquash => 'Squash';
+
+  @override
+  String get activityTypeRacquetball => 'Racquetball';
+
+  @override
+  String get activityTypePickleball => 'Pickleball';
+
+  @override
+  String get activityTypePadel => 'Padel';
+
+  @override
+  String get activityTypeWindsurf => 'Windsurf';
+
+  @override
+  String get activityTypeStandUpPaddling => 'Stand up paddling';
+
+  @override
+  String get activityTypeSurf => 'Surf';
+
+  @override
+  String get activityTypeSoccer => 'Soccer';
+
+  @override
+  String get activityTypeCardioTraining => 'Cardio training';
+
+  @override
+  String get activityTypeKayaking => 'Kayaking';
+
+  @override
+  String get activityTypeSailing => 'Sailing';
+
+  @override
+  String get activityTypeSnowShoeing => 'Snow shoeing';
+
+  @override
+  String get activityTypeInlineSkating => 'Inline skating';
+
+  @override
+  String get activityTypeHiit => 'HIIT';
 
   @override
   String get trackingIdle => 'Idle';
@@ -310,6 +445,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get trackingAverageSpeed => 'Avg speed';
+
+  @override
+  String get trackingCurrentSpeed => 'Current speed';
 
   @override
   String get trackingSpeedUnitKmh => 'km/h';
@@ -376,6 +514,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get trackingActivitySavedCelebration => 'Activity saved';
+
+  @override
+  String get trackingUploadSuccess => 'Activity uploaded successfully';
 
   @override
   String get routeStatusMatched => 'Route: matched';
@@ -445,6 +586,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsHighContrast => 'High contrast';
+
+  @override
+  String get settingsSectionTheme => 'Theme';
+
+  @override
+  String get settingsSectionRouteDisplay => 'Route display';
+
+  @override
+  String get settingsSectionServer => 'Server';
+
+  @override
+  String get settingsSectionAboutApp => 'About app';
+
+  @override
+  String get settingsThemePreviewTitle => 'Theme preview';
+
+  @override
+  String get settingsThemePreviewSubtitle =>
+      'High contrast strengthens text and borders in key UI surfaces.';
+
+  @override
+  String get settingsAppVersionTitle => 'App version';
 
   @override
   String get settingsRouteMatchingTitle => 'Route matching';

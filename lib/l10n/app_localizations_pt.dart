@@ -243,6 +243,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get historyUploadPending => 'Envio pendente';
 
   @override
+  String get historyUploadDone => 'Enviado';
+
+  @override
   String get historyRenameTitle => 'Nome da atividade';
 
   @override
@@ -275,6 +278,138 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get activityTypeWalk => 'Caminhada';
+
+  @override
+  String get activityTypeTrailRun => 'Corrida de trilho';
+
+  @override
+  String get activityTypeTrackRun => 'Corrida de pista';
+
+  @override
+  String get activityTypeTreadmillRun => 'Corrida em esteira';
+
+  @override
+  String get activityTypeVirtualRun => 'Corrida virtual';
+
+  @override
+  String get activityTypeRoadCycling => 'Ciclismo de estrada';
+
+  @override
+  String get activityTypeGravelCycling => 'Ciclismo gravel';
+
+  @override
+  String get activityTypeMtbCycling => 'Ciclismo MTB';
+
+  @override
+  String get activityTypeCommutingCycling => 'Ciclismo de deslocamento';
+
+  @override
+  String get activityTypeMixedSurfaceCycling => 'Ciclismo de piso misto';
+
+  @override
+  String get activityTypeVirtualCycling => 'Ciclismo virtual';
+
+  @override
+  String get activityTypeIndoorCycling => 'Ciclismo indoor';
+
+  @override
+  String get activityTypeEBikeCycling => 'Ciclismo de e-bike';
+
+  @override
+  String get activityTypeEBikeMountainCycling => 'Ciclismo MTB de e-bike';
+
+  @override
+  String get activityTypeIndoorSwimming => 'Natação em piscina';
+
+  @override
+  String get activityTypeOpenWaterSwimming => 'Natação em águas abertas';
+
+  @override
+  String get activityTypeGeneralWorkout => 'Treino geral';
+
+  @override
+  String get activityTypeIndoorWalk => 'Caminhada indoor';
+
+  @override
+  String get activityTypeHike => 'Caminhada em trilha';
+
+  @override
+  String get activityTypeRowing => 'Remo';
+
+  @override
+  String get activityTypeYoga => 'Yoga';
+
+  @override
+  String get activityTypeAlpineSki => 'Esqui alpino';
+
+  @override
+  String get activityTypeNordicSki => 'Esqui nórdico';
+
+  @override
+  String get activityTypeSnowboard => 'Snowboard';
+
+  @override
+  String get activityTypeIceSkate => 'Patinação no gelo';
+
+  @override
+  String get activityTypeTransition => 'Transição';
+
+  @override
+  String get activityTypeStrengthTraining => 'Treino de força';
+
+  @override
+  String get activityTypeCrossfit => 'CrossFit';
+
+  @override
+  String get activityTypeTennis => 'Tênis';
+
+  @override
+  String get activityTypeTableTennis => 'Tênis de mesa';
+
+  @override
+  String get activityTypeBadminton => 'Badminton';
+
+  @override
+  String get activityTypeSquash => 'Squash';
+
+  @override
+  String get activityTypeRacquetball => 'Raquetebol';
+
+  @override
+  String get activityTypePickleball => 'Pickleball';
+
+  @override
+  String get activityTypePadel => 'Padel';
+
+  @override
+  String get activityTypeWindsurf => 'Windsurf';
+
+  @override
+  String get activityTypeStandUpPaddling => 'Stand up paddle';
+
+  @override
+  String get activityTypeSurf => 'Surf';
+
+  @override
+  String get activityTypeSoccer => 'Futebol';
+
+  @override
+  String get activityTypeCardioTraining => 'Treino cardiovascular';
+
+  @override
+  String get activityTypeKayaking => 'Caiaque';
+
+  @override
+  String get activityTypeSailing => 'Vela';
+
+  @override
+  String get activityTypeSnowShoeing => 'Caminhada com raquetes de neve';
+
+  @override
+  String get activityTypeInlineSkating => 'Patinação inline';
+
+  @override
+  String get activityTypeHiit => 'HIIT';
 
   @override
   String get trackingIdle => 'Parado';
@@ -311,6 +446,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get trackingAverageSpeed => 'Velocidade média';
+
+  @override
+  String get trackingCurrentSpeed => 'Velocidade atual';
 
   @override
   String get trackingSpeedUnitKmh => 'km/h';
@@ -377,6 +515,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get trackingActivitySavedCelebration => 'Atividade guardada';
+
+  @override
+  String get trackingUploadSuccess => 'Atividade enviada com sucesso';
 
   @override
   String get routeStatusMatched => 'Rota: ajustada';
@@ -446,6 +587,28 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get settingsHighContrast => 'Alto contraste';
+
+  @override
+  String get settingsSectionTheme => 'Tema';
+
+  @override
+  String get settingsSectionRouteDisplay => 'Exibição de rota';
+
+  @override
+  String get settingsSectionServer => 'Servidor';
+
+  @override
+  String get settingsSectionAboutApp => 'Sobre a app';
+
+  @override
+  String get settingsThemePreviewTitle => 'Pré-visualização do tema';
+
+  @override
+  String get settingsThemePreviewSubtitle =>
+      'O alto contraste reforça texto e bordas nas superfícies principais da interface.';
+
+  @override
+  String get settingsAppVersionTitle => 'Versão da app';
 
   @override
   String get settingsRouteMatchingTitle => 'Correspondência de rota';

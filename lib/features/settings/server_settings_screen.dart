@@ -232,78 +232,97 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(UIConstants.paddingStandard),
+          padding: const EdgeInsets.all(16),
           children: [
+            _SettingsSectionHeader(title: l10n.loggedIn),
+            Card(
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.dns_outlined),
+                    title: Text(l10n.serverUrl),
+                    subtitle: Text(
+                      _serverUrl,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  ListTile(
+                    leading: const Icon(Icons.person_outline),
+                    title: Text(l10n.username),
+                    subtitle: Text(
+                      _username,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            _SettingsSectionHeader(title: l10n.tileServerUrl),
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(UIConstants.paddingStandard),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.loggedIn,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Text(
-                          l10n.serverUrl,
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        Expanded(child: Text(_serverUrl)),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Text(
-                          l10n.username,
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        Text(_username),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    const Divider(),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.logout, color: Colors.red),
-                      title: Text(
-                        l10n.logout,
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                      onTap: _handleLogout,
-                    ),
-                  ],
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: TextFormField(
+                  controller: _tileServerUrlController,
+                  decoration: InputDecoration(
+                    hintText: l10n.tileServerUrlHint,
+                    border: InputBorder.none,
+                    icon: const Icon(Icons.map_outlined),
+                    labelText: l10n.tileServerUrl,
+                  ),
+                  keyboardType: TextInputType.url,
+                  textInputAction: TextInputAction.done,
+                  validator: (value) => Validators.validateUrl(value, l10n),
+                  onFieldSubmitted: (_) => _saveSettings(),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _tileServerUrlController,
-              decoration: InputDecoration(
-                labelText: l10n.tileServerUrl,
-                hintText: l10n.tileServerUrlHint,
-                border: const OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.url,
-              textInputAction: TextInputAction.done,
-              validator: (value) => Validators.validateUrl(value, l10n),
-              onFieldSubmitted: (_) => _saveSettings(),
-            ),
             const SizedBox(height: 24),
-            FilledButton(
+            FilledButton.icon(
               onPressed: _saveSettings,
-              child: Padding(
-                padding: const EdgeInsets.all(UIConstants.paddingMedium),
-                child: Text(l10n.save),
+              icon: const Icon(Icons.save),
+              label: Text(l10n.save),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
+            ),
+            const SizedBox(height: 40),
+            OutlinedButton.icon(
+              onPressed: _handleLogout,
+              icon: const Icon(Icons.logout),
+              label: Text(l10n.logout),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+                side: BorderSide(color: Theme.of(context).colorScheme.error),
+                minimumSize: const Size.fromHeight(48),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsSectionHeader extends StatelessWidget {
+  const _SettingsSectionHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8, left: 4),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w800,
+          color: Theme.of(context).colorScheme.primary,
         ),
       ),
     );

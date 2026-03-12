@@ -1,11 +1,22 @@
+import 'package:endurain/core/constants/activity_type_catalog.dart';
 import 'package:endurain/core/constants/tracking_ui_tokens.dart';
 import 'package:endurain/core/models/activity.dart';
 import 'package:endurain/core/services/tracking_session_engine.dart';
+import 'package:endurain/core/services/audio_feedback_service.dart';
+import 'package:endurain/core/theme/endurain_design_system.dart';
+import 'package:endurain/core/utils/activity_type_localization.dart';
 import 'package:endurain/core/utils/metric_formatter.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
+import 'package:endurain/features/map/widgets/activity_type_picker_sheet.dart';
 import 'package:endurain/l10n/app_localizations.dart';
+import 'package:endurain/core/models/metric_type.dart';
+import 'package:endurain/core/services/secure_storage_service.dart';
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class TrackingControls extends StatefulWidget {
   const TrackingControls({
@@ -36,15 +47,37 @@ class TrackingControls extends StatefulWidget {
 }
 
 class _TrackingControlsState extends State<TrackingControls> {
-  ActivityType _selectedType = ActivityType.run;
+  ActivityTypeCatalogItem _selectedActivity = ActivityTypeCatalog.defaultItem;
+  late final PageController _metricsPageController;
+  int _metricsPage = 0;
+  List<MetricType?> _page1Metrics = [
+    MetricType.distance,
+    MetricType.elevation,
+    MetricType.speed,
+    MetricType.pace
+  ];
+  List<MetricType?> _page2Metrics = [
+    MetricType.none,
+    MetricType.none,
+    MetricType.none,
+    MetricType.none
+  ];
+  final _storage = SecureStorageService();
 
   @override
   void initState() {
     super.initState();
-    final suggested = widget.suggestedActivityType;
-    if (suggested != null) {
-      _selectedType = suggested;
-    }
+    _selectedActivity = ActivityTypeCatalog.fromSuggestedMode(
+      widget.suggestedActivityType,
+    );
+    _metricsPageController = PageController();
+    _loadMetricConfig();
+  }
+
+  @override
+  void dispose() {
+    _metricsPageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -57,8 +90,161 @@ class _TrackingControlsState extends State<TrackingControls> {
     if (isEditingType &&
         suggested != null &&
         suggested != oldWidget.suggestedActivityType) {
-      _selectedType = suggested;
+      _selectedActivity = ActivityTypeCatalog.fromSuggestedMode(suggested);
     }
+  }
+
+  Future<void> _loadMetricConfig() async {
+    final jsonString = await _storage.getMetricConfig();
+    if (jsonString != null) {
+      try {
+        final data = json.decode(jsonString) as Map<String, dynamic>;
+        setState(() {
+          _page1Metrics = (data['page1'] as List<dynamic>)
+              .map((e) => _parseMetricType(e as String?))
+              .toList();
+          _page2Metrics = (data['page2'] as List<dynamic>)
+              .map((e) => _parseMetricType(e as String?))
+              .toList();
+        });
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _saveMetricConfig() async {
+    final data = {
+      'page1': _page1Metrics.map((e) => e?.name ?? 'none').toList(),
+      'page2': _page2Metrics.map((e) => e?.name ?? 'none').toList(),
+    };
+    await _storage.setMetricConfig(json.encode(data));
+  }
+
+  MetricType? _parseMetricType(String? name) {
+    if (name == null || name == 'none') return MetricType.none;
+    return MetricType.values.firstWhere(
+      (e) => e.name == name,
+      orElse: () => MetricType.none,
+    );
+  }
+
+  String _formatMetricValue(MetricType type, AppLocalizations l10n, TrackingSessionSnapshot snapshot, ActivityType effectiveType) {
+    switch (type) {
+      case MetricType.distance:
+        return MetricFormatter.formatDistanceKm(snapshot.distanceMeters, l10n.trackingDistanceUnitKm);
+      case MetricType.duration:
+        return MetricFormatter.formatDurationClock(snapshot.duration);
+      case MetricType.speed:
+        return MetricFormatter.formatSpeedKmh(_currentSpeedKmh(snapshot.trackPoints), l10n.trackingSpeedUnitKmh);
+      case MetricType.avgSpeed:
+         final avgSpeed = snapshot.duration.inSeconds > 0 
+             ? (snapshot.distanceMeters / snapshot.duration.inSeconds) * 3.6 
+             : 0.0;
+         return MetricFormatter.formatSpeedKmh(avgSpeed, l10n.trackingSpeedUnitKmh);
+      case MetricType.pace:
+        final speedKmh = _currentSpeedKmh(snapshot.trackPoints);
+        if (speedKmh == null || speedKmh <= 0.1) return "-:--";
+        final paceMinKm = 60 / speedKmh;
+        final min = paceMinKm.floor();
+        final sec = ((paceMinKm - min) * 60).round();
+        return '$min:${sec.toString().padLeft(2, '0')}';
+      case MetricType.avgPace:
+         final avgSpeed = snapshot.duration.inSeconds > 0 
+             ? (snapshot.distanceMeters / snapshot.duration.inSeconds) * 3.6 
+             : 0.0;
+         if (avgSpeed <= 0.1) return "-:--";
+         final paceMinKm = 60 / avgSpeed;
+         final min = paceMinKm.floor();
+         final sec = ((paceMinKm - min) * 60).round();
+         return '$min:${sec.toString().padLeft(2, '0')}';
+      case MetricType.elevation:
+        return '${snapshot.elevationGainMeters.toStringAsFixed(0)} ${l10n.trackingElevationUnitM}';
+      case MetricType.none:
+        return "";
+    }
+  }
+  
+  void _showMetricPicker(int pageIndex, int slotIndex) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+               Padding(
+                 padding: const EdgeInsets.all(16),
+                 child: Text("Select Metric", style: Theme.of(context).textTheme.titleLarge),
+               ),
+               Expanded(
+                 child: ListView(
+                   shrinkWrap: true,
+                   children: MetricType.values.map((type) => ListTile(
+                     leading: type == MetricType.none ? const Icon(Icons.close) : null,
+                     title: Text(type == MetricType.none ? "Empty / Remove" : type.label(AppLocalizations.of(context)!)),
+                     onTap: () {
+                       setState(() {
+                         if (pageIndex == 0) {
+                           _page1Metrics[slotIndex] = type;
+                         } else {
+                           _page2Metrics[slotIndex] = type;
+                         }
+                       });
+                       _saveMetricConfig();
+                       Navigator.pop(context);
+                     },
+                   )).toList(),
+                 ),
+               ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMetricSlot(
+      int pageIndex,
+      int slotIndex,
+      AppLocalizations l10n,
+      TrackingSessionSnapshot snapshot,
+      ActivityType effectiveType,
+      TextStyle valueStyle,
+      TextStyle labelStyle,
+  ) {
+    final metrics = pageIndex == 0 ? _page1Metrics : _page2Metrics;
+    if (metrics.length <= slotIndex) return const SizedBox();
+    
+    final type = metrics[slotIndex] ?? MetricType.none;
+    
+    if (type == MetricType.none) {
+      return GestureDetector(
+        onTap: () => _showMetricPicker(pageIndex, slotIndex),
+        child: Container(
+          height: 70, 
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.2), style: BorderStyle.solid),
+          ),
+          child: Center(
+            child: Icon(Icons.add, size: 24, color: Theme.of(context).colorScheme.outline),
+          ),
+        ),
+      );
+    }
+    
+    return GestureDetector(
+      onLongPress: () {
+          HapticFeedback.mediumImpact();
+          _showMetricPicker(pageIndex, slotIndex);
+      },
+      child: _MetricCell(
+        label: type.label(l10n),
+        value: _formatMetricValue(type, l10n, snapshot, effectiveType),
+        textStyle: valueStyle,
+        metaStyle: labelStyle,
+      ),
+    );
   }
 
   @override
@@ -69,60 +255,77 @@ class _TrackingControlsState extends State<TrackingControls> {
     final isPaused = widget.snapshot.state == TrackingSessionState.paused;
     final canPauseOrResume = isRecording || isPaused;
     final status = _statusText(l10n, widget.snapshot.state);
-    final effectiveType = widget.snapshot.activityType ?? _selectedType;
-    final durationLabel = MetricFormatter.formatDurationClock(
-      widget.snapshot.duration,
-    );
-    final distanceLabel = MetricFormatter.formatDistanceKm(
-      widget.snapshot.distanceMeters,
-      l10n.trackingDistanceUnitKm,
-    );
-    final movementValue = MetricFormatter.formatMovement(
-      activityType: effectiveType,
-      distanceMeters: widget.snapshot.distanceMeters,
-      durationSeconds: widget.snapshot.duration.inSeconds,
-      paceUnit: l10n.trackingPaceUnitMinKm,
-      speedUnit: l10n.trackingSpeedUnitKmh,
-    );
-    final movementLabel = _movementLabel(effectiveType, l10n);
+    final effectiveType =
+        widget.snapshot.activityType ?? _selectedActivity.trackingMode;
     final isLiveTracking = isRecording || isPaused;
-    final elevationLabel =
-        '${widget.snapshot.elevationGainMeters.toStringAsFixed(0)} ${l10n.trackingElevationUnitM}';
     final tone = _statusTone(widget.snapshot.state);
-    final hasGpsFix = widget.hasGpsFix;
-    final isPreparingStart = widget.isPreparingStart;
     final actionColor = (isRecording || isPaused)
         ? TrackingSemanticColors.error
         : TrackingSemanticColors.success;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isCompact = constraints.maxWidth < 360;
+        final isCompact = constraints.maxWidth < 390;
         final metricValueStyle =
-            (PlatformUtils.isApplePlatform
-                    ? TrackingTypography.title.copyWith(
-                        color: CupertinoColors.label.resolveFrom(context),
-                      )
-                    : (theme.textTheme.headlineSmall ??
-                          TrackingTypography.title))
-                .copyWith(
-                  fontWeight: FontWeight.w800,
-                  fontSize: isLiveTracking
-                      ? (isCompact ? 21 : 26)
-                      : (isCompact ? 18 : 22),
-                );
-        final metricMetaStyle = PlatformUtils.isApplePlatform
-            ? TrackingTypography.meta.copyWith(
-                color: CupertinoColors.secondaryLabel.resolveFrom(context),
-                fontSize: isCompact ? 11 : 12,
-              )
-            : (theme.textTheme.labelSmall ?? TrackingTypography.meta).copyWith(
-                fontSize: isCompact ? 11 : 12,
-              );
+            EndurainTypography.metricValue(theme.colorScheme).copyWith(
+              color: theme.colorScheme.onSurface,
+              fontSize: isLiveTracking ? (isCompact ? 44 : 56) : (isCompact ? 40 : 48),
+              fontWeight: FontWeight.w900,
+              height: 1.0,
+            );
+        final metricMetaStyle = EndurainTypography.metricLabel(
+          theme.colorScheme,
+        ).copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+          fontSize: isCompact ? 12.0 : 13.5,
+          fontWeight: FontWeight.w600,
+        );
+
+        final metricsPager = _MetricPager(
+          pageController: _metricsPageController,
+          page: _metricsPage,
+          onPageChanged: (page) {
+            if (_metricsPage == page) return;
+            setState(() {
+              _metricsPage = page;
+            });
+          },
+          firstPageTop: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+               Expanded(child: _buildMetricSlot(0, 0, l10n, widget.snapshot, effectiveType, metricValueStyle, metricMetaStyle)),
+               const SizedBox(width: 8),
+               Expanded(child: _buildMetricSlot(0, 1, l10n, widget.snapshot, effectiveType, metricValueStyle, metricMetaStyle)),
+            ],
+          ),
+          firstPageBottom: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+               Expanded(child: _buildMetricSlot(0, 2, l10n, widget.snapshot, effectiveType, metricValueStyle, metricMetaStyle)),
+               const SizedBox(width: 8),
+               Expanded(child: _buildMetricSlot(0, 3, l10n, widget.snapshot, effectiveType, metricValueStyle, metricMetaStyle)),
+            ],
+          ),
+          secondPageTop: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+               Expanded(child: _buildMetricSlot(1, 0, l10n, widget.snapshot, effectiveType, metricValueStyle, metricMetaStyle)),
+               const SizedBox(width: 8),
+               Expanded(child: _buildMetricSlot(1, 1, l10n, widget.snapshot, effectiveType, metricValueStyle, metricMetaStyle)),
+            ],
+          ),
+          secondPageBottom: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+               Expanded(child: _buildMetricSlot(1, 2, l10n, widget.snapshot, effectiveType, metricValueStyle, metricMetaStyle)),
+               const SizedBox(width: 8),
+               Expanded(child: _buildMetricSlot(1, 3, l10n, widget.snapshot, effectiveType, metricValueStyle, metricMetaStyle)),
+            ],
+          ),
+        );
 
         final actionButtons = _buildActionButtons(
           context: context,
-          isCompact: isCompact,
           isRecording: isRecording,
           isPaused: isPaused,
           canPauseOrResume: canPauseOrResume,
@@ -148,69 +351,22 @@ class _TrackingControlsState extends State<TrackingControls> {
             ),
             child: Padding(
               padding: EdgeInsets.all(
-                isCompact ? TrackingSpacing.md : TrackingSpacing.lg,
+                isCompact ? TrackingSpacing.sm : TrackingSpacing.md,
               ),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _StatusPillCupertino(
+                  _StatusGpsLine(
                     key: const Key('tracking-status-label'),
-                    color: cupertinoStatusColor(tone),
-                    label: status,
-                  ),
-                  const SizedBox(height: TrackingSpacing.sm),
-                  _GpsFixIndicator(
-                    hasGpsFix: hasGpsFix,
-                    isPreparingStart: isPreparingStart,
+                    status: status,
+                    statusColor: cupertinoStatusColor(tone),
+                    hasGpsFix: widget.hasGpsFix,
+                    isPreparingStart: widget.isPreparingStart,
                     countdownSeconds: widget.startCountdownSeconds,
                   ),
-                  const SizedBox(height: TrackingSpacing.md),
-                  _MetricRow(
-                    leftLabel: l10n.trackingDuration,
-                    leftValue: durationLabel,
-                    rightLabel: l10n.trackingDistance,
-                    rightValue: distanceLabel,
-                    textStyle: metricValueStyle,
-                    metaStyle: metricMetaStyle,
-                  ),
-                  const SizedBox(height: TrackingSpacing.md),
-                  _MetricRow(
-                    leftLabel: movementLabel,
-                    leftValue: movementValue,
-                    rightLabel: l10n.trackingElevationGain,
-                    rightValue: elevationLabel,
-                    textStyle: metricValueStyle,
-                    metaStyle: metricMetaStyle,
-                  ),
-                  const SizedBox(height: TrackingSpacing.md),
-                  Text(l10n.activityTypeLabel, style: metricMetaStyle),
-                  const SizedBox(height: TrackingSpacing.sm),
-                  CupertinoSlidingSegmentedControl<ActivityType>(
-                    key: const Key('tracking-activity-type'),
-                    groupValue: _selectedType,
-                    children: {
-                      ActivityType.run: _segmentLabelWithIcon(
-                        l10n.activityTypeRun,
-                        _activityIcon(ActivityType.run),
-                      ),
-                      ActivityType.ride: _segmentLabelWithIcon(
-                        l10n.activityTypeRide,
-                        _activityIcon(ActivityType.ride),
-                      ),
-                      ActivityType.walk: _segmentLabelWithIcon(
-                        l10n.activityTypeWalk,
-                        _activityIcon(ActivityType.walk),
-                      ),
-                    },
-                    onValueChanged: (value) {
-                      if (isRecording || value == null) return;
-                      setState(() {
-                        _selectedType = value;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: TrackingSpacing.lg),
+                  const SizedBox(height: 2),
+                  metricsPager,
+                  const SizedBox(height: 4),
                   actionButtons,
                 ],
               ),
@@ -226,67 +382,22 @@ class _TrackingControlsState extends State<TrackingControls> {
           clipBehavior: Clip.antiAlias,
           child: Padding(
             padding: EdgeInsets.all(
-              isCompact ? TrackingSpacing.md : TrackingSpacing.lg,
+              isCompact ? TrackingSpacing.sm : TrackingSpacing.md,
             ),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _StatusPillMaterial(
+                _StatusGpsLine(
                   key: const Key('tracking-status-label'),
-                  color: _statusColor(tone),
-                  label: status,
-                ),
-                const SizedBox(height: TrackingSpacing.sm),
-                _GpsFixIndicator(
-                  hasGpsFix: hasGpsFix,
-                  isPreparingStart: isPreparingStart,
+                  status: status,
+                  statusColor: _statusColor(tone),
+                  hasGpsFix: widget.hasGpsFix,
+                  isPreparingStart: widget.isPreparingStart,
                   countdownSeconds: widget.startCountdownSeconds,
                 ),
-                const SizedBox(height: TrackingSpacing.md),
-                _MetricRow(
-                  leftLabel: l10n.trackingDuration,
-                  leftValue: durationLabel,
-                  rightLabel: l10n.trackingDistance,
-                  rightValue: distanceLabel,
-                  textStyle: metricValueStyle,
-                  metaStyle: metricMetaStyle,
-                ),
-                const SizedBox(height: TrackingSpacing.md),
-                _MetricRow(
-                  leftLabel: movementLabel,
-                  leftValue: movementValue,
-                  rightLabel: l10n.trackingElevationGain,
-                  rightValue: elevationLabel,
-                  textStyle: metricValueStyle,
-                  metaStyle: metricMetaStyle,
-                ),
-                const SizedBox(height: TrackingSpacing.md),
-                Text(l10n.activityTypeLabel, style: metricMetaStyle),
-                const SizedBox(height: TrackingSpacing.sm),
-                Wrap(
-                  key: const Key('tracking-activity-type'),
-                  spacing: TrackingSpacing.sm,
-                  runSpacing: TrackingSpacing.sm,
-                  children: [
-                    _buildTypeChip(
-                      label: l10n.activityTypeRun,
-                      value: ActivityType.run,
-                      isEnabled: !isRecording,
-                    ),
-                    _buildTypeChip(
-                      label: l10n.activityTypeRide,
-                      value: ActivityType.ride,
-                      isEnabled: !isRecording,
-                    ),
-                    _buildTypeChip(
-                      label: l10n.activityTypeWalk,
-                      value: ActivityType.walk,
-                      isEnabled: !isRecording,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: TrackingSpacing.lg),
+                const SizedBox(height: 2),
+                metricsPager,
+                const SizedBox(height: 0),
                 actionButtons,
               ],
             ),
@@ -298,7 +409,6 @@ class _TrackingControlsState extends State<TrackingControls> {
 
   Widget _buildActionButtons({
     required BuildContext context,
-    required bool isCompact,
     required bool isRecording,
     required bool isPaused,
     required bool canPauseOrResume,
@@ -311,7 +421,7 @@ class _TrackingControlsState extends State<TrackingControls> {
     final stopLabel = isRecording || isPaused
         ? l10n.trackingStop
         : l10n.trackingStart;
-    final canQuickRepeat = widget.suggestedActivityType != null && !canPauseOrResume;
+        
     void pausePressed() {
       if (isRecording) {
         widget.onPause();
@@ -319,198 +429,34 @@ class _TrackingControlsState extends State<TrackingControls> {
         widget.onResume();
       }
     }
+
     void stopPressed() {
       if (widget.isPreparingStart) return;
       if (isRecording || isPaused) {
         widget.onStop();
       } else {
-        widget.onStart(_selectedType);
+        widget.onStart(_selectedActivity.trackingMode);
       }
     }
 
-    if (isCompact && canPauseOrResume) {
-      if (PlatformUtils.isApplePlatform) {
-        return Column(
-          children: [
-            SizedBox(
-              width: double.infinity,
-              child: CupertinoButton(
-                key: const Key('tracking-pause-resume-button'),
-                color: CupertinoColors.systemGrey,
-                borderRadius: BorderRadius.circular(TrackingRadius.md),
-                padding: const EdgeInsets.symmetric(
-                  vertical: TrackingSpacing.md,
-                ),
-                onPressed: pausePressed,
-                child: Text(
-                  pauseLabel,
-                  style: TrackingTypography.title.copyWith(
-                    color: CupertinoColors.white,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: TrackingSpacing.sm),
-            SizedBox(
-              width: double.infinity,
-              child: CupertinoButton(
-                key: const Key('tracking-start-stop-button'),
-                color: actionColor,
-                borderRadius: BorderRadius.circular(TrackingRadius.md),
-                padding: const EdgeInsets.symmetric(
-                  vertical: TrackingSpacing.md,
-                ),
-                onPressed: widget.isPreparingStart ? null : stopPressed,
-                child: Text(
-                  stopLabel,
-                  style: TrackingTypography.title.copyWith(
-                    color: CupertinoColors.white,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      }
+    if (canPauseOrResume) {
       return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.tonal(
-              key: const Key('tracking-pause-resume-button'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-                textStyle: TrackingTypography.title,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(TrackingRadius.md),
-                ),
-              ),
-              onPressed: pausePressed,
-              child: Text(pauseLabel),
-            ),
+          Text(
+            l10n.activityTypeLabel,
+            style: EndurainTypography.helper(Theme.of(context).colorScheme),
           ),
-          const SizedBox(height: TrackingSpacing.sm),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              key: const Key('tracking-start-stop-button'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-                backgroundColor: actionColor,
-                foregroundColor: Colors.white,
-                textStyle: TrackingTypography.title,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(TrackingRadius.md),
-                ),
-              ),
-              onPressed: widget.isPreparingStart ? null : stopPressed,
-              child: Text(stopLabel),
-            ),
-          ),
-        ],
-      );
-    }
-
-    if (PlatformUtils.isApplePlatform) {
-      return Column(
-        children: [
-          if (canQuickRepeat) ...[
-            SizedBox(
-              width: double.infinity,
-              child: CupertinoButton(
-                key: const Key('tracking-repeat-last-button'),
-                color: CupertinoColors.systemGrey2,
-                borderRadius: BorderRadius.circular(TrackingRadius.md),
-                padding: const EdgeInsets.symmetric(vertical: TrackingSpacing.md),
-                onPressed: () => widget.onStart(widget.suggestedActivityType!),
-                child: Text(
-                  l10n.trackingRepeatLast(
-                    _activityLabel(l10n, widget.suggestedActivityType!),
-                  ),
-                  style: TrackingTypography.body.copyWith(
-                    color: CupertinoColors.black,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: TrackingSpacing.sm),
-          ],
+          const SizedBox(height: 4),
+          _buildActivityTypeSelector(l10n, isEnabled: false),
+          const SizedBox(height: 12),
           Row(
             children: [
-              if (canPauseOrResume) ...[
-                Expanded(
-                  child: CupertinoButton(
-                    key: const Key('tracking-pause-resume-button'),
-                    color: CupertinoColors.systemGrey,
-                    borderRadius: BorderRadius.circular(TrackingRadius.md),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: TrackingSpacing.md,
-                    ),
-                    onPressed: pausePressed,
-                    child: Text(
-                      pauseLabel,
-                      style: TrackingTypography.title.copyWith(
-                        color: CupertinoColors.white,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: TrackingSpacing.md),
-              ],
-              Expanded(
-                child: CupertinoButton(
-                  key: const Key('tracking-start-stop-button'),
-                  color: actionColor,
-                  borderRadius: BorderRadius.circular(TrackingRadius.md),
-                  padding: const EdgeInsets.symmetric(vertical: TrackingSpacing.md),
-                  onPressed: widget.isPreparingStart ? null : stopPressed,
-                  child: Text(
-                    stopLabel,
-                    style: TrackingTypography.title.copyWith(
-                      color: CupertinoColors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      );
-    }
-
-    return Column(
-      children: [
-        if (canQuickRepeat) ...[
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              key: const Key('tracking-repeat-last-button'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(46),
-                side: BorderSide(
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                ),
-              ),
-              onPressed: () => widget.onStart(widget.suggestedActivityType!),
-              icon: const Icon(Icons.history),
-              label: Text(
-                l10n.trackingRepeatLast(
-                  _activityLabel(l10n, widget.suggestedActivityType!),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: TrackingSpacing.sm),
-        ],
-        Row(
-          children: [
-            if (canPauseOrResume) ...[
               Expanded(
                 child: FilledButton.tonal(
                   key: const Key('tracking-pause-resume-button'),
                   style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52),
+                    minimumSize: const Size.fromHeight(56),
                     textStyle: TrackingTypography.title,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(TrackingRadius.md),
@@ -520,87 +466,173 @@ class _TrackingControlsState extends State<TrackingControls> {
                   child: Text(pauseLabel),
                 ),
               ),
-              const SizedBox(width: TrackingSpacing.md),
-            ],
-            Expanded(
-              child: FilledButton(
-                key: const Key('tracking-start-stop-button'),
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                  backgroundColor: actionColor,
-                  foregroundColor: Colors.white,
-                  textStyle: TrackingTypography.title,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(TrackingRadius.md),
+              const SizedBox(width: TrackingSpacing.sm),
+              Expanded(
+                child: FilledButton(
+                  key: const Key('tracking-start-stop-button'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(56),
+                    backgroundColor: actionColor,
+                    foregroundColor: Colors.white,
+                    textStyle: TrackingTypography.title,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(TrackingRadius.md),
+                    ),
                   ),
+                  onPressed: widget.isPreparingStart ? null : stopPressed,
+                  child: Text(stopLabel),
                 ),
-                onPressed: widget.isPreparingStart ? null : stopPressed,
-                child: Text(stopLabel),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    // IDLE State
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          flex: 4, 
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.activityTypeLabel,
+                style: EndurainTypography.helper(Theme.of(context).colorScheme),
+              ),
+              const SizedBox(height: 4),
+              _buildActivityTypeSelector(l10n, isEnabled: true),
+            ],
+          ),
+        ),
+        const SizedBox(width: TrackingSpacing.md),
+        Expanded(
+          flex: 6,
+          child: FilledButton(
+            key: const Key('tracking-start-stop-button'),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(56),
+              backgroundColor: TrackingSemanticColors.success,
+              foregroundColor: Colors.white,
+              textStyle: EndurainTypography.metricLabel(
+                Theme.of(context).colorScheme,
+              ).copyWith(fontSize: 20, fontWeight: FontWeight.w800),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(TrackingRadius.md),
               ),
             ),
-          ],
+            onPressed: widget.isPreparingStart ? null : stopPressed,
+            child: Text(stopLabel),
+          ),
         ),
       ],
     );
   }
 
-  Widget _segmentLabelWithIcon(String text, IconData? icon) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: TrackingSpacing.md),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[Icon(icon, size: 14), const SizedBox(width: 6)],
-          Text(text),
-        ],
+  Widget _buildActivityTypeSelector(
+    AppLocalizations l10n, {
+    required bool isEnabled,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final label = _catalogLabel(_selectedActivity, l10n);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: const Key('tracking-activity-type-selector'),
+        borderRadius: BorderRadius.circular(TrackingRadius.md),
+        onTap: isEnabled
+            ? () async {
+                final selectedId = await showActivityTypePickerSheet(
+                  context: context,
+                  selectedTypeId: _selectedActivity.id,
+                  labelBuilder: (item) => _catalogLabel(item, l10n),
+                );
+                if (selectedId == null) return;
+                setState(() {
+                  _selectedActivity = ActivityTypeCatalog.byId(selectedId);
+                });
+              }
+            : null,
+        child: Ink(
+          height: 56,
+          key: const Key('tracking-activity-type'),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(TrackingRadius.md),
+            border: Border.all(color: colorScheme.outlineVariant),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: TrackingSpacing.sm,
+              vertical: TrackingSpacing.sm,
+            ),
+            child: Row(
+              children: [
+                Icon(_selectedActivity.icon, size: 18),
+                const SizedBox(width: EndurainSpacing.xs),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: EndurainTypography.metricLabel(colorScheme).copyWith(
+                      color: colorScheme.onSurface,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: EndurainSpacing.xs),
+                Icon(
+                  isEnabled ? Icons.expand_more_rounded : Icons.lock_outline,
+                  size: 18,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildTypeChip({
-    required String label,
-    required ActivityType value,
-    required bool isEnabled,
-  }) {
-    final selected = _selectedType == value;
-    final chipForeground = selected
-        ? Colors.black
-        : Theme.of(context).colorScheme.onSurface;
-    return ChoiceChip(
-      key: Key('tracking-type-${value.name}'),
-      label: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(_activityIcon(value), size: 16, color: chipForeground),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TrackingTypography.body.copyWith(
-              color: chipForeground,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-      selected: selected,
-      onSelected: isEnabled
-          ? (_) {
-              setState(() {
-                _selectedType = value;
-              });
-            }
-          : null,
-      side: BorderSide(
-        color: selected
-            ? TrackingSemanticColors.info
-            : Colors.grey.withValues(alpha: 0.4),
-      ),
-      selectedColor: TrackingSemanticColors.info.withValues(alpha: 0.16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(TrackingRadius.pill),
-      ),
-    );
+  String _catalogLabel(ActivityTypeCatalogItem item, AppLocalizations l10n) {
+    return localizeActivityTypeById(l10n, item.id);
   }
+
+  double? _currentSpeedKmh(List<TrackPoint> points) {
+    if (points.length < 2) return null;
+    final last = points.last;
+    final previous = points[points.length - 2];
+    final dtSeconds =
+        last.timestamp.difference(previous.timestamp).inMilliseconds / 1000;
+    if (dtSeconds <= 0) return null;
+    final distanceMeters = _distanceMeters(
+      previous.latitude,
+      previous.longitude,
+      last.latitude,
+      last.longitude,
+    );
+    if (!distanceMeters.isFinite || distanceMeters <= 0) return null;
+    return (distanceMeters / dtSeconds) * 3.6;
+  }
+
+  double _distanceMeters(double lat1, double lon1, double lat2, double lon2) {
+    const earthRadius = 6371000.0;
+    final dLat = _degToRad(lat2 - lat1);
+    final dLon = _degToRad(lon2 - lon1);
+    final a =
+        (sin(dLat / 2) * sin(dLat / 2)) +
+        cos(_degToRad(lat1)) *
+            cos(_degToRad(lat2)) *
+            (sin(dLon / 2) * sin(dLon / 2));
+    final c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    return earthRadius * c;
+  }
+
+  double _degToRad(double deg) => deg * (pi / 180.0);
 
   String _statusText(AppLocalizations l10n, TrackingSessionState state) {
     switch (state) {
@@ -645,121 +677,20 @@ class _TrackingControlsState extends State<TrackingControls> {
     }
     return l10n.trackingPace;
   }
-
-  IconData _activityIcon(ActivityType type) {
-    switch (type) {
-      case ActivityType.run:
-        return Icons.directions_run;
-      case ActivityType.ride:
-        return Icons.directions_bike;
-      case ActivityType.walk:
-        return Icons.hiking;
-    }
-  }
-
-  String _activityLabel(AppLocalizations l10n, ActivityType type) {
-    switch (type) {
-      case ActivityType.run:
-        return l10n.activityTypeRun;
-      case ActivityType.ride:
-        return l10n.activityTypeRide;
-      case ActivityType.walk:
-        return l10n.activityTypeWalk;
-    }
-  }
 }
 
-class _StatusPillMaterial extends StatelessWidget {
-  const _StatusPillMaterial({
+class _StatusGpsLine extends StatelessWidget {
+  const _StatusGpsLine({
     super.key,
-    required this.color,
-    required this.label,
-  });
-
-  final Color color;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: TrackingSpacing.md,
-        vertical: TrackingSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(TrackingRadius.pill),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: TrackingSpacing.sm),
-          Text(
-            label,
-            style: TrackingTypography.body.copyWith(
-              color: color,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatusPillCupertino extends StatelessWidget {
-  const _StatusPillCupertino({
-    super.key,
-    required this.color,
-    required this.label,
-  });
-
-  final Color color;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(TrackingRadius.pill),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: TrackingSpacing.md,
-          vertical: TrackingSpacing.sm,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(CupertinoIcons.recordingtape, size: 14, color: color),
-            const SizedBox(width: TrackingSpacing.sm),
-            Text(
-              label,
-              style: TrackingTypography.body.copyWith(
-                color: color,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _GpsFixIndicator extends StatelessWidget {
-  const _GpsFixIndicator({
+    required this.status,
+    required this.statusColor,
     required this.hasGpsFix,
     required this.isPreparingStart,
     required this.countdownSeconds,
   });
 
+  final String status;
+  final Color statusColor;
   final bool hasGpsFix;
   final bool isPreparingStart;
   final int countdownSeconds;
@@ -767,8 +698,7 @@ class _GpsFixIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final icon = hasGpsFix ? Icons.gps_fixed_rounded : Icons.gps_not_fixed_rounded;
-    final color = hasGpsFix
+    final gpsColor = hasGpsFix
         ? TrackingSemanticColors.success
         : Theme.of(context).colorScheme.error;
     final base = hasGpsFix ? l10n.trackingGpsReady : l10n.trackingGpsSearching;
@@ -778,17 +708,33 @@ class _GpsFixIndicator extends StatelessWidget {
 
     return Row(
       children: [
-        Icon(icon, size: 15, color: color),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: TrackingSpacing.sm,
+            vertical: TrackingSpacing.xs,
+          ),
+          decoration: BoxDecoration(
+            color: statusColor.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(TrackingRadius.pill),
+          ),
+          child: Text(
+            status,
+            style: TrackingTypography.body.copyWith(
+              color: statusColor,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
         const SizedBox(width: TrackingSpacing.sm),
         Expanded(
           child: Text(
             message,
-            key: const Key('tracking-gps-fix-label'),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: color,
+              color: gpsColor,
               fontWeight: FontWeight.w700,
             ),
-            maxLines: 2,
           ),
         ),
       ],
@@ -796,45 +742,108 @@ class _GpsFixIndicator extends StatelessWidget {
   }
 }
 
-class _MetricRow extends StatelessWidget {
-  const _MetricRow({
-    required this.leftLabel,
-    required this.leftValue,
-    required this.rightLabel,
-    required this.rightValue,
-    required this.textStyle,
-    required this.metaStyle,
+class _MetricPager extends StatelessWidget {
+  const _MetricPager({
+    required this.pageController,
+    required this.page,
+    required this.onPageChanged,
+    required this.firstPageTop,
+    required this.firstPageBottom,
+    required this.secondPageTop,
+    required this.secondPageBottom,
   });
 
-  final String leftLabel;
-  final String leftValue;
-  final String rightLabel;
-  final String rightValue;
-  final TextStyle textStyle;
-  final TextStyle metaStyle;
+  final PageController pageController;
+  final int page;
+  final ValueChanged<int> onPageChanged;
+  final Widget firstPageTop;
+  final Widget firstPageBottom;
+  final Widget secondPageTop;
+  final Widget secondPageBottom;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final active = Theme.of(context).colorScheme.primary;
+    final inactive = Theme.of(context).colorScheme.outlineVariant;
+    
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(
-          child: _MetricCell(
-            label: leftLabel,
-            value: leftValue,
-            textStyle: textStyle,
-            metaStyle: metaStyle,
+        SizedBox(
+          height: 160, 
+          child: PageView(
+            controller: pageController,
+            onPageChanged: onPageChanged,
+            children: [
+              _MetricPageBody(top: firstPageTop, bottom: firstPageBottom),
+              _MetricPageBody(top: secondPageTop, bottom: secondPageBottom),
+            ],
           ),
         ),
-        const SizedBox(width: TrackingSpacing.md),
-        Expanded(
-          child: _MetricCell(
-            label: rightLabel,
-            value: rightValue,
-            textStyle: textStyle,
-            metaStyle: metaStyle,
-          ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _PageDot(
+              active: page == 0,
+              activeColor: active,
+              inactiveColor: inactive,
+            ),
+            const SizedBox(width: 6),
+            _PageDot(
+              active: page == 1,
+              activeColor: active,
+              inactiveColor: inactive,
+            ),
+          ],
         ),
       ],
+    );
+  }
+}
+
+class _MetricPageBody extends StatelessWidget {
+  const _MetricPageBody({required this.top, required this.bottom});
+
+  final Widget top;
+  final Widget bottom;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Column(
+        children: [
+          Expanded(child: top),
+          const SizedBox(height: 4),
+          Expanded(child: bottom),
+        ],
+      ),
+    );
+  }
+}
+
+class _PageDot extends StatelessWidget {
+  const _PageDot({
+    required this.active,
+    required this.activeColor,
+    required this.inactiveColor,
+  });
+
+  final bool active;
+  final Color activeColor;
+  final Color inactiveColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      width: active ? 14 : 6,
+      height: 6,
+      decoration: BoxDecoration(
+        color: active ? activeColor : inactiveColor,
+        borderRadius: BorderRadius.circular(999),
+      ),
     );
   }
 }
@@ -856,18 +865,18 @@ class _MetricCell extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Theme.of(
-          context,
-        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+        color: Theme.of(context).colorScheme.surface,
+        border: Border.all(color: Theme.of(context).colorScheme.outline, width: 1),
         borderRadius: BorderRadius.circular(TrackingRadius.md),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: TrackingSpacing.md,
-          vertical: TrackingSpacing.sm,
+          horizontal: 8,
+          vertical: 4,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               label,
@@ -875,15 +884,19 @@ class _MetricCell extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: TrackingSpacing.xs),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                value,
-                style: textStyle,
-                maxLines: 1,
-                softWrap: false,
+            Expanded(
+              child: SizedBox(
+                width: double.infinity,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: textStyle,
+                    maxLines: 1,
+                    softWrap: false,
+                  ),
+                ),
               ),
             ),
           ],

@@ -15,6 +15,38 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
+import 'package:endurain/core/services/audio_feedback_service.dart';
+
+class MockAudioFeedbackService implements AudioFeedbackService {
+  @override
+  bool get isEnabled => false;
+
+  @override
+  Future<void> announceCountdown(int seconds) async {}
+
+  @override
+  Future<void> announceGpsStatus({required bool isLost}) async {}
+
+  @override
+  Future<void> announceSplit({required int km, required double paceSecondsPerKm}) async {}
+
+  @override
+  Future<void> announceStart() async {}
+
+  @override
+  Future<void> speak(String text) async {}
+
+  @override
+  Future<void> stop() async {}
+
+  @override
+  void toggleEnabled(bool enabled) {}
+
+  @override
+  Future<void> updateSettings({required bool enabled, required bool announceSplits, required bool announceStart, bool announceGps = true}) async {}
+}
+
+
 class _FakeStorageService extends SecureStorageService {
   final Map<String, String> _store = <String, String>{};
 
@@ -122,6 +154,7 @@ void main() {
       final positionStream = _FakePositionStreamProvider();
       final repository = InMemoryActivityRepository();
       final engine = TrackingSessionEngine(
+        audioService: MockAudioFeedbackService(),
         repository: repository,
         positionStreamProvider: positionStream,
       );

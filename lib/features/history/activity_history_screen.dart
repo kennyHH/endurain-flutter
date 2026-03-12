@@ -1,4 +1,10 @@
+import 'package:share_plus/share_plus.dart';
+import 'package:endurain/core/services/gpx_exporter.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'dart:async';
+import 'dart:math';
 
 import 'package:endurain/core/models/activity.dart';
 import 'package:endurain/core/models/route_display_mode.dart';
@@ -10,6 +16,7 @@ import 'package:endurain/core/constants/map_constants.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/core/utils/activity_upload_feedback_mapper.dart';
 import 'package:endurain/l10n/app_localizations.dart';
+import 'package:endurain/core/theme/endurain_design_system.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -22,9 +29,7 @@ enum _HistorySortOrder { newest, oldest, longest, shortest }
 enum _HistoryGroup { today, yesterday, thisWeek, older }
 
 class _HistoryListEntry {
-  const _HistoryListEntry.header(this.title)
-    : activity = null,
-      key = null;
+  const _HistoryListEntry.header(this.title) : activity = null, key = null;
   const _HistoryListEntry.item(this.activity, this.key) : title = null;
 
   final String? title;
@@ -323,9 +328,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
         SnackBar(content: Text(l10n.historyDeletedSuccess)),
       );
     } else {
-      messenger.showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(error)));
     }
   }
 
@@ -431,17 +434,19 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
             padding: const EdgeInsets.fromLTRB(4, 2, 4, 2),
             child: Text(
               entry.title!,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
             ),
           );
         }
         final activity = entry.activity!;
         return Card(
-          elevation: 2,
+          elevation: 0,
+          color: Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
+            side: BorderSide(color: Theme.of(context).colorScheme.outline),
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(14),
@@ -454,6 +459,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Icon(
                         _activityIconForType(activity.activityType),
@@ -462,92 +468,114 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(
-                          (activity.name == null || activity.name!.isEmpty)
-                              ? _activityTypeLabel(l10n, activity.activityType)
-                              : activity.name!,
-                          style: Theme.of(context).textTheme.titleMedium,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              (activity.name == null || activity.name!.isEmpty)
+                                  ? _activityTypeLabel(
+                                      l10n,
+                                      activity.activityType,
+                                    )
+                                  : activity.name!,
+                              style: Theme.of(context).textTheme.titleMedium,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${_formatDate(activity.startedAt)} • ${_formatTime(activity.startedAt)}-${_formatTime(activity.endedAt ?? activity.startedAt)}',
+                              style: Theme.of(context).textTheme.bodySmall,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: activity.uploaded
+                              ? Theme.of(context).colorScheme.primaryContainer
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.secondaryContainer,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              activity.uploaded
+                                  ? Icons.cloud_done_rounded
+                                  : Icons.cloud_upload_rounded,
+                              size: 12,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              activity.uploaded
+                                  ? l10n.historyUploadDone
+                                  : l10n.historyUploadPending,
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(fontWeight: FontWeight.w800),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 2),
                       Icon(
                         Icons.chevron_right_rounded,
-                        size: 30,
+                        size: 28,
                         color: Theme.of(context).colorScheme.primary,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${_formatDate(activity.startedAt)} • ${_formatTime(activity.startedAt)}-${_formatTime(activity.endedAt ?? activity.startedAt)}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    '${_formatDistance(activity.distanceMeters)} • ${MetricFormatter.formatDurationLabeled(activity.durationSeconds)} • +${activity.elevationGainMeters.toStringAsFixed(0)} ${l10n.trackingElevationUnitM}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (!activity.uploaded) ...[
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.secondaryContainer.withValues(alpha: 0.7),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        l10n.historyUploadPending,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
                   const SizedBox(height: 10),
                   _ActivityRouteMap(
                     points: activity.trackPoints,
-                    interactive: false,
-                    height: 110,
+                    interactive: true,
+                    height: 116,
                     useMatchedTrack: _useMatchedTrack,
                     activityType: activity.activityType,
+                    showRouteStatus: false,
                   ),
                   const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                  Row(
                     children: [
-                      _CompactMetric(
-                        label: l10n.trackingDuration,
-                        value: _formatDurationLabeled(
-                          activity.durationSeconds,
+                      Expanded(
+                        child: _CompactMetric(
+                          label: l10n.trackingDuration,
+                          value: _formatDurationLabeled(activity.durationSeconds),
+                          compact: true,
                         ),
-                        width: 126,
                       ),
-                      _CompactMetric(
-                        label: l10n.trackingDistance,
-                        value: _formatDistance(activity.distanceMeters),
-                        width: 126,
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: _CompactMetric(
+                          label: l10n.trackingDistance,
+                          value: _formatDistance(activity.distanceMeters),
+                          compact: true,
+                        ),
                       ),
-                      _CompactMetric(
-                        label: _formatMovementMetric(activity, l10n).label,
-                        value: _formatMovementMetric(activity, l10n).value,
-                        width: 126,
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: _CompactMetric(
+                          label: _formatMovementMetric(activity, l10n).label,
+                          value: _formatMovementMetric(activity, l10n).value,
+                          compact: true,
+                        ),
                       ),
-                      _CompactMetric(
-                        label: l10n.trackingElevationGain,
-                        value:
-                            '${activity.elevationGainMeters.toStringAsFixed(0)} ${l10n.trackingElevationUnitM}',
-                        width: 126,
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: _CompactMetric(
+                          label: l10n.trackingElevationGain,
+                          value: '${activity.elevationGainMeters.toStringAsFixed(0)} ${l10n.trackingElevationUnitM}',
+                          compact: true,
+                        ),
                       ),
                     ],
                   ),
@@ -585,7 +613,10 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
 
   String _formatDistance(double distanceMeters) {
     final l10n = AppLocalizations.of(context)!;
-    return MetricFormatter.formatDistanceKm(distanceMeters, l10n.trackingDistanceUnitKm);
+    return MetricFormatter.formatDistanceKm(
+      distanceMeters,
+      l10n.trackingDistanceUnitKm,
+    );
   }
 
   List<_HistoryListEntry> _buildHistoryEntries(
@@ -602,7 +633,9 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
         currentGroup = group;
         result.add(_HistoryListEntry.header(_groupTitle(group, l10n)));
       }
-      result.add(_HistoryListEntry.item(activity, 'history-item-${activity.id}'));
+      result.add(
+        _HistoryListEntry.item(activity, 'history-item-${activity.id}'),
+      );
     }
     return result;
   }
@@ -611,7 +644,9 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
     final local = date.toLocal();
     final todayStart = DateTime(now.year, now.month, now.day);
     final yesterdayStart = todayStart.subtract(const Duration(days: 1));
-    final weekStart = todayStart.subtract(Duration(days: todayStart.weekday - 1));
+    final weekStart = todayStart.subtract(
+      Duration(days: todayStart.weekday - 1),
+    );
 
     if (!local.isBefore(todayStart)) {
       return _HistoryGroup.today;
@@ -637,7 +672,6 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
         return l10n.historyGroupOlder;
     }
   }
-
 }
 
 class ActivityDetailScreen extends StatelessWidget {
@@ -656,10 +690,47 @@ class ActivityDetailScreen extends StatelessWidget {
   final Future<void> Function(String name)? onRename;
   final Future<void> Function()? onDelete;
 
+  
+  Future<void> _shareActivity(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      final exporter = GpxExporter();
+      final gpxString = exporter.export(activity);
+      
+      // Create a valid filename
+      final dateStr = activity.startedAt.toIso8601String().split('T')[0];
+      final typeStr = activity.activityType.name;
+      final filename = 'endurain_${typeStr}_${dateStr}.gpx';
+      
+      // Share using XFile from data
+      // Note: On some platforms, saving to a temp file might be more robust, 
+      // but XFile.fromData is the cleanest without path_provider dependency check.
+      // However, share_plus 12.x supports XFile.fromData well.
+      
+      final xFile = XFile.fromData(
+        Uint8List.fromList(utf8.encode(gpxString)),
+        mimeType: 'application/gpx+xml',
+        name: filename,
+        lastModified: DateTime.now(),
+      );
+      
+      await Share.shareXFiles(
+        [xFile],
+        subject: 'Endurain Activity: ${activity.name ?? typeStr}',
+        text: 'Check out my activity on Endurain!',
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to export GPX: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final points = activity.trackPoints.length;
     final type = switch (activity.activityType) {
       ActivityType.run => l10n.activityTypeRun,
       ActivityType.ride => l10n.activityTypeRide,
@@ -693,6 +764,12 @@ class ActivityDetailScreen extends StatelessWidget {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.ios_share),
+            tooltip: "Export GPX", // TODO: Localize if possible
+            onPressed: () => _shareActivity(context),
+          ),
+
           if (onRename != null)
             IconButton(
               icon: const Icon(Icons.edit),
@@ -743,28 +820,19 @@ class ActivityDetailScreen extends StatelessWidget {
         children: [
           _ActivityRouteMap(
             points: activity.trackPoints,
-            interactive: false,
-            height: compact ? 206 : 240,
+            interactive: true,
+            height: compact ? 274 : 330,
             useMatchedTrack: useMatchedTrack,
             activityType: activity.activityType,
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (context) => _RouteOverviewScreen(
-                    activity: activity,
-                    useMatchedTrack: useMatchedTrack,
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          _MapTapHint(
-            text: l10n.historyTapMapForOverview,
-            compact: compact,
           ),
           const SizedBox(height: 12),
           Card(
+            elevation: 0,
+            color: Theme.of(context).colorScheme.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: BorderSide(color: Theme.of(context).colorScheme.outline),
+            ),
             child: Padding(
               padding: EdgeInsets.all(compact ? 10 : 12),
               child: Column(
@@ -809,19 +877,13 @@ class ActivityDetailScreen extends StatelessWidget {
                         value: elevationLoss,
                         compact: compact,
                       ),
-                      _MetricTile(
-                        icon: Icons.pin_drop_outlined,
-                        label: l10n.historyTrackPoints,
-                        value: points.toString(),
-                        compact: compact,
-                      ),
                     ],
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _ElevationProfileCard(points: activity.trackPoints, compact: compact),
           if (onRetryUpload != null && !activity.uploaded) ...[
             const SizedBox(height: 12),
@@ -845,10 +907,16 @@ class _MovementMetric {
   final String value;
 }
 
-_MovementMetric _formatMovementMetric(Activity activity, AppLocalizations l10n) {
+_MovementMetric _formatMovementMetric(
+  Activity activity,
+  AppLocalizations l10n,
+) {
   if (activity.activityType == ActivityType.ride) {
     final speed = activity.averageSpeedKmh;
-    final value = MetricFormatter.formatSpeedKmh(speed, l10n.trackingSpeedUnitKmh);
+    final value = MetricFormatter.formatSpeedKmh(
+      speed,
+      l10n.trackingSpeedUnitKmh,
+    );
     return _MovementMetric(label: l10n.trackingAverageSpeed, value: value);
   }
   final pace = _formatPace(activity.averagePaceSecondsPerKm, l10n);
@@ -856,7 +924,10 @@ _MovementMetric _formatMovementMetric(Activity activity, AppLocalizations l10n) 
 }
 
 String _formatPace(double? paceSecondsPerKm, AppLocalizations l10n) {
-  return MetricFormatter.formatPace(paceSecondsPerKm, l10n.trackingPaceUnitMinKm);
+  return MetricFormatter.formatPace(
+    paceSecondsPerKm,
+    l10n.trackingPaceUnitMinKm,
+  );
 }
 
 class _MetricTile extends StatelessWidget {
@@ -884,10 +955,11 @@ class _MetricTile extends StatelessWidget {
           vertical: compact ? 8 : 9,
         ),
         decoration: BoxDecoration(
-          color: Theme.of(
-            context,
-          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outline,
+          ),
         ),
         child: Row(
           children: [
@@ -916,7 +988,7 @@ class _MetricTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700,
-                      fontSize: compact ? 12.5 : null,
+                      fontSize: compact ? 14.5 : 16,
                     ),
                   ),
                 ],
@@ -933,6 +1005,33 @@ String _formatDurationLabeled(int seconds) {
   return MetricFormatter.formatDurationLabeled(seconds);
 }
 
+double _trackDistanceMeters(List<TrackPoint> points) {
+  if (points.length < 2) return 0;
+  var total = 0.0;
+  for (var i = 1; i < points.length; i++) {
+    total += _haversineMeters(
+      points[i - 1].latitude,
+      points[i - 1].longitude,
+      points[i].latitude,
+      points[i].longitude,
+    );
+  }
+  return total;
+}
+
+double _haversineMeters(double lat1, double lon1, double lat2, double lon2) {
+  const earthRadius = 6371000.0;
+  final dLat = (lat2 - lat1) * (pi / 180.0);
+  final dLon = (lon2 - lon1) * (pi / 180.0);
+  final a =
+      (sin(dLat / 2) * sin(dLat / 2)) +
+      cos(lat1 * (pi / 180.0)) *
+          cos(lat2 * (pi / 180.0)) *
+          (sin(dLon / 2) * sin(dLon / 2));
+  final c = 2 * atan2(sqrt(a), sqrt(1 - a));
+  return earthRadius * c;
+}
+
 class _AdaptiveMetricGrid extends StatelessWidget {
   const _AdaptiveMetricGrid({required this.children, required this.compact});
 
@@ -946,9 +1045,10 @@ class _AdaptiveMetricGrid extends StatelessWidget {
         final spacing = compact ? 8.0 : 10.0;
         final minWidth = compact ? 136.0 : 156.0;
         final maxColumns = constraints.maxWidth >= 640 ? 3 : 2;
-        final columns = ((constraints.maxWidth + spacing) / (minWidth + spacing))
-            .floor()
-            .clamp(1, maxColumns);
+        final columns =
+            ((constraints.maxWidth + spacing) / (minWidth + spacing))
+                .floor()
+                .clamp(1, maxColumns);
         final tileWidth =
             (constraints.maxWidth - (spacing * (columns - 1))) / columns;
         return Wrap(
@@ -971,76 +1071,59 @@ class _AdaptiveMetricGrid extends StatelessWidget {
   }
 }
 
-class _MapTapHint extends StatelessWidget {
-  const _MapTapHint({required this.text, required this.compact});
+class _CompactMetric extends StatelessWidget {
+  const _CompactMetric({
+    required this.label,
+    required this.value,
+    this.compact = false,
+  });
 
-  final String text;
+  final String label;
+  final String value;
+  
   final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(
-          Icons.open_in_full_rounded,
-          size: compact ? 14 : 16,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            text,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontSize: compact ? 11.5 : null,
+    final container = Container(
+      padding: EdgeInsets.symmetric(horizontal: compact ? 4 : 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              fontSize: compact ? 9 : null,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CompactMetric extends StatelessWidget {
-  const _CompactMetric({required this.label, required this.value, this.width});
-
-  final String label;
-  final String value;
-  final double? width;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        decoration: BoxDecoration(
-          color: Theme.of(
-            context,
-          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall,
-            ),
-            const SizedBox(height: 2),
-            Text(
+          SizedBox(height: compact ? 0 : 2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
               value,
               maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w800,
+                fontSize: compact ? 13 : null,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
+
+    return container;
   }
 }
 
@@ -1294,72 +1377,6 @@ class _HistoryFilterBottomSheetState extends State<_HistoryFilterBottomSheet> {
   }
 }
 
-class _RouteOverviewScreen extends StatelessWidget {
-  const _RouteOverviewScreen({
-    required this.activity,
-    required this.useMatchedTrack,
-  });
-
-  final Activity activity;
-  final bool useMatchedTrack;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final compact = MediaQuery.sizeOf(context).width < 380;
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.historyDetailTitle)),
-      body: ListView(
-        padding: EdgeInsets.all(compact ? 12 : 16),
-        children: [
-          _ActivityRouteMap(
-            points: activity.trackPoints,
-            interactive: true,
-            height: compact ? 280 : 340,
-            useMatchedTrack: useMatchedTrack,
-            activityType: activity.activityType,
-          ),
-          const SizedBox(height: 12),
-          _AdaptiveMetricGrid(
-            compact: compact,
-            children: [
-              _MetricTile(
-                icon: Icons.timer_outlined,
-                label: l10n.trackingDuration,
-                value: _formatDurationLabeled(activity.durationSeconds),
-                compact: compact,
-              ),
-              _MetricTile(
-                icon: Icons.straighten,
-                label: l10n.trackingDistance,
-                value:
-                    '${(activity.distanceMeters / 1000).toStringAsFixed(2)} ${l10n.trackingDistanceUnitKm}',
-                compact: compact,
-              ),
-              _MetricTile(
-                icon: Icons.north_east_rounded,
-                label: l10n.trackingElevationGain,
-                value:
-                    '${activity.elevationGainMeters.toStringAsFixed(0)} ${l10n.trackingElevationUnitM}',
-                compact: compact,
-              ),
-              _MetricTile(
-                icon: Icons.south_east_rounded,
-                label: l10n.historyElevationLoss,
-                value:
-                    '${activity.elevationLossMeters.toStringAsFixed(0)} ${l10n.trackingElevationUnitM}',
-                compact: compact,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _ElevationProfileCard(points: activity.trackPoints, compact: compact),
-        ],
-      ),
-    );
-  }
-}
-
 class _ElevationProfileCard extends StatelessWidget {
   const _ElevationProfileCard({required this.points, required this.compact});
 
@@ -1368,10 +1385,27 @@ class _ElevationProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final altitudes = points
+    final rawAltitudes = points
         .map((point) => point.altitudeMeters)
         .whereType<double>()
         .toList();
+        
+    // Moving average smoothing
+    final altitudes = <double>[];
+    if (rawAltitudes.isNotEmpty) {
+      const windowSize = 5;
+      for (var i = 0; i < rawAltitudes.length; i++) {
+        double sum = 0;
+        int count = 0;
+        for (var j = i - windowSize ~/ 2; j <= i + windowSize ~/ 2; j++) {
+          if (j >= 0 && j < rawAltitudes.length) {
+            sum += rawAltitudes[j];
+            count++;
+          }
+        }
+        altitudes.add(sum / count);
+      }
+    }
     return Card(
       child: Padding(
         padding: EdgeInsets.all(compact ? 10 : 12),
@@ -1407,24 +1441,86 @@ class _ElevationProfileCard extends StatelessWidget {
               )
             else
               SizedBox(
-                height: 140,
+                height: compact ? 82 : 94,
                 width: double.infinity,
-                child: CustomPaint(
-                  painter: _ElevationProfilePainter(
-                    altitudes: altitudes,
-                    lineColor: Theme.of(context).colorScheme.primary,
-                    fillColor: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.14),
-                    gridColor: Theme.of(
-                      context,
-                    ).colorScheme.outline.withValues(alpha: 0.22),
-                  ),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      left: 34,
+                      child: CustomPaint(
+                        painter: _ElevationProfilePainter(
+                          altitudes: altitudes,
+                          lineColor: Theme.of(context).colorScheme.primary,
+                          fillColor: Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.14),
+                          gridColor: Theme.of(
+                            context,
+                          ).colorScheme.outline.withValues(alpha: 0.22),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      child: Text(
+                        '${altitudes.reduce((a, b) => a > b ? a : b).toStringAsFixed(0)} ${AppLocalizations.of(context)!.trackingElevationUnitM}',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      child: Text(
+                        '${altitudes.reduce((a, b) => a < b ? a : b).toStringAsFixed(0)} ${AppLocalizations.of(context)!.trackingElevationUnitM}',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
+            const SizedBox(height: 6),
+            _ElevationDistanceScale(points: points, compact: compact),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ElevationDistanceScale extends StatelessWidget {
+  const _ElevationDistanceScale({required this.points, required this.compact});
+
+  final List<TrackPoint> points;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final totalKm = _trackDistanceMeters(points) / 1000;
+    final middleKm = totalKm / 2;
+    final textStyle = Theme.of(context).textTheme.labelSmall?.copyWith(
+      fontSize: compact ? 10.5 : 11.5,
+      fontWeight: FontWeight.w600,
+    );
+    return Row(
+      children: [
+        Text('0 ${l10n.trackingDistanceUnitKm}', style: textStyle),
+        const Spacer(),
+        Text(
+          '${middleKm.toStringAsFixed(1)} ${l10n.trackingDistanceUnitKm}',
+          style: textStyle,
+        ),
+        const Spacer(),
+        Text(
+          '${totalKm.toStringAsFixed(1)} ${l10n.trackingDistanceUnitKm}',
+          style: textStyle,
+        ),
+      ],
     );
   }
 }
@@ -1452,16 +1548,31 @@ class _ElevationProfilePainter extends CustomPainter {
     final span = (max - min).abs() < 0.0001 ? 1.0 : (max - min);
     final stepX = size.width / (altitudes.length - 1);
 
-    final linePath = Path();
+    final points = <Offset>[];
     for (var i = 0; i < altitudes.length; i++) {
       final x = stepX * i;
       final normalized = (altitudes[i] - min) / span;
       final y = size.height - (normalized * size.height);
-      if (i == 0) {
-        linePath.moveTo(x, y);
-      } else {
-        linePath.lineTo(x, y);
+      points.add(Offset(x, y));
+    }
+
+    final linePath = Path()..moveTo(points.first.dx, points.first.dy);
+    if (points.length == 2) {
+      linePath.lineTo(points.last.dx, points.last.dy);
+    } else {
+      for (var i = 1; i < points.length - 1; i++) {
+        final xc = (points[i].dx + points[i + 1].dx) / 2;
+        final yc = (points[i].dy + points[i + 1].dy) / 2;
+        linePath.quadraticBezierTo(points[i].dx, points[i].dy, xc, yc);
       }
+      final penultimate = points[points.length - 2];
+      final last = points.last;
+      linePath.quadraticBezierTo(
+        penultimate.dx,
+        penultimate.dy,
+        last.dx,
+        last.dy,
+      );
     }
 
     final fillPath = Path.from(linePath)
@@ -1502,7 +1613,7 @@ class _ActivityRouteMap extends StatefulWidget {
     required this.height,
     required this.useMatchedTrack,
     required this.activityType,
-    this.onTap,
+    this.showRouteStatus = true,
   });
 
   static const _mapMatchingPreviewService = MapMatchingPreviewService();
@@ -1512,7 +1623,7 @@ class _ActivityRouteMap extends StatefulWidget {
   final double height;
   final bool useMatchedTrack;
   final ActivityType activityType;
-  final VoidCallback? onTap;
+  final bool showRouteStatus;
 
   @override
   State<_ActivityRouteMap> createState() => _ActivityRouteMapState();
@@ -1540,12 +1651,12 @@ class _ActivityRouteMapState extends State<_ActivityRouteMap> {
   }
 
   Future<void> _resolveDisplayPoints() async {
-    final result =
-        await _ActivityRouteMap._mapMatchingPreviewService.resolveRouteDisplayAsync(
-      rawPoints: widget.points,
-      useMatchedPreview: widget.useMatchedTrack,
-      activityType: widget.activityType,
-    );
+    final result = await _ActivityRouteMap._mapMatchingPreviewService
+        .resolveRouteDisplayAsync(
+          rawPoints: widget.points,
+          useMatchedPreview: widget.useMatchedTrack,
+          activityType: widget.activityType,
+        );
     if (!mounted) return;
     setState(() {
       _displayPoints = result.points;
@@ -1577,7 +1688,6 @@ class _ActivityRouteMapState extends State<_ActivityRouteMap> {
     final latLngPoints = displayPoints
         .map((p) => LatLng(p.latitude, p.longitude))
         .toList();
-    final center = latLngPoints[latLngPoints.length ~/ 2];
     final routeOutline = Theme.of(context).brightness == Brightness.dark
         ? Colors.black.withValues(alpha: 0.7)
         : Colors.white.withValues(alpha: 0.92);
@@ -1588,10 +1698,14 @@ class _ActivityRouteMapState extends State<_ActivityRouteMap> {
         height: widget.height,
         child: FlutterMap(
           options: MapOptions(
-            initialCenter: center,
-            initialZoom: widget.interactive ? 11.5 : 10.8,
+            initialCameraFit: CameraFit.bounds(
+              bounds: LatLngBounds.fromPoints(latLngPoints),
+              padding: const EdgeInsets.all(30),
+            ),
             interactionOptions: InteractionOptions(
-              flags: widget.interactive ? InteractiveFlag.all : InteractiveFlag.none,
+              flags: widget.interactive
+                  ? InteractiveFlag.all
+                  : InteractiveFlag.none,
             ),
           ),
           children: [
@@ -1640,39 +1754,37 @@ class _ActivityRouteMapState extends State<_ActivityRouteMap> {
       ),
     );
     final statusText = switch (_routeSource) {
-      RouteMatchSource.matched =>
-        AppLocalizations.of(context)!.routeStatusMatched,
-      RouteMatchSource.fallback =>
-        AppLocalizations.of(context)!.routeStatusFallback,
+      RouteMatchSource.matched => AppLocalizations.of(
+        context,
+      )!.routeStatusMatched,
+      RouteMatchSource.fallback => AppLocalizations.of(
+        context,
+      )!.routeStatusFallback,
       RouteMatchSource.raw => AppLocalizations.of(context)!.routeStatusRaw,
     };
     return Stack(
       children: [
         map,
-        Positioned(
-          top: 8,
-          right: 8,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Text(
-                statusText,
-                style: Theme.of(
+        if (widget.showRouteStatus)
+          Positioned(
+            top: 8,
+            right: 8,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Theme.of(
                   context,
-                ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700),
+                ).colorScheme.surface.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(999),
               ),
-            ),
-          ),
-        ),
-        if (widget.onTap != null)
-          Positioned.fill(
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(onTap: widget.onTap),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Text(
+                  statusText,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
             ),
           ),
       ],
@@ -1692,13 +1804,13 @@ class _RoutePointBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 1.5),
+        border: Border.all(color: Theme.of(context).colorScheme.onSurface, width: 1.5),
       ),
       alignment: Alignment.center,
       child: Text(
         label,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface,
           fontWeight: FontWeight.w800,
           fontSize: 11,
         ),

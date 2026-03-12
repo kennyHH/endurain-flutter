@@ -24,6 +24,8 @@ class SecureStorageService {
   static const _gpsFilterModeKey = 'gps_filter_mode';
   static const _mapMatchingPreviewEnabledKey = 'map_matching_preview_enabled';
   static const _allowInsecureTlsKey = 'allow_insecure_tls';
+  static const _metricConfigKey = 'metric_config';
+  
 
   // Read a value
   Future<String?> read({required String key}) async {
@@ -97,6 +99,9 @@ class SecureStorageService {
 
   // Token-specific methods
   Future<String?> getAccessToken() => read(key: _accessTokenKey);
+
+  Future<String?> getMetricConfig() => read(key: _metricConfigKey);
+  Future<void> setMetricConfig(String config) => write(key: _metricConfigKey, value: config);
   Future<void> setAccessToken(String token) =>
       write(key: _accessTokenKey, value: token);
   Future<void> deleteAccessToken() => delete(key: _accessTokenKey);
