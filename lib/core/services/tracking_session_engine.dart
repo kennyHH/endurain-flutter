@@ -5,6 +5,7 @@ import 'package:endurain/core/models/activity.dart';
 import 'package:endurain/core/models/gps_filter_mode.dart';
 import 'package:endurain/core/services/activity_repository.dart';
 import 'package:endurain/core/services/location_service.dart';
+import 'package:endurain/core/services/audio_feedback_service.dart';
 
 enum TrackingSessionState { idle, recording, paused, stopped }
 
@@ -115,10 +116,12 @@ class TrackingSessionEngine {
     this.maxRunSpeedMetersPerSecond = 16.0,
     this.maxRideSpeedMetersPerSecond = 22.0,
     GpsFilterMode gpsFilterMode = GpsFilterMode.auto,
+    AudioFeedbackService? audioService,
   }) : _repository = repository,
        _positionStreamProvider = positionStreamProvider,
        _nowProvider = nowProvider ?? DateTime.now,
-       _gpsFilterMode = gpsFilterMode;
+       _gpsFilterMode = gpsFilterMode,
+       _audio = audioService ?? AudioFeedbackService();
 
   final ActivityRepository _repository;
   final PositionStreamProvider _positionStreamProvider;
@@ -131,7 +134,19 @@ class TrackingSessionEngine {
   final double maxWalkSpeedMetersPerSecond;
   final double maxRunSpeedMetersPerSecond;
   final double maxRideSpeedMetersPerSecond;
-  GpsFilterMode _gpsFilterMode;
+    GpsFilterMode _gpsFilterMode;
+  
+  // Audio & Splits
+  final AudioFeedbackService _audio;
+  int _lastSplitKm = 0;
+  DateTime? _lastSplitTime;
+  
+  // GPS Watchdog
+  Timer? _gpsWatchdogTimer;
+  bool _isGpsSignalLost = false;
+  DateTime? _lastGpsAnnouncementTime;
+  static const Duration _gpsDebounce = Duration(seconds: 60);
+
 
   final StreamController<TrackingSessionSnapshot> _streamController =
       StreamController<TrackingSessionSnapshot>.broadcast();
@@ -149,9 +164,21 @@ class TrackingSessionEngine {
     _gpsFilterMode = mode;
   }
 
-  Future<bool> start(ActivityType activityType, {DateTime? startedAt}) async {
+  Future<bool> start(ActivityType activityType, {DateTime? startedAt, bool useCountdown = false}) async {
     if (_snapshot.state == TrackingSessionState.recording) {
       return false;
+    }
+    
+    if (useCountdown) {
+      // 6, 5, 4, 3, 2, 1
+      for (var i = 6; i > 0; i--) {
+        await _audio.announceCountdown(i);
+        await Future.delayed(const Duration(seconds: 1));
+      }
+      await _audio.announceStart(); // "Go!"
+    } else {
+      // Just announce start if no countdown
+      await _audio.announceStart();
     }
 
     await _positionSubscription?.cancel();
@@ -165,10 +192,19 @@ class TrackingSessionEngine {
       elevationGainMeters: 0,
       trackPoints: const <TrackPoint>[],
     );
+    
+    // Reset state
+    _lastSplitKm = 0;
+    _lastSplitTime = startTime;
+    _isGpsSignalLost = false;
+    _lastGpsAnnouncementTime = null;
+    
     _emitSnapshot();
     _startDurationTicker();
 
     _subscribeToPositionStream();
+    _startGpsWatchdog();
+    
     return true;
   }
 
@@ -177,6 +213,7 @@ class TrackingSessionEngine {
     await _positionSubscription?.cancel();
     _positionSubscription = null;
     _durationTicker?.cancel();
+    _gpsWatchdogTimer?.cancel();
     _durationTicker = null;
     _positionReconnectTimer?.cancel();
     _positionReconnectTimer = null;
@@ -200,6 +237,7 @@ class TrackingSessionEngine {
     await _positionSubscription?.cancel();
     _positionSubscription = null;
     _durationTicker?.cancel();
+    _gpsWatchdogTimer?.cancel();
     _durationTicker = null;
     _positionReconnectTimer?.cancel();
     _positionReconnectTimer = null;
@@ -242,6 +280,7 @@ class TrackingSessionEngine {
     await _positionSubscription?.cancel();
     _positionSubscription = null;
     _durationTicker?.cancel();
+    _gpsWatchdogTimer?.cancel();
     _durationTicker = null;
     _positionReconnectTimer?.cancel();
     _positionReconnectTimer = null;
@@ -253,10 +292,40 @@ class TrackingSessionEngine {
     await _repository.delete(id);
   }
 
-  void dispose() {
+    void _startGpsWatchdog() {
+    _gpsWatchdogTimer?.cancel();
+    _gpsWatchdogTimer = Timer(const Duration(seconds: 10), _onGpsSignalLost);
+  }
+  
+  void _onGpsSignalLost() {
+    if (_snapshot.state != TrackingSessionState.recording) return;
+    if (!_isGpsSignalLost) {
+      _isGpsSignalLost = true;
+      _announceGpsStatus(true);
+    }
+  }
+  
+  void _onGpsSignalRecovered() {
+    if (_isGpsSignalLost) {
+      _isGpsSignalLost = false;
+      _announceGpsStatus(false);
+    }
+    _startGpsWatchdog();
+  }
+  
+  void _announceGpsStatus(bool isLost) {
+    final now = _nowProvider();
+    if (_lastGpsAnnouncementTime == null || 
+        now.difference(_lastGpsAnnouncementTime!) > _gpsDebounce) {
+      _audio.announceGpsStatus(isLost: isLost);
+      _lastGpsAnnouncementTime = now;
+    }
+  }
+void dispose() {
     _positionSubscription?.cancel();
     _positionReconnectTimer?.cancel();
     _durationTicker?.cancel();
+    _gpsWatchdogTimer?.cancel();
     _streamController.close();
   }
 
@@ -284,7 +353,20 @@ class TrackingSessionEngine {
   }
 
   void _onPosition(PositionSample sample) {
+    // Reset watchdog on any update (even if low accuracy, at least we have signal)
+    // But if accuracy is terrible, maybe we still consider it lost?
+    // Let's assume ANY update means we have signal, but maybe poor quality.
+    // User said "accuracy drops or signal is gone".
+    
     final accuracy = sample.horizontalAccuracyMeters;
+    
+    // Check signal quality
+    if (accuracy != null && accuracy > 50) { // Threshold for "Lost" signal quality
+       _onGpsSignalLost();
+    } else {
+       _onGpsSignalRecovered();
+    }
+
     final maxAcceptedAccuracy = _maxAccuracyForCurrentActivity();
     if (accuracy != null &&
         accuracy.isFinite &&
@@ -302,9 +384,43 @@ class TrackingSessionEngine {
     if (!accepted) {
       return;
     }
+    
+    // Check splits
+    _checkSplit();
   }
 
-  bool addPoint(TrackPoint point) {
+    void _checkSplit() {
+    final currentKm = (_snapshot.distanceMeters / 1000).floor();
+    if (currentKm > _lastSplitKm) {
+      final now = _nowProvider();
+      final lastTime = _lastSplitTime ?? _snapshot.startTime!;
+      
+      // Calculate pace for this specific kilometer (or segment)
+      // Duration since last split
+      final durationSinceLast = now.difference(lastTime);
+      final seconds = durationSinceLast.inSeconds;
+      
+      // Distance covered: usually exactly 1km if we check often enough, 
+      // but might be slightly more.
+      // Pace = seconds / km.
+      // If we crossed 1km boundary, we assume we covered 1km since last split?
+      // Not exactly if we missed updates.
+      // But good enough approximation: "Last Split Pace".
+      
+      // Better: Pace of the *current* km?
+      // If currentKm = 1, _lastSplitKm = 0.
+      // We covered 1km. Duration is `seconds`.
+      // Pace = seconds per km.
+      
+      final pace = seconds.toDouble(); // seconds for 1 km
+      
+      _audio.announceSplit(km: currentKm, paceSecondsPerKm: pace);
+      
+      _lastSplitKm = currentKm;
+      _lastSplitTime = now;
+    }
+  }
+bool addPoint(TrackPoint point) {
     if (_snapshot.state != TrackingSessionState.recording ||
         _snapshot.startTime == null) {
       return false;
@@ -357,6 +473,7 @@ class TrackingSessionEngine {
 
   void _startDurationTicker() {
     _durationTicker?.cancel();
+    // Do not cancel watchdog here!
     _durationTicker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (_snapshot.state != TrackingSessionState.recording ||
           _snapshot.startTime == null) {

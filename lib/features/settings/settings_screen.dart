@@ -1,13 +1,15 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/features/settings/server_settings_screen.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/core/constants/ui_constants.dart';
 import 'package:endurain/core/theme/app_theme.dart';
+import 'package:endurain/core/theme/endurain_design_system.dart';
 import 'package:endurain/core/models/gps_filter_mode.dart';
 import 'package:endurain/core/models/route_display_mode.dart';
+import 'package:endurain/core/services/audio_feedback_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
@@ -18,6 +20,8 @@ class SettingsScreen extends StatefulWidget {
     required this.routeDisplayMode,
     required this.gpsFilterMode,
     required this.selectedThemePreset,
+    
+    
     this.onThemeModeChanged,
     this.onHighContrastChanged,
     this.onRouteDisplayModeChanged,
@@ -36,6 +40,8 @@ class SettingsScreen extends StatefulWidget {
   final ValueChanged<RouteDisplayMode>? onRouteDisplayModeChanged;
   final ValueChanged<GpsFilterMode>? onGpsFilterModeChanged;
   final ValueChanged<AppThemePreset>? onThemePresetChanged;
+  
+  
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -53,7 +59,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   String _version = '';
   String _buildInfo = '';
-  String _copyright = '';
+    String _copyright = '';
+  
+  // Audio Settings
+  bool _audioEnabled = true;
+  
+  
 
   Future<void> _pickThemeMode(AppLocalizations l10n) async {
     final options = {
@@ -116,12 +127,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _pickThemePreset(AppLocalizations l10n) async {
     final options = {
-      AppThemePreset.endurain: l10n.settingsThemePresetEndurain,
       AppThemePreset.ocean: l10n.settingsThemePresetOcean,
       AppThemePreset.forest: l10n.settingsThemePresetForest,
+      AppThemePreset.slate: "Slate", // TODO: Localize
+      AppThemePreset.twilight: "Twilight", // TODO: Localize
+      AppThemePreset.ember: "Ember", // TODO: Localize
+      AppThemePreset.berry: "Berry", // TODO: Localize
     };
+    
+    AppThemePreset? selected;
+    
     if (PlatformUtils.isApplePlatform) {
-      final selected = await showCupertinoModalPopup<AppThemePreset>(
+      selected = await showCupertinoModalPopup<AppThemePreset>(
         context: context,
         builder: (context) {
           return CupertinoActionSheet(
@@ -141,38 +158,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
           );
         },
       );
-      if (selected != null) {
-        widget.onThemePresetChanged?.call(selected);
-      }
-      return;
+    } else {
+      selected = await showModalBottomSheet<AppThemePreset>(
+        context: context,
+        builder: (context) {
+          return SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: options.entries
+                  .map(
+                    (entry) => ListTile(
+                      title: Text(entry.value),
+                      trailing: widget.selectedThemePreset == entry.key
+                          ? const Icon(Icons.check)
+                          : null,
+                      onTap: () => Navigator.of(context).pop(entry.key),
+                    ),
+                  )
+                  .toList(),
+            ),
+          );
+        },
+      );
     }
-    final selected = await showModalBottomSheet<AppThemePreset>(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: options.entries
-                .map(
-                  (entry) => ListTile(
-                    title: Text(entry.value),
-                    trailing: widget.selectedThemePreset == entry.key
-                        ? const Icon(Icons.check)
-                        : null,
-                    onTap: () => Navigator.of(context).pop(entry.key),
-                  ),
-                )
-                .toList(),
-          ),
-        );
-      },
-    );
+
     if (selected != null) {
       widget.onThemePresetChanged?.call(selected);
     }
   }
 
-  String _themeModeLabel(AppLocalizations l10n, ThemeMode mode) {
+    String _themeModeLabel(AppLocalizations l10n, ThemeMode mode) {
     switch (mode) {
       case ThemeMode.light:
         return l10n.settingsThemeLight;
@@ -185,12 +200,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   String _themePresetLabel(AppLocalizations l10n, AppThemePreset preset) {
     switch (preset) {
-      case AppThemePreset.endurain:
-        return l10n.settingsThemePresetEndurain;
       case AppThemePreset.ocean:
         return l10n.settingsThemePresetOcean;
       case AppThemePreset.forest:
         return l10n.settingsThemePresetForest;
+      case AppThemePreset.slate:
+        return "Slate";
+      case AppThemePreset.twilight:
+        return "Twilight";
+      case AppThemePreset.ember:
+        return "Ember";
+      case AppThemePreset.berry:
+        return "Berry";
     }
   }
 
@@ -248,10 +269,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  String _routeDisplayModeLabel(
-    AppLocalizations l10n,
-    RouteDisplayMode mode,
-  ) {
+  String _routeDisplayModeLabel(AppLocalizations l10n, RouteDisplayMode mode) {
     switch (mode) {
       case RouteDisplayMode.auto:
         return l10n.settingsRouteDisplayModeAuto;
@@ -338,12 +356,59 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Color _presetPrimary(AppThemePreset preset, bool dark) {
+    switch (preset) {
+      case AppThemePreset.ocean:
+        return dark ? const Color(0xFF33C4E6) : const Color(0xFF006B8A);
+      case AppThemePreset.forest:
+        return dark ? const Color(0xFF21BFA3) : const Color(0xFF006A63);
+      case AppThemePreset.slate:
+        return dark ? const Color(0xFF90A4AE) : const Color(0xFF455A64);
+      case AppThemePreset.twilight:
+        return dark ? const Color(0xFF7986CB) : const Color(0xFF283593);
+      case AppThemePreset.ember:
+        return dark ? const Color(0xFFFF8A65) : const Color(0xFFD84315);
+      case AppThemePreset.berry:
+        return dark ? const Color(0xFFF06292) : const Color(0xFFAD1457);
+    }
+  }
+
+  Color _presetSecondary(AppThemePreset preset, bool dark) {
+    switch (preset) {
+      case AppThemePreset.ocean:
+        return dark ? const Color(0xFF7DB4FF) : const Color(0xFF1E5FA5);
+      case AppThemePreset.forest:
+        return dark ? const Color(0xFF7AC9FF) : const Color(0xFF2D5EA0);
+      case AppThemePreset.slate:
+        return const Color(0xFFB0BEC5);
+      case AppThemePreset.twilight:
+        return const Color(0xFF9FA8DA);
+      case AppThemePreset.ember:
+        return const Color(0xFFFFAB91);
+      case AppThemePreset.berry:
+        return const Color(0xFFF48FB1);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    _loadAudioSettings();
     _loadVersion();
   }
 
+    void _loadAudioSettings() {
+    final service = AudioFeedbackService();
+    setState(() {
+      _audioEnabled = service.isEnabled;
+    });
+  }
+
+  void _toggleAudio(bool value) {
+    setState(() => _audioEnabled = value);
+    AudioFeedbackService().toggleEnabled(value);
+  }
+  
   Future<void> _loadVersion() async {
     final packageInfo = await PackageInfo.fromPlatform();
     final currentYear = DateTime.now().year;
@@ -357,11 +422,72 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  
+  void _showInfoDialog(String title, String message) {
+    if (PlatformUtils.isApplePlatform) {
+      showCupertinoDialog(
+        context: context,
+        builder: (context) => CupertinoAlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final systemBrightness = MediaQuery.platformBrightnessOf(context);
+    final effectiveBrightness = switch (widget.selectedThemeMode) {
+      ThemeMode.light => Brightness.light,
+      ThemeMode.dark => Brightness.dark,
+      ThemeMode.system => systemBrightness,
+    };
+    final previewIsDark = effectiveBrightness == Brightness.dark;
+    final previewPrimary = _presetPrimary(
+      widget.selectedThemePreset,
+      previewIsDark,
+    );
+    final previewSecondary = _presetSecondary(
+      widget.selectedThemePreset,
+      previewIsDark,
+    );
+    final previewBackground = previewIsDark
+        ? EndurainColors.darkBackground
+        : EndurainColors.lightBackground;
+    final previewSurface = previewIsDark
+        ? EndurainColors.darkSurface
+        : EndurainColors.lightSurface;
+    final previewOnSurface = previewIsDark
+        ? EndurainColors.darkOnSurface
+        : EndurainColors.lightOnSurface;
+    final previewOutline = widget.highContrast
+        ? (previewIsDark ? const Color(0xFF8FA6B8) : const Color(0xFF456173))
+        : (previewIsDark
+              ? EndurainColors.darkOutline
+              : EndurainColors.lightOutline);
 
-    // Cupertino style for iOS/macOS
     if (PlatformUtils.isApplePlatform) {
       return CupertinoPageScaffold(
         navigationBar: CupertinoNavigationBar(
@@ -370,94 +496,115 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              CupertinoListSection.insetGrouped(
-                header: Text(l10n.settingsThemeMode),
-                children: [
-                  CupertinoListTile.notched(
-                    leading: const Icon(CupertinoIcons.paintbrush),
-                    title: Text(l10n.settingsThemeMode),
-                    subtitle: Text(
-                      _themeModeLabel(l10n, widget.selectedThemeMode),
-                    ),
-                    trailing: const CupertinoListTileChevron(),
-                    onTap: () => _pickThemeMode(l10n),
-                  ),
-                  CupertinoListTile.notched(
-                    leading: const Icon(CupertinoIcons.drop),
-                    title: Text(l10n.settingsThemePreset),
-                    subtitle: Text(
-                      _themePresetLabel(l10n, widget.selectedThemePreset),
-                    ),
-                    trailing: const CupertinoListTileChevron(),
-                    onTap: () => _pickThemePreset(l10n),
-                  ),
-                  CupertinoListTile.notched(
-                    leading: const Icon(CupertinoIcons.eye),
-                    title: Text(l10n.settingsHighContrast),
-                    trailing: CupertinoSwitch(
-                      value: widget.highContrast,
-                      onChanged: widget.onHighContrastChanged,
-                    ),
-                  ),
-                ],
-              ),
-              CupertinoListSection.insetGrouped(
-                header: Text(l10n.settingsRouteMatchingTitle),
-                children: [
-                  CupertinoListTile.notched(
-                    leading: const Icon(CupertinoIcons.map_pin_ellipse),
-                    title: Text(l10n.settingsRouteDisplayModeTitle),
-                    additionalInfo: Text(
-                      _routeDisplayModeLabel(l10n, widget.routeDisplayMode),
-                    ),
-                    trailing: const CupertinoListTileChevron(),
-                    onTap: () => _pickRouteDisplayMode(l10n),
-                  ),
-                  CupertinoListTile.notched(
-                    leading: const Icon(CupertinoIcons.location_solid),
-                    title: Text(l10n.settingsGpsFilterModeTitle),
-                    subtitle: Text(
-                      _gpsFilterModeDescription(l10n, widget.gpsFilterMode),
-                    ),
-                    additionalInfo: Text(
-                      _gpsFilterModeLabel(l10n, widget.gpsFilterMode),
-                    ),
-                    trailing: const CupertinoListTileChevron(),
-                    onTap: () => _pickGpsFilterMode(l10n),
-                  ),
-                ],
-              ),
-              CupertinoListSection.insetGrouped(
-                header: Text(l10n.serverSettings),
-                children: [
-                  CupertinoListTile(
-                    leading: const Icon(CupertinoIcons.globe),
-                    title: Text(l10n.serverSettings),
-                    trailing: const CupertinoListTileChevron(),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        CupertinoPageRoute<void>(
-                          builder: (context) =>
-                              ServerSettingsScreen(onLogout: widget.onLogout),
+              Expanded(
+                child: ListView(
+                  children: [
+                    CupertinoListSection.insetGrouped(
+                      header: Text(l10n.settingsSectionTheme),
+                      children: [
+                        
+                        CupertinoListTile.notched(
+                          leading: const Tooltip(message: "Choose between Light, Dark, or System theme.", child: Icon(CupertinoIcons.brightness)),
+                          title: Text(l10n.settingsThemeMode),
+                          subtitle: Text(
+                            _themeModeLabel(l10n, widget.selectedThemeMode),
+                          ),
+                          trailing: const CupertinoListTileChevron(),
+                          onTap: () => _pickThemeMode(l10n),
                         ),
-                      );
-                    },
-                  ),
-                  CupertinoListTile.notched(
-                    leading: const Icon(CupertinoIcons.info_circle),
-                    title: const Text('App version'),
-                    subtitle: Text(
-                      _version.isEmpty ? '-' : '$_version\n$_buildInfo',
+                        CupertinoListTile.notched(
+                          leading: const Tooltip(message: "Select a color scheme for the app UI.", child: Icon(CupertinoIcons.drop)),
+                          title: Text(l10n.settingsThemePreset),
+                          subtitle: Text(
+                            _themePresetLabel(l10n, widget.selectedThemePreset),
+                          ),
+                          trailing: const CupertinoListTileChevron(),
+                          onTap: () => _pickThemePreset(l10n),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              Padding(
-                padding: const EdgeInsets.only(
-                  bottom: UIConstants.paddingStandard,
+                    CupertinoListSection.insetGrouped(
+                      header: Text(l10n.settingsSectionRouteDisplay),
+                      children: [
+                        CupertinoListTile.notched(
+                          leading: const Tooltip(message: "Choose how the route is drawn on the map.", child: Icon(CupertinoIcons.map_pin_ellipse)),
+                          title: Text(l10n.settingsRouteDisplayModeTitle),
+                          additionalInfo: Text(
+                            _routeDisplayModeLabel(
+                              l10n,
+                              widget.routeDisplayMode,
+                            ),
+                          ),
+                          trailing: const CupertinoListTileChevron(),
+                          onTap: () => _pickRouteDisplayMode(l10n),
+                        ),
+                        CupertinoListTile.notched(
+                          leading: const Tooltip(message: "Configure GPS filtering strength.", child: Icon(CupertinoIcons.location_solid)),
+                          title: Text(l10n.settingsGpsFilterModeTitle),
+                          subtitle: Text(
+                            _gpsFilterModeDescription(
+                              l10n,
+                              widget.gpsFilterMode,
+                            ),
+                          ),
+                          additionalInfo: Text(
+                            _gpsFilterModeLabel(l10n, widget.gpsFilterMode),
+                          ),
+                          trailing: const CupertinoListTileChevron(),
+                          onTap: () => _pickGpsFilterMode(l10n),
+                        ),
+                      ],
+                    ),
+                    CupertinoListSection.insetGrouped(
+                      header: const Text("Audio Feedback"), // TODO: Localize
+                      children: [
+                        CupertinoListTile.notched(
+                          leading: const Tooltip(message: "Enable audio feedback.", child: Icon(CupertinoIcons.volume_up)),
+                          title: const Text("Voice Coach"), // TODO: Localize
+                          trailing: CupertinoSwitch(
+                            value: _audioEnabled,
+                            onChanged: _toggleAudio,
+                          ),
+                        ),
+                      ],
+                    ),
+                    CupertinoListSection.insetGrouped(
+                      header: Text(l10n.settingsSectionServer),
+                      children: [
+                        CupertinoListTile.notched(
+                          leading: const Tooltip(message: "Configure server connection.", child: Icon(CupertinoIcons.globe)),
+                          title: Text(l10n.serverSettings),
+                          trailing: const CupertinoListTileChevron(),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              CupertinoPageRoute<void>(
+                                builder: (context) => ServerSettingsScreen(
+                                  onLogout: widget.onLogout,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    CupertinoListSection.insetGrouped(
+                      header: Text(l10n.settingsSectionAboutApp),
+                      children: [
+                        CupertinoListTile.notched(
+                          leading: const Tooltip(message: "App version and build information.", child: Icon(CupertinoIcons.info_circle)),
+                          title: Text(l10n.settingsAppVersionTitle),
+                          subtitle: Text(
+                            _version.isEmpty ? '-' : '$_version\n$_buildInfo',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: EndurainSpacing.md),
                 child: Text(
                   _copyright,
                   style: CupertinoTheme.of(context).textTheme.tabLabelTextStyle
@@ -470,30 +617,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     }
 
-    // Material style for Android
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsScreen)),
       body: Column(
         children: [
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(EndurainSpacing.md),
               children: [
-                Text(
-                  l10n.settingsThemeMode,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 8),
+                _SettingsSectionHeader(title: l10n.settingsSectionTheme),
                 Card(
                   child: Column(
                     children: [
+                      
                       ListTile(
-                        leading: const Icon(Icons.palette_outlined),
+                        leading: const Icon(Icons.brightness_6_outlined),
                         title: Text(l10n.settingsThemeMode),
                         subtitle: Text(
                           _themeModeLabel(l10n, widget.selectedThemeMode),
                         ),
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.info_outline),
+                              onPressed: () => _showInfoDialog(l10n.settingsThemeMode, "Choose between Light, Dark, or System theme."),
+                            ),
+                            const Icon(Icons.chevron_right),
+                          ],
+                        ),
                         onTap: () => _pickThemeMode(l10n),
                       ),
                       ListTile(
@@ -502,34 +654,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         subtitle: Text(
                           _themePresetLabel(l10n, widget.selectedThemePreset),
                         ),
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.info_outline),
+                              onPressed: () => _showInfoDialog(l10n.settingsThemePreset, "Select a color scheme for the app UI."), // TODO: Localize description
+                            ),
+                            const Icon(Icons.chevron_right),
+                          ],
+                        ),
                         onTap: () => _pickThemePreset(l10n),
-                      ),
-                      SwitchListTile(
-                        secondary: const Icon(Icons.contrast),
-                        title: Text(l10n.settingsHighContrast),
-                        value: widget.highContrast,
-                        onChanged: widget.onHighContrastChanged,
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  l10n.settingsRouteMatchingTitle,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 8),
+                const SizedBox(height: EndurainSpacing.md),
+                _SettingsSectionHeader(title: l10n.settingsSectionRouteDisplay),
                 Card(
                   child: Column(
                     children: [
                       ListTile(
-                        leading: const Icon(Icons.tune),
+                        leading: const Icon(Icons.route_outlined),
                         title: Text(l10n.settingsRouteDisplayModeTitle),
                         subtitle: Text(
                           _routeDisplayModeLabel(l10n, widget.routeDisplayMode),
                         ),
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.info_outline),
+                              onPressed: () => _showInfoDialog(l10n.settingsRouteDisplayModeTitle, "Choose how the route is drawn on the map (Raw GPS or Matched to roads)."), // TODO: Localize description
+                            ),
+                            const Icon(Icons.chevron_right),
+                          ],
+                        ),
                         onTap: () => _pickRouteDisplayMode(l10n),
                       ),
                       ListTile(
@@ -539,21 +699,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           '${_gpsFilterModeLabel(l10n, widget.gpsFilterMode)}\n'
                           '${_gpsFilterModeDescription(l10n, widget.gpsFilterMode)}',
                         ),
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.info_outline),
+                              onPressed: () => _showInfoDialog(l10n.settingsGpsFilterModeTitle, _gpsFilterModeDescription(l10n, widget.gpsFilterMode)),
+                            ),
+                            const Icon(Icons.chevron_right),
+                          ],
+                        ),
                         onTap: () => _pickGpsFilterMode(l10n),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  l10n.serverSettings,
-                  style: Theme.of(context).textTheme.titleSmall,
+                const SizedBox(height: EndurainSpacing.md),
+                                _SettingsSectionHeader(title: "Audio Feedback"), // TODO: Localize
+                Card(
+                  child: Column(
+                    children: [
+                      SwitchListTile(
+                        secondary: const Tooltip(message: "Enable audio feedback during activities.", child: Icon(Icons.volume_up)),
+                        title: const Text("Voice Coach"), // TODO: Localize
+                        value: _audioEnabled,
+                        onChanged: _toggleAudio,
+                      ),
+                      // More granular settings later
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: EndurainSpacing.md),
+_SettingsSectionHeader(title: l10n.settingsSectionServer),
                 Card(
                   child: ListTile(
-                    leading: const Icon(Icons.dns),
+                    leading: const Tooltip(message: "Configure server connection.", child: Icon(Icons.dns)),
                     title: Text(l10n.serverSettings),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {
@@ -567,13 +747,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
                 ),
-                const SizedBox(height: 12),
-                Text('App', style: Theme.of(context).textTheme.titleSmall),
-                const SizedBox(height: 8),
+                const SizedBox(height: EndurainSpacing.md),
+                _SettingsSectionHeader(title: l10n.settingsSectionAboutApp),
                 Card(
                   child: ListTile(
-                    leading: const Icon(Icons.info_outline),
-                    title: const Text('App version'),
+                    leading: const Tooltip(message: "App version and build information.", child: Icon(Icons.info_outline)),
+                    title: Text(l10n.settingsAppVersionTitle),
                     subtitle: Text(
                       _version.isEmpty ? '-' : '$_version\n$_buildInfo',
                     ),
@@ -583,7 +762,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(bottom: UIConstants.paddingStandard),
+            padding: const EdgeInsets.only(bottom: EndurainSpacing.md),
             child: Text(
               _copyright,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -592,6 +771,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SettingsSectionHeader extends StatelessWidget {
+  const _SettingsSectionHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: EndurainSpacing.xs),
+      child: Text(
+        title,
+        style: EndurainTypography.metricLabel(Theme.of(context).colorScheme)
+            .copyWith(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w800,
+              color: Theme.of(context).colorScheme.primary,
+            ),
       ),
     );
   }

@@ -23,11 +23,12 @@ class _AppState extends State<App> {
   bool _isLoading = true;
   bool _isAuthenticated = false;
   ThemeMode _themeMode = ThemeMode.system;
-  bool _highContrast = false;
+  bool _highContrast = true;
   RouteDisplayMode _routeDisplayMode = RouteDisplayMode.auto;
   GpsFilterMode _gpsFilterMode = GpsFilterMode.auto;
   bool _allowInsecureTls = false;
-  AppThemePreset _themePreset = AppThemePreset.endurain;
+  AppThemePreset _themePreset = AppThemePreset.slate;
+  
 
   @override
   void initState() {
@@ -38,16 +39,16 @@ class _AppState extends State<App> {
   Future<void> _checkAuthentication() async {
     bool isAuth = false;
     ThemeMode nextThemeMode = ThemeMode.system;
-    var nextHighContrast = false;
+    var nextHighContrast = true;
     var nextRouteDisplayMode = RouteDisplayMode.auto;
     var nextGpsFilterMode = GpsFilterMode.auto;
     var nextAllowInsecureTls = false;
-    var nextThemePreset = AppThemePreset.endurain;
+    var nextThemePreset = AppThemePreset.slate;
     try {
       isAuth = await _storage.isAuthenticated();
       final savedThemeMode = await _storage.getThemeMode();
       nextThemeMode = _themeModeFromStorage(savedThemeMode);
-      nextHighContrast = await _storage.getHighContrast();
+      nextHighContrast = true;
       final storedRouteMode = await _storage.getRouteDisplayMode();
       if (storedRouteMode == null || storedRouteMode.isEmpty) {
         final legacyMapMatching = await _storage.getMapMatchingPreviewEnabled();
@@ -61,7 +62,10 @@ class _AppState extends State<App> {
         await _storage.getGpsFilterMode(),
       );
       nextAllowInsecureTls = await _storage.getAllowInsecureTls();
-      nextThemePreset = _themePresetFromStorage(await _storage.getThemePreset());
+      nextThemePreset = _themePresetFromStorage(
+        await _storage.getThemePreset(),
+      );
+
     } catch (_) {
       // Fall back to unauthenticated when secure storage is unavailable.
       isAuth = false;
@@ -88,6 +92,7 @@ class _AppState extends State<App> {
       case 'dark':
         return ThemeMode.dark;
       case 'system':
+        return ThemeMode.system;
       default:
         return ThemeMode.system;
     }
@@ -110,20 +115,33 @@ class _AppState extends State<App> {
         return AppThemePreset.ocean;
       case 'forest':
         return AppThemePreset.forest;
-      case 'endurain':
+      case 'slate':
+        return AppThemePreset.slate;
+      case 'twilight':
+        return AppThemePreset.twilight;
+      case 'ember':
+        return AppThemePreset.ember;
+      case 'berry':
+        return AppThemePreset.berry;
       default:
-        return AppThemePreset.endurain;
+        return AppThemePreset.slate;
     }
   }
 
   String _themePresetToStorage(AppThemePreset preset) {
     switch (preset) {
-      case AppThemePreset.endurain:
-        return 'endurain';
       case AppThemePreset.ocean:
         return 'ocean';
       case AppThemePreset.forest:
         return 'forest';
+      case AppThemePreset.slate:
+        return 'slate';
+      case AppThemePreset.twilight:
+        return 'twilight';
+      case AppThemePreset.ember:
+        return 'ember';
+      case AppThemePreset.berry:
+        return 'berry';
     }
   }
 
@@ -175,7 +193,7 @@ class _AppState extends State<App> {
     await _storage.setGpsFilterMode(gpsFilterModeToStorage(mode));
   }
 
-  Future<void> _onThemePresetChanged(AppThemePreset preset) async {
+    Future<void> _onThemePresetChanged(AppThemePreset preset) async {
     setState(() {
       _themePreset = preset;
     });
@@ -219,6 +237,7 @@ class _AppState extends State<App> {
                     preset: _themePreset,
                   )
                 : AppTheme.cupertinoLightTheme(
+                    
                     highContrast: _highContrast,
                     preset: _themePreset,
                   ),
@@ -247,6 +266,8 @@ class _AppState extends State<App> {
                 onAllowInsecureTlsChanged: _onAllowInsecureTlsChanged,
                 selectedThemePreset: _themePreset,
                 onThemePresetChanged: _onThemePresetChanged,
+                
+                
               )
             : LoginScreen(onLoginSuccess: _onLoginSuccess),
       );
@@ -284,6 +305,8 @@ class _AppState extends State<App> {
                 onAllowInsecureTlsChanged: _onAllowInsecureTlsChanged,
                 selectedThemePreset: _themePreset,
                 onThemePresetChanged: _onThemePresetChanged,
+                
+                
               )
             : LoginScreen(onLoginSuccess: _onLoginSuccess),
       );

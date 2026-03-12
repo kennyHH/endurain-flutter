@@ -18,10 +18,12 @@ import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/services/activity_upload_service.dart';
 import 'package:endurain/core/services/map_matching_preview_service.dart';
 import 'package:endurain/core/services/tracking_session_engine.dart';
+import 'package:endurain/core/services/audio_feedback_service.dart';
 import 'package:endurain/core/utils/activity_upload_feedback_mapper.dart';
 import 'package:endurain/core/utils/metric_formatter.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/core/constants/map_constants.dart';
+import 'package:endurain/core/theme/endurain_design_system.dart';
 import 'package:endurain/features/map/widgets/tracking_controls.dart';
 
 class MapScreen extends StatefulWidget {
@@ -68,7 +70,8 @@ class _MapScreenState extends State<MapScreen> {
   bool _isLoadingLocation = false;
   bool _hasLocationPermission = false;
   bool _isLocationLocked = true; // Track if location is locked to user
-  double _heading = 0.0; // Device heading in degrees
+  double _heading = 0.0;
+  bool _isNorthUp = false; // Device heading in degrees
   StreamSubscription<CompassEvent>? _compassSubscription;
   StreamSubscription<Position>? _positionSubscription;
   StreamSubscription<TrackingSessionSnapshot>? _trackingSubscription;
@@ -79,6 +82,7 @@ class _MapScreenState extends State<MapScreen> {
   DateTime? _lastPositionAt;
   int _stableFixCount = 0;
   bool _isGpsSignalLost = false;
+  bool _audioEnabled = true;
   int _startCountdownRemaining = 0;
 
   LocationService get _locationService =>
@@ -113,6 +117,7 @@ class _MapScreenState extends State<MapScreen> {
     _loadUserLocation();
     _startCompassUpdates();
     _startGpsWatchdog();
+    _audioEnabled = AudioFeedbackService().isEnabled;
   }
 
   @override
@@ -133,18 +138,19 @@ class _MapScreenState extends State<MapScreen> {
     _ownedTrackingSessionEngine?.dispose();
     super.dispose();
   }
-
+  /// Start listening to compass heading updates
   /// Start listening to compass heading updates
   void _startCompassUpdates() {
-    // Compass is only supported on iOS and Android (not macOS)
     if (PlatformUtils.isMobile) {
-      _compassSubscription = FlutterCompass.events?.listen((
-        CompassEvent event,
-      ) {
+      _compassSubscription = FlutterCompass.events?.listen((CompassEvent event) {
         if (mounted && event.heading != null) {
+          final heading = event.heading!;
           setState(() {
-            _heading = event.heading!;
+            _heading = heading;
           });
+          if (!_isNorthUp && _isLocationLocked) {
+             _updateMapCamera(_currentLocation, heading);
+          }
         }
       });
     }
@@ -164,6 +170,26 @@ class _MapScreenState extends State<MapScreen> {
       _isLoadingLocation = true;
     });
 
+    // Optimization: Try to get last known position first for immediate fix
+    final lastKnown = await _locationService.getLastKnownPosition();
+    if (mounted && lastKnown != null) {
+      final latLng = LatLng(lastKnown.latitude, lastKnown.longitude);
+      // Only update if we are still at default location or if it's a valid fix
+      if (_currentLocation.latitude == MapConstants.defaultLatitude) {
+         setState(() {
+           _currentLocation = latLng;
+           _hasLocationPermission = true;
+           // Don't stop loading yet, wait for fresh fix
+         });
+         // Move map immediately
+         WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _updateMapCamera(latLng, _heading);
+            }
+         });
+      }
+    }
+
     final position = await _locationService.getCurrentPosition();
 
     if (mounted) {
@@ -175,7 +201,7 @@ class _MapScreenState extends State<MapScreen> {
         });
         // Wait for next frame to ensure map is ready
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          _mapController.move(_currentLocation, MapConstants.initialLoadZoom);
+          _updateMapCamera(_currentLocation, _heading);
         });
         // Start continuous position tracking
         _startPositionUpdates();
@@ -208,7 +234,7 @@ class _MapScreenState extends State<MapScreen> {
 
           // If location is locked, move map to follow user
           if (_isLocationLocked) {
-            _mapController.move(newLocation, _mapController.camera.zoom);
+            _updateMapCamera(newLocation, _heading);
           }
         }
       },
@@ -248,23 +274,138 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
-  /// Toggle location lock
-  void _toggleLocationLock() {
+  /// Center map on user location and keep position visible.
+    void _toggleAudio() {
     setState(() {
-      _isLocationLocked = !_isLocationLocked;
+      _audioEnabled = !_audioEnabled;
     });
+    AudioFeedbackService().toggleEnabled(_audioEnabled);
+  }
 
-    // If locking, center on current position
-    if (_isLocationLocked && _hasLocationPermission) {
-      _mapController.move(_currentLocation, _mapController.camera.zoom);
+        void _toggleCompassMode() {
+    setState(() {
+      _isNorthUp = !_isNorthUp;
+      _isLocationLocked = true; // Re-lock and center on mode switch
+    });
+    // Immediate smooth transition
+    _updateMapCamera(_currentLocation, _heading);
+  }
+
+
+  
+
+
+
+  /// Keep user marker visible even while interacting with the map.
+  
+  void _updateMapCamera(LatLng location, double heading) {
+    if (!_isLocationLocked) return;
+
+    final double targetRotation = _isNorthUp ? 0.0 : -heading;
+    final double currentZoom = _mapController.camera.zoom;
+    
+    // Shift center to keep user in upper part (visually centered above UI)
+    final shiftedCenter = _calculateShiftedCenter(location, currentZoom, targetRotation);
+    
+    // Use moveAndRotate if available. Assuming flutter_map 6+.
+    // If not, try-catch or separate calls. 
+    // Since we don't know the exact version, let's use move and rotate separately if needed,
+    // but moveAndRotate is standard now.
+    try {
+      _mapController.moveAndRotate(shiftedCenter, currentZoom, targetRotation);
+    } catch (_) {
+      _mapController.move(shiftedCenter, currentZoom);
+      _mapController.rotate(targetRotation);
     }
   }
 
-  /// Handle map movement by user - unlock location
-  void _onMapMoved() {
-    if (_trackingSnapshot.state == TrackingSessionState.recording) {
-      return;
+  LatLng _calculateShiftedCenter(LatLng userLoc, double zoom, double rotationDeg) {
+    // Shift map center "down" so user appears "up"
+    // 15% screen height shift
+    // This is approximate but effective for standard projections
+    
+    // We need to move the center point from UserLoc in direction (Rotation + 180)
+    // Distance in meters corresponding to 15% screen height pixels
+    
+    // Simple Approximation:
+    // At zoom 15, ~4 meters/pixel (equator)
+    // Resolution = 156543.03 * cos(lat) / 2^zoom
+    
+    final latRad = userLoc.latitude * (math.pi / 180.0);
+    final resolution = 156543.03 * math.cos(latRad) / math.pow(2, zoom);
+    
+    // Shift pixels (e.g., 100px)
+    // We don't have context size easily here without LayoutBuilder context or MediaQuery.
+    // But we are in a State class, so context is available.
+    double screenHeight = 800; // Default fallback
+    if (mounted) {
+       screenHeight = MediaQuery.of(context).size.height;
     }
+    
+    final shiftPixels = screenHeight * 0.15; 
+    final shiftMeters = shiftPixels * resolution;
+    
+    // Bearing (radians) - Screen Down is +180 relative to Screen Up (0)
+    // Screen Up is -Rotation relative to North.
+    // So Screen Down is -Rotation + 180 relative to North.
+    // Wait.
+    // Map Rotation R means North is rotated R degrees clockwise?
+    // Usually standard map rotation: 0 = North Up. 90 = East Up.
+    // If Map is rotated -90 (West Up), North is to the Right.
+    // Screen Down is always +180 relative to Screen Up.
+    // Screen Up corresponds to bearing -R on map?
+    // Let's test: R=0 (North Up). Screen Up = North (0). Screen Down = South (180). Correct.
+    // R=90 (East Up). Screen Up = East (90). Screen Down = West (270).
+    // Formula: Bearing = -R + 180?
+    // If R=90, -90+180 = 90 (East). Wrong.
+    // If Map is rotated 90 deg clockwise, North is at 3 o'clock.
+    // Up is West (270). Down is East (90).
+    // Rotation usually means camera rotation.
+    // If Camera Rot = 90, Heading = 90.
+    // Map rotates -90.
+    // Let's trust `rotationDeg` passed in which is `_mapController.rotation`.
+    // If rotation is 0, Up is North. Down is South (180).
+    // If rotation is 90, Up is West? (Map rotates CW).
+    // Let's use `radians = (rotationDeg + 180) * (pi/180)`?
+    // If R=0 -> 180 (South). Correct.
+    // If R=90 -> 270 (West).
+    // Let's verify standard behavior.
+    
+    // Actually, flutter_map rotation:
+    // 0 = North Up.
+    // 90 = North is Right. (Map rotated CW).
+    // So Up is West (270). Down is East (90).
+    // My formula `(R + 180)` gives `270`. Which is West.
+    // Wait. `R=90`. `90+180=270`.
+    // If `R=90` (North Right), Up is West (270). Down is East (90).
+    // So `R+180` gives West (Up). We want Down.
+    // So `R` gives Down?
+    // If `R=90`, `90` is East (Down). Yes!
+    // If `R=0`, `0` is North (Up). No, we want Down (South, 180).
+    // So `R + 180`?
+    // If `R=0`, `180` is South (Down). Correct.
+    // If `R=90`, `270` is West (Up). Wrong.
+    
+    // Let's rethink.
+    // Vector pointing UP on screen corresponds to bearing `-rotation` on map.
+    // Vector pointing DOWN on screen corresponds to bearing `-rotation + 180`.
+    
+    final bearingRad = (-rotationDeg + 180) * (math.pi / 180.0);
+    
+    // Destination point
+    const earthRadius = 6378137.0;
+    final dLat = (shiftMeters / earthRadius) * math.cos(bearingRad);
+    final dLon = (shiftMeters / earthRadius) * math.sin(bearingRad) / math.cos(latRad);
+    
+    return LatLng(
+      userLoc.latitude + (dLat * 180 / math.pi),
+      userLoc.longitude + (dLon * 180 / math.pi),
+    );
+  }
+
+
+    void _onMapMoved() {
+    // Unlock if user manually drags map
     if (_isLocationLocked) {
       setState(() {
         _isLocationLocked = false;
@@ -431,6 +572,11 @@ class _MapScreenState extends State<MapScreen> {
     setState(() {
       _startCountdownRemaining = _startTrackingCountdownSeconds;
     });
+    
+    // Start Engine countdown immediately (it handles audio and delay)
+    // We don't await it here so UI timer can run in parallel
+    unawaited(_trackingSessionEngine.start(activityType, useCountdown: true));
+    
     _startCountdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
@@ -441,7 +587,6 @@ class _MapScreenState extends State<MapScreen> {
         setState(() {
           _startCountdownRemaining = 0;
         });
-        _trackingSessionEngine.start(activityType);
         HapticFeedback.mediumImpact();
         return;
       }
@@ -482,9 +627,9 @@ class _MapScreenState extends State<MapScreen> {
       await _trackingSessionEngine.reset();
       if (!mounted) return;
       final l10n = AppLocalizations.of(context)!;
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text(l10n.trackingDiscardedActivity)),
-      );
+      ScaffoldMessenger.maybeOf(
+        context,
+      )?.showSnackBar(SnackBar(content: Text(l10n.trackingDiscardedActivity)));
       return;
     }
     await HapticFeedback.mediumImpact();
@@ -508,9 +653,11 @@ class _MapScreenState extends State<MapScreen> {
       final messageWithStatus = (!result.success && result.statusCode != null)
           ? '$baseMessage (HTTP ${result.statusCode})'
           : baseMessage;
-      final message = (detail != null && detail.isNotEmpty)
-          ? '$messageWithStatus - $detail'
-          : messageWithStatus;
+      final message = result.success
+          ? baseMessage
+          : ((detail != null && detail.isNotEmpty)
+                ? '$messageWithStatus - $detail'
+                : messageWithStatus);
 
       if (messenger == null) return;
       if (!result.success) {
@@ -590,9 +737,11 @@ class _MapScreenState extends State<MapScreen> {
       l10n,
     );
     final detail = result.serverDetail;
-    final message = (detail != null && detail.isNotEmpty)
-        ? '$baseMessage - $detail'
-        : baseMessage;
+    final message = result.success
+        ? baseMessage
+        : ((detail != null && detail.isNotEmpty)
+              ? '$baseMessage - $detail'
+              : baseMessage);
     if (messenger == null) return;
     if (result.success) {
       await HapticFeedback.lightImpact();
@@ -661,22 +810,58 @@ class _MapScreenState extends State<MapScreen> {
             // Position button with SafeArea to avoid tab bar
             SafeArea(
               child: Align(
-                alignment: Alignment.bottomRight,
+                alignment: Alignment.topLeft,
                 child: Padding(
                   padding: const EdgeInsets.all(
                     LocationMarkerConstants.buttonOuterPadding,
                   ),
                   child: CupertinoButton.filled(
+                    color: const Color(0xCC16212B),
                     padding: const EdgeInsets.all(
                       LocationMarkerConstants.buttonInnerPadding,
                     ),
-                    onPressed: _toggleLocationLock,
-                    child: Icon(
-                      _isLocationLocked
-                          ? CupertinoIcons.location_solid
-                          : CupertinoIcons.location,
-                      color: CupertinoColors.white,
+                    onPressed: _toggleAudio,
+                    child: Tooltip(
+                      message: _audioEnabled ? "Mute Voice Coach" : "Enable Voice Coach", // TODO: Localize
+                      child: Icon(
+                        _audioEnabled
+                            ? CupertinoIcons.volume_up
+                            : CupertinoIcons.volume_off,
+                        color: const Color(0xFF1FC8B6),
+                      ),
                     ),
+                  ),
+                ),
+              ),
+            ),
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(
+                    LocationMarkerConstants.buttonOuterPadding,
+                  ),
+                  child: CupertinoButton.filled(
+                    color: const Color(0xCC16212B),
+                    padding: const EdgeInsets.all(
+                      LocationMarkerConstants.buttonInnerPadding,
+                    ),
+                    onPressed: _toggleCompassMode,
+                    child: Tooltip(
+                    message: _isNorthUp ? "Map is North Up. Tap to follow heading." : "Map follows heading. Tap to lock North Up.", // TODO: Localize
+                    child: _isNorthUp
+                        ? const Icon(
+                            CupertinoIcons.compass,
+                            color: Color(0xFF1FC8B6),
+                          )
+                        : Transform.rotate(
+                            angle: (_heading * math.pi / 180) * -1,
+                            child: const Icon(
+                              CupertinoIcons.location_north_fill,
+                              color: Color(0xFF1FC8B6),
+                            ),
+                          ),
+                  ),
                   ),
                 ),
               ),
@@ -685,26 +870,48 @@ class _MapScreenState extends State<MapScreen> {
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 90),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 430),
-                    child: TrackingControls(
-                      snapshot: _trackingSnapshot,
-                      suggestedActivityType: widget.suggestedActivityType,
-                      hasGpsFix: _hasStableStartFix,
-                      isPreparingStart: _isPreparingStart,
-                      startCountdownSeconds: _startCountdownRemaining,
-                      onStart: _handleStartTracking,
-                      onPause: () {
-                        unawaited(_handlePauseTracking());
-                      },
-                      onResume: () {
-                        unawaited(_handleResumeTracking());
-                      },
-                      onStop: () {
-                        unawaited(_handleStopTracking());
-                      },
-                    ),
+                  padding: const EdgeInsets.fromLTRB(
+                    EndurainSpacing.sm,
+                    EndurainSpacing.sm,
+                    EndurainSpacing.sm,
+                    62,
+                  ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final controlsNeedExtraHeight =
+                          _trackingSnapshot.state ==
+                              TrackingSessionState.recording ||
+                          _trackingSnapshot.state ==
+                              TrackingSessionState.paused;
+                      final compactHeight = constraints.maxHeight <= 700;
+                      final heightFactor = compactHeight
+                          ? (controlsNeedExtraHeight ? 0.53 : 0.49)
+                          : (controlsNeedExtraHeight ? 0.48 : 0.44);
+                      return ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 460),
+                        child: FractionallySizedBox(
+                          heightFactor: heightFactor,
+                          alignment: Alignment.bottomCenter,
+                          child: TrackingControls(
+                            snapshot: _trackingSnapshot,
+                            suggestedActivityType: widget.suggestedActivityType,
+                            hasGpsFix: _hasStableStartFix,
+                            isPreparingStart: _isPreparingStart,
+                            startCountdownSeconds: _startCountdownRemaining,
+                            onStart: _handleStartTracking,
+                            onPause: () {
+                              unawaited(_handlePauseTracking());
+                            },
+                            onResume: () {
+                              unawaited(_handleResumeTracking());
+                            },
+                            onStop: () {
+                              unawaited(_handleStopTracking());
+                            },
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -715,7 +922,12 @@ class _MapScreenState extends State<MapScreen> {
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 172),
+                    padding: const EdgeInsets.fromLTRB(
+                      EndurainSpacing.xl,
+                      EndurainSpacing.sm,
+                      EndurainSpacing.xl,
+                      172,
+                    ),
                     child: _GpsSignalWarningBanner(
                       message: l10n.trackingGpsSignalLost,
                     ),
@@ -728,7 +940,7 @@ class _MapScreenState extends State<MapScreen> {
                 child: Align(
                   alignment: Alignment.topCenter,
                   child: Padding(
-                    padding: const EdgeInsets.only(top: 12),
+                    padding: const EdgeInsets.only(top: EndurainSpacing.sm),
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         color: CupertinoColors.systemGrey5,
@@ -779,26 +991,47 @@ class _MapScreenState extends State<MapScreen> {
             child: Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 90),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 430),
-                  child: TrackingControls(
-                    snapshot: _trackingSnapshot,
-                    suggestedActivityType: widget.suggestedActivityType,
-                    hasGpsFix: _hasStableStartFix,
-                    isPreparingStart: _isPreparingStart,
-                    startCountdownSeconds: _startCountdownRemaining,
-                    onStart: _handleStartTracking,
-                    onPause: () {
-                      unawaited(_handlePauseTracking());
-                    },
-                    onResume: () {
-                      unawaited(_handleResumeTracking());
-                    },
-                    onStop: () {
-                      unawaited(_handleStopTracking());
-                    },
-                  ),
+                padding: const EdgeInsets.fromLTRB(
+                  EndurainSpacing.sm,
+                  EndurainSpacing.sm,
+                  EndurainSpacing.sm,
+                  62,
+                ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final controlsNeedExtraHeight =
+                        _trackingSnapshot.state ==
+                            TrackingSessionState.recording ||
+                        _trackingSnapshot.state == TrackingSessionState.paused;
+                    final compactHeight = constraints.maxHeight <= 700;
+                    final heightFactor = compactHeight
+                        ? (controlsNeedExtraHeight ? 0.53 : 0.49)
+                        : (controlsNeedExtraHeight ? 0.48 : 0.44);
+                    return ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 460),
+                      child: FractionallySizedBox(
+                        heightFactor: heightFactor,
+                        alignment: Alignment.bottomCenter,
+                        child: TrackingControls(
+                          snapshot: _trackingSnapshot,
+                          suggestedActivityType: widget.suggestedActivityType,
+                          hasGpsFix: _hasStableStartFix,
+                          isPreparingStart: _isPreparingStart,
+                          startCountdownSeconds: _startCountdownRemaining,
+                          onStart: _handleStartTracking,
+                          onPause: () {
+                            unawaited(_handlePauseTracking());
+                          },
+                          onResume: () {
+                            unawaited(_handleResumeTracking());
+                          },
+                          onStop: () {
+                            unawaited(_handleStopTracking());
+                          },
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -809,7 +1042,12 @@ class _MapScreenState extends State<MapScreen> {
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 172),
+                  padding: const EdgeInsets.fromLTRB(
+                    EndurainSpacing.xl,
+                    EndurainSpacing.sm,
+                    EndurainSpacing.xl,
+                    172,
+                  ),
                   child: _GpsSignalWarningBanner(
                     message: l10n.trackingGpsSignalLost,
                   ),
@@ -824,7 +1062,7 @@ class _MapScreenState extends State<MapScreen> {
               child: Align(
                 alignment: Alignment.topCenter,
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 12),
+                  padding: const EdgeInsets.only(top: EndurainSpacing.sm),
                   child: Chip(
                     avatar: const Icon(Icons.alt_route, size: 16),
                     label: Text(_liveRouteStatusLabel(l10n)),
@@ -832,14 +1070,54 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               ),
             ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: const EdgeInsets.all(
+                  LocationMarkerConstants.buttonOuterPadding,
+                ),
+                child: FloatingActionButton.small(
+                  heroTag: 'audio_toggle', // Unique tag
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHigh,
+                  foregroundColor: _audioEnabled 
+                      ? Theme.of(context).colorScheme.primary 
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                  onPressed: _toggleAudio,
+                  tooltip: _audioEnabled ? "Mute Voice Coach" : "Enable Voice Coach", // TODO: Localize
+                  child: Icon(_audioEnabled ? Icons.volume_up : Icons.volume_off),
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.all(
+                  LocationMarkerConstants.buttonOuterPadding,
+                ),
+                child: FloatingActionButton.small(
+                  heroTag: 'compass_btn',
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHigh,
+                  foregroundColor: Theme.of(context).colorScheme.primary,
+                  onPressed: _toggleCompassMode,
+                  tooltip: _isNorthUp ? "Map is North Up" : "Follow Heading", // TODO: Localize
+                  child: _isNorthUp
+                      ? const Icon(Icons.explore) // Compass
+                      : Transform.rotate(
+                          angle: (_heading * math.pi / 180) * -1,
+                          child: const Icon(Icons.navigation), // Arrow
+                        ),
+                ),
+              ),
+            ),
+          ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _toggleLocationLock,
-        tooltip: l10n.mapCenterOnLocation,
-        child: Icon(
-          _isLocationLocked ? Icons.my_location : Icons.location_searching,
-        ),
       ),
     );
   }
@@ -854,7 +1132,7 @@ class _LocationMarker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Transform.rotate(
-      angle: heading * math.pi / 180, // Convert degrees to radians
+      angle: heading * math.pi / 180,
       child: CustomPaint(
         size: const Size(
           LocationMarkerConstants.markerSize,
@@ -965,14 +1243,12 @@ class _RoutePointBadge extends StatelessWidget {
   }
 }
 
-/// Custom painter for the location marker
 class _LocationMarkerPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 5;
 
-    // Draw directional cone (pointing upward when heading is 0)
     final conePaint = Paint()
       ..color = Colors.blue.withValues(
         alpha: LocationMarkerConstants.coneOpacity,
@@ -980,16 +1256,16 @@ class _LocationMarkerPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final conePath = ui.Path()
-      ..moveTo(center.dx, center.dy) // Center of circle
+      ..moveTo(center.dx, center.dy)
       ..lineTo(
         center.dx - radius * LocationMarkerConstants.coneWidthMultiplier,
         center.dy - radius * LocationMarkerConstants.coneHeightMultiplier,
-      ) // Left point
+      )
       ..arcToPoint(
         Offset(
           center.dx + radius * LocationMarkerConstants.coneWidthMultiplier,
           center.dy - radius * LocationMarkerConstants.coneHeightMultiplier,
-        ), // Right point
+        ),
         radius: Radius.circular(
           radius * LocationMarkerConstants.coneArcRadiusMultiplier,
         ),
@@ -999,7 +1275,6 @@ class _LocationMarkerPainter extends CustomPainter {
 
     canvas.drawPath(conePath, conePaint);
 
-    // Draw white border circle
     final borderPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
@@ -1010,7 +1285,6 @@ class _LocationMarkerPainter extends CustomPainter {
       borderPaint,
     );
 
-    // Draw blue dot
     final dotPaint = Paint()
       ..color = const Color(LocationMarkerConstants.markerBlue)
       ..style = PaintingStyle.fill;

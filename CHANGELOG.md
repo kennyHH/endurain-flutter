@@ -4,17 +4,48 @@ All notable changes to Endurain mobile app are documented in this file.
 
 ## [Unreleased]
 
+## [0.0.32] - 2026-03-12
+
+### Changed
+- **Map Navigation:** Implemented Professional navigation logic.
+  - User position is always centered visually (slightly shifted up to avoid bottom UI).
+  - **Heading Up Mode (Default):** Map rotates smoothly based on user direction.
+  - **North Up Mode:** Map stays fixed to North.
+  - **Interaction:** Dragging the map unlocks the camera. Tapping the Compass/Arrow button re-locks and centers the user.
+- **Map UI:**
+  - Removed "Edit" indicator on map fields entirely to maximize space for metrics (long-press to edit still works).
+  - Improved smooth camera transitions during rotation and movement.
+
+### Fixed
+- **App Version:** Corrected version display in Settings and build artifacts.
+- **Camera Jitter:** Resolved issues with camera jumping during rotation updates.
+- **UI Overlap:** Ensured user marker is not obscured by the bottom tracking panel.
+
+
+
 ### Added
 - Added `GPS filter mode` setting with manual override options: `Auto by activity`, `Normal`, and `Strict (urban)`.
 - Added user-facing explanations for each GPS filter mode in Settings (EN/PT localization).
+- Added full backend-aligned activity type catalog support (IDs `1..46`) with mapped icons for mobile tracking UI.
+- Added a dedicated activity type picker bottom sheet with full vertical list, icon + label rows, and selected-state checkmark accent.
+- Added complete EN/PT localization keys for all supported activity labels and centralized `activity_type_localization` mapping by backend type ID.
 
 ### Changed
 - `Auto by activity` now acts as intelligent default GPS behavior: stricter for Walk/Run, balanced for Ride.
 - GPS filter mode is now persisted and applied live to tracking logic without requiring app restart.
+- Tracking controls now open the full activity selector sheet when tapping the current activity type, and selection updates start behavior immediately.
+- Recording/map overlay layout was refactored into a responsive bottom sheet/card composition for clearer metric hierarchy and better small-device behavior.
+- Map control styling was tuned for stronger in-map contrast using Endurain dark surfaces and cool accent tones (no industry standard-like beige/light-green palette).
 
 ### Fixed
+- **App Version:** Corrected version display in Settings and build artifacts.
 - Resolved CI `Analyze` failure by removing remaining analyzer findings in map tracking flow, validators, location settings, and tracking controls.
 - Updated async handling in tracking actions/snackbar flows to satisfy `unawaited_futures`/context-safety analyzer checks.
+- Updated tracking selector/widget tests for the new bottom-sheet interaction flow and full-list selection behavior.
+
+### Testing
+- `flutter analyze` passes with the new activity selector, localization, and layout changes.
+- `flutter test` passes after updating selector interaction tests.
 
 ### Documentation
 - Reduced `ROADMAP.md` to a lightweight support backlog to reflect maintenance-focused workflow.
@@ -24,6 +55,251 @@ All notable changes to Endurain mobile app are documented in this file.
 ### Maintainer delivery summary
 - PR branch includes the complete support stream for versions `0.0.1` through `0.0.17`, including tracking UX, upload robustness, map/detail improvements, deletion flows, suspicious-session safeguards, GPS quality tuning, and GPS mode override.
 - Current test APK artifact is published via GitHub Release in fork repository (`v0.0.17-support`) and linked for maintainer validation.
+
+
+## [0.0.31] - 2026-03-12
+
+### Added
+- **Login Screen Footer:** Added "Powered by Endurain" footer with heart icon and copyright year.
+- **GPX Export:** Added "Export GPX" button to Activity Details screen, allowing users to share or save their recorded tracks.
+- **Settings Tooltips:** Added descriptive tooltips to all settings items for better usability.
+- **Map Compass Improvements:** Added tooltips to map controls and refined compass logic (North Up vs. Heading Up).
+- **Map Editable Fields:** Changed the edit indicator icon to a "+" symbol for clearer affordance.
+
+### Changed
+- **Settings UI:** Removed the Theme Preview component to clean up the layout.
+- **Map UI:** Ensured user location dot remains centered above the bottom information panel.
+
+### Fixed
+- **App Version:** Corrected version display in Settings and build artifacts.
+- **UI Consistency:** Standardized tooltip behavior across Material and Cupertino widgets where possible.
+
+## [0.0.28] - 2026-03-12
+
+### Added
+- **UI Overhaul (Map & Tracking):**
+  - **Grid Layout:** New bottom sheet design with a 2x2 metric grid (Distance, Elevation, Speed, Avg Speed) and pagination for additional stats.
+  - **Floating Controls:** Moved Compass, Layer Selector, and Location Lock to a floating column on the right side of the map.
+  - **Compass Logic:** Tap compass to reset heading to North (0°).
+  - **Activity Selector:** Split bottom bar layout in Idle state (Selector + Large Start Button).
+- **Robust Audio Feedback:**
+  - **Engine-Driven:** Moved audio logic (Countdown, Splits, GPS) to the background-aware Tracking Engine, ensuring announcements work even when the screen is locked.
+  - **GPS Status:** Added "Signal Lost/Recovered" announcements with a 60s debounce to prevent spam.
+  - **Countdown:** "6, 5, 4, 3, 2, 1, Go!" sequence handled by the engine.
+- **Color Presets:**
+  - **New Palette:** Replaced "Custom Pastel" with 6 professional presets: Ocean, Forest, Slate, Twilight, Ember, Berry.
+  - **Accessibility:** Optimized contrast for both Light and Dark modes.
+
+### Changed
+- **Codebase:** Refactored `TrackingSessionEngine` to support dependency injection for better testing.
+- **Testing:** Updated all unit and integration tests to use a mocked Audio Service, fixing CI failures.
+
+### Fixed
+- **App Version:** Corrected version display in Settings and build artifacts.
+- **Countdown:** Fixed issue where countdown audio might stop if the app was backgrounded immediately.
+
+## [0.0.27] - 2026-03-12
+
+### Added
+- **Audio Feedback (Voice Coach):**
+  - Added voice announcements for Start Countdown (6s), "Let's go" confirmation, and KM splits (Pace).
+  - Added Speaker Toggle button to Map Screen (Top-Left) to mute/unmute announcements.
+  - Added Audio Settings section in Settings Screen.
+- **Custom Theming:**
+  - Added "Custom (Pastel)" theme preset with a color picker.
+  - Removed "Endurain" preset in favor of "Ocean" (default), "Forest", and "Custom".
+  - Custom pastel colors are applied to high-contrast boxes (History, Tracking) and Primary elements.
+
+### Changed
+- **Elevation Profile:** Applied moving average smoothing to the elevation chart in Activity Details to reduce visual noise ("zackig" lines).
+- **Map UI:** Relocated GPS centering button to accommodate the new Audio Toggle button.
+- **APK Size:** Maintained split APK configuration for optimal download size (~19MB).
+
+### Testing
+- `flutter analyze` passed.
+- `flutter test` passed.
+
+## [0.0.26] - 2026-03-12
+
+### Added
+- Added pastel color palettes for Forest, Ocean, and Endurain presets to `EndurainColors`.
+- Implemented high-contrast theme overrides that use preset-specific pastel backgrounds instead of harsh black/white.
+
+### Changed
+- Updated `AppTheme` to dynamically map surface colors to pastel tones when High Contrast mode is active.
+- Refactored `TrackingControls`, `ActivityHistoryScreen`, and `ActivityDetailScreen` to use theme-aware surface colors, ensuring cards match the selected preset (Green/Blue/Teal) in both Light and Dark modes.
+- Reverted APK build configuration to generate split APKs (arm64-v8a) by default, reducing download size from ~55MB to ~19MB.
+
+### Testing
+- `flutter analyze` passed.
+- `flutter test` passed.
+
+## [0.0.25] - 2026-03-12
+
+### Added
+- Added high-contrast semantic color tokens to the design system (`EndurainColors.highContrastSurface`, `highContrastBorder`).
+- Added transparent-background metric tiles with distinct borders for cleaner list visuals.
+
+### Changed
+- Refactored all high-contrast UI elements to use centralized theme tokens instead of hardcoded values.
+- Polished `ActivityDetailScreen` to match the new History card aesthetics (Black surface, white borders, compact metrics).
+- Unified card styling across History and Detail screens for consistent visual hierarchy.
+
+### Testing
+- `flutter analyze` passed.
+- `flutter test` passed.
+
+## [0.0.24] - 2026-03-12
+
+### Added
+- Added Android background location permissions and foreground service configuration for reliable tracking.
+- Added "Get Last Known Position" logic to map initialization for instant location feedback.
+- Added structured layout to Server Settings screen with grouped cards and clearer typography.
+
+### Changed
+- Refactored `ServerSettingsScreen` to match the main Settings design language (Cards, Section Headers).
+- Optimized GPS fixing time by prioritizing last known location before waiting for satellite lock.
+- Configured Android foreground notification to prevent tracking termination by the OS.
+
+### Testing
+- `flutter analyze` passed.
+- `flutter test` passed.
+
+## [0.0.23] - 2026-03-12
+
+### Added
+- Added high-contrast tracking metrics (White text on Black background) for better readability in sunlight.
+- Added responsive single-line metric layout for History list items (no horizontal scrolling required).
+
+### Changed
+- Increased font size for tracking metric values (36/48pt) for immediate legibility.
+- compacted vertical spacing in tracking controls to maximize map visibility.
+- Enforced high-contrast styling for History cards (Black background with visible borders).
+- Enabled map interaction (pinch/zoom/pan) in Activity Details screen.
+- Tuned GPS settings for maximum responsiveness (zero distance filter) to improve track accuracy.
+
+### Fixed
+- **App Version:** Corrected version display in Settings and build artifacts.
+- Fixed layout overflow in History list items by using flexible sizing for metrics.
+
+### Testing
+- `flutter analyze` passed.
+- `flutter test` passed.
+
+## [0.0.22] - 2026-03-12
+
+### Added
+- Added persistent upper-half user positioning while location lock is active in map tracking, keeping the GPS marker visible above panel-heavy UI.
+- Added metric paging refinements in tracking panel to prioritize tap targets and maintain swipe discoverability.
+
+### Changed
+- Moved tracking panel lower and reduced internal whitespace so Start/Pause/Stop controls stay visible without clipping.
+- Increased activity-type selector touch area (larger icon and vertical hitbox) for easier interaction.
+- Tightened spacing between metric block, activity-type selector, and action buttons in map tracking.
+- Reworked Activity History cards to a denser header layout (activity + date/time range + uploaded badge in one row) to free map space.
+- Removed top summary text row in history cards and moved core metrics into a single horizontal line under the map preview.
+- Increased History card and metric contrast with stronger surface/border separation.
+- Removed route status badge from history list map previews; route status remains in detail view.
+- Enabled pinch/pan interaction on Activity Details route map.
+- Reduced vertical footprint of elevation profile in details and moved profile block closer to metric cards.
+- Moved elevation min/max values from right header into left Y-axis labels beside the profile chart.
+
+### Fixed
+- **App Version:** Corrected version display in Settings and build artifacts.
+- Fixed cryptic successful-save/upload feedback by suppressing server detail formatting on success and showing clean user-facing success text.
+- Fixed jagged elevation profile rendering by switching to smoothed curve drawing.
+- Fixed stale settings UX by removing High Contrast toggle section while keeping high-contrast rendering active.
+
+### Testing
+- `flutter analyze` passed.
+- `flutter test` passed.
+
+## [0.0.21] - 2026-03-12
+
+### Added
+- Added horizontal metric paging in live map tracking panel: swipe left/right between two metric sets.
+- Added upload-success localization key for activity upload feedback (`trackingUploadSuccess`, EN/PT).
+
+### Changed
+- Increased tracking overlay height factors to prevent action button clipping on compact map screens.
+- Moved `Current speed` from action area into the second metrics page to keep Start/Pause/Stop always visible.
+- Refined Activity History card contrast with stronger container/background separation and subtle primary-accent border.
+- Enabled interactive route map in Activity Details (pinch-zoom and pan) while preserving initial full-route fit on open.
+- Updated activity upload success snackbar text on map screen to a clear activity-focused confirmation.
+
+### Fixed
+- **App Version:** Corrected version display in Settings and build artifacts.
+- Fixed missing uploaded-state badge by showing explicit states for both pending and uploaded activities in History.
+- Fixed missing readability of elevation context by adding min/max elevation summary near the profile header.
+- Fixed test regressions introduced by tracking panel metric layout changes.
+
+### Testing
+- `flutter analyze` passed.
+- `flutter test` passed.
+
+## [0.0.20] - 2026-03-12
+
+### Added
+- Added uploaded-state badge in Activity History (`Uploaded`) with cloud check icon for sessions already synced to server.
+- Added distance scale under the elevation profile (start/mid/end km markers) in Activity Details.
+
+### Changed
+- Removed secondary route-overview drilldown from Activity Details map tap to keep a single details view.
+- Activity Details map now opens already fitted to the full route bounds so the complete track is visible without manual pinch/zoom.
+- Increased Activity Details map height and enlarged key metric values for better readability.
+- Compressed elevation profile block to free vertical space for map and metrics while keeping elevation trend visibility.
+- Removed drag-handle/drag-resize behavior from live tracking overlay to keep controls always stable and visible.
+- Removed `Repeat last ...` shortcut from live map tracking controls.
+- Merged `Idle` status and GPS state (`Searching GPS fix`/ready) into a single top row in the tracking panel.
+- Moved GPS recenter action from bottom-right to top-right in map view and shifted tracking panel lower to expose more map area.
+- Tuned tracking panel compact layout so sport selector and Start/Pause/Stop controls remain visible with larger numbers.
+- Set current-speed value emphasis to match primary metric size hierarchy in the live tracking panel.
+
+### Fixed
+- **App Version:** Corrected version display in Settings and build artifacts.
+- Improved route visibility defaults so route geometry is consistently visible in Activity Details on open.
+- Kept user position centered/visible during live map tracking by favoring location lock behavior.
+
+### Testing
+- `flutter analyze` passed.
+- `flutter test` passed.
+
+## [0.0.19] - 2026-03-12
+
+### Added
+- Added visible drag handle at the top of the tracking overlay (Material + Cupertino) to clarify manual panel resizing.
+- Added live `Current speed` metric to tracking controls, computed from the most recent GPS segment and localized (EN/PT).
+
+### Changed
+- Reworked tracking overlay sizing behavior for small screens with automatic compact mode based on available height.
+- Added manual overlay height control via vertical swipe gestures (swipe up/down) plus double-tap reset back to automatic sizing.
+- Compressed tracking card spacing and action-area layout so Start/Pause/Stop controls remain visible on constrained viewports.
+- Improved activity type selector compactness (padding/icon spacing) to prevent clipping on small devices.
+- Increased key metric number size while preserving fit behavior.
+
+### Testing
+- `flutter analyze` passed.
+- `flutter test test/features/map/tracking_controls_test.dart` passed.
+- `flutter test` passed.
+
+## [0.0.18] - 2026-03-12
+
+### Added
+- Added a dedicated Theme preview tile in Settings with a miniature card showing active background, surface, and accent colors for the current theme preset.
+- Added clear Settings section headers across platforms: Theme, Route display, Server, and About app.
+- Added new localization keys (EN/PT) for section titles and app metadata labels in the updated Settings layout.
+
+### Changed
+- Refined Settings information architecture for both Material and Cupertino conventions using sectioned grouped lists.
+- Improved high-contrast behavior in key list widgets by increasing subtitle and icon readability in light and dark themes.
+- Polished history/detail micro-interactions and metric presentation from prior support work as part of release hardening.
+
+### Security
+- Re-validated release security baseline: no hard-coded secrets introduced in current release changes and release signing remains explicit in Gradle configuration.
+
+### Testing
+- `flutter analyze` passed.
+- `flutter test` passed.
 
 ## [0.0.17] - 2026-03-11
 
@@ -45,6 +321,7 @@ All notable changes to Endurain mobile app are documented in this file.
 ## [0.0.15] - 2026-03-11
 
 ### Fixed
+- **App Version:** Corrected version display in Settings and build artifacts.
 - Improved upload fallback behavior for `400/404/415/422` responses so method/endpoint/file-field candidates are fully exhausted before failing.
 - Improved upload error detail extraction for structured validation responses (e.g. now compact messages like `file: Field required` instead of raw JSON blobs in snackbars).
 - Improved selected activity type chip contrast in tracking controls (selected text/icon now high-contrast and clearly readable).
@@ -72,12 +349,14 @@ All notable changes to Endurain mobile app are documented in this file.
 ## [0.0.13] - 2026-03-11
 
 ### Fixed
+- **App Version:** Corrected version display in Settings and build artifacts.
 - Fixed Android release networking by adding missing `android.permission.INTERNET` to the main manifest.
 - Resolved DNS lookup failures in release builds (`Failed host lookup`) that occurred despite valid HTTPS configuration.
 
 ## [0.0.12] - 2026-03-11
 
 ### Fixed
+- **App Version:** Corrected version display in Settings and build artifacts.
 - Preserved original low-level TLS/network error context by rethrowing `ApiRequestException` in auth/server/SSO services instead of wrapping it into generic exceptions.
 - Improved `ApiRequestException.toString()` to include the underlying `cause`, making handshake diagnostics actionable in login error dialogs.
 
@@ -87,6 +366,7 @@ All notable changes to Endurain mobile app are documented in this file.
 ## [0.0.11] - 2026-03-11
 
 ### Fixed
+- **App Version:** Corrected version display in Settings and build artifacts.
 - Fixed login TLS toggle behavior by recreating default auth/network service instances after toggle changes, ensuring updated TLS mode is applied to fresh HTTP clients.
 - Fixed login help UX: explanatory helper texts are no longer always visible; help content is now shown only via explicit `i`/`?` interactions.
 
@@ -105,6 +385,7 @@ All notable changes to Endurain mobile app are documented in this file.
 ## [0.0.9] - 2026-03-11
 
 ### Fixed
+- **App Version:** Corrected version display in Settings and build artifacts.
 - Fixed TLS diagnostics usability before authentication: insecure TLS test toggle is now available directly on login step 1.
 - Improved TLS error detail visibility in login flow even when lower-level exceptions are wrapped by service layers.
 
@@ -127,6 +408,7 @@ All notable changes to Endurain mobile app are documented in this file.
 ## [0.0.7] - 2026-03-11
 
 ### Fixed
+- **App Version:** Corrected version display in Settings and build artifacts.
 - Improved login diagnostics for HTTPS local instances by classifying TLS handshake/certificate failures separately from generic network errors.
 - Added explicit TLS-aware user error message mapping (`errorTls`) instead of reporting all handshake failures as `Network error`.
 - Extended login error dialog to include low-level TLS cause details (when available) for faster troubleshooting of certificate chain/hostname trust issues.
@@ -138,6 +420,7 @@ All notable changes to Endurain mobile app are documented in this file.
 ## [0.0.6] - 2026-03-11
 
 ### Fixed
+- **App Version:** Corrected version display in Settings and build artifacts.
 - Fixed login flow for self-hosted local servers by allowing `http://` URLs for localhost and private network ranges in server URL validation.
 - Fixed Android connectivity for local non-HTTPS endpoints by enabling cleartext traffic support in app manifest.
 - Reduced false `Network error` cases during server URL step for reachable local Docker/self-hosted instances.
@@ -177,7 +460,7 @@ All notable changes to Endurain mobile app are documented in this file.
 ## [0.0.3] - 2026-03-11
 
 ### Changed
-- Replaced the previous green/Komoot-like accent palette with Endurain-inspired brand colors (warm orange + deep blue) across Material and Cupertino themes.
+- Replaced the previous green/industry standard-like accent palette with Endurain-inspired brand colors (warm orange + deep blue) across Material and Cupertino themes.
 - Updated tracking semantic colors and selected-chip accents to match Endurain branding.
 - Updated active route polyline color in map tracking to use the current theme primary color.
 - Updated location marker blue tone to Endurain brand blue.
@@ -205,6 +488,7 @@ All notable changes to Endurain mobile app are documented in this file.
 - Enabled release size optimizations (R8 minification + resource shrinking) in Android release build.
 
 ### Fixed
+- **App Version:** Corrected version display in Settings and build artifacts.
 - Fixed Android build metadata key usage to align with current `--dart-define` values (`BUILD_DATE`, `GIT_SHA`).
 - Fixed map tracking panel reset after stop so previous session metrics/route no longer remain visible.
 
@@ -226,6 +510,7 @@ All notable changes to Endurain mobile app are documented in this file.
 - Improved icon generation configuration in `pubspec.yaml` and regenerated launcher assets for Android/iOS/macOS.
 
 ### Fixed
+- **App Version:** Corrected version display in Settings and build artifacts.
 - Fixed sessions not being persisted when stop was triggered from paused state.
 - Fixed activity history not refreshing after new tracked activities were saved.
 - Fixed missing upload retry path for activities that failed server upload.

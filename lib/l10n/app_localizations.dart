@@ -536,6 +536,12 @@ abstract class AppLocalizations {
   /// **'Upload pending'**
   String get historyUploadPending;
 
+  /// Badge for activities already uploaded to server - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Uploaded'**
+  String get historyUploadDone;
+
   /// Dialog title to rename an activity - Used in: activity_history_screen.dart
   ///
   /// In en, this message translates to:
@@ -601,6 +607,270 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Walk'**
   String get activityTypeWalk;
+
+  /// Activity type label for trail run - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Trail run'**
+  String get activityTypeTrailRun;
+
+  /// Activity type label for track run - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Track run'**
+  String get activityTypeTrackRun;
+
+  /// Activity type label for treadmill run - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Treadmill run'**
+  String get activityTypeTreadmillRun;
+
+  /// Activity type label for virtual run - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual run'**
+  String get activityTypeVirtualRun;
+
+  /// Activity type label for road cycling - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Road cycling'**
+  String get activityTypeRoadCycling;
+
+  /// Activity type label for gravel cycling - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Gravel cycling'**
+  String get activityTypeGravelCycling;
+
+  /// Activity type label for mtb cycling - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'MTB cycling'**
+  String get activityTypeMtbCycling;
+
+  /// Activity type label for commuting cycling - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Commuting cycling'**
+  String get activityTypeCommutingCycling;
+
+  /// Activity type label for mixed surface cycling - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Mixed surface cycling'**
+  String get activityTypeMixedSurfaceCycling;
+
+  /// Activity type label for virtual cycling - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual cycling'**
+  String get activityTypeVirtualCycling;
+
+  /// Activity type label for indoor cycling - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Indoor cycling'**
+  String get activityTypeIndoorCycling;
+
+  /// Activity type label for e-bike cycling - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'E-Bike cycling'**
+  String get activityTypeEBikeCycling;
+
+  /// Activity type label for e-bike mountain cycling - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'E-Bike mountain cycling'**
+  String get activityTypeEBikeMountainCycling;
+
+  /// Activity type label for indoor swimming - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Indoor swimming'**
+  String get activityTypeIndoorSwimming;
+
+  /// Activity type label for open water swimming - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Open water swimming'**
+  String get activityTypeOpenWaterSwimming;
+
+  /// Activity type label for general workout - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'General workout'**
+  String get activityTypeGeneralWorkout;
+
+  /// Activity type label for indoor walk - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Indoor walk'**
+  String get activityTypeIndoorWalk;
+
+  /// Activity type label for hike - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Hike'**
+  String get activityTypeHike;
+
+  /// Activity type label for rowing - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Rowing'**
+  String get activityTypeRowing;
+
+  /// Activity type label for yoga - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Yoga'**
+  String get activityTypeYoga;
+
+  /// Activity type label for alpine ski - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Alpine ski'**
+  String get activityTypeAlpineSki;
+
+  /// Activity type label for nordic ski - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Nordic ski'**
+  String get activityTypeNordicSki;
+
+  /// Activity type label for snowboard - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Snowboard'**
+  String get activityTypeSnowboard;
+
+  /// Activity type label for ice skate - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Ice skate'**
+  String get activityTypeIceSkate;
+
+  /// Activity type label for transition - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Transition'**
+  String get activityTypeTransition;
+
+  /// Activity type label for strength training - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Strength training'**
+  String get activityTypeStrengthTraining;
+
+  /// Activity type label for crossfit - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Crossfit'**
+  String get activityTypeCrossfit;
+
+  /// Activity type label for tennis - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Tennis'**
+  String get activityTypeTennis;
+
+  /// Activity type label for table tennis - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Table tennis'**
+  String get activityTypeTableTennis;
+
+  /// Activity type label for badminton - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Badminton'**
+  String get activityTypeBadminton;
+
+  /// Activity type label for squash - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Squash'**
+  String get activityTypeSquash;
+
+  /// Activity type label for racquetball - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Racquetball'**
+  String get activityTypeRacquetball;
+
+  /// Activity type label for pickleball - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Pickleball'**
+  String get activityTypePickleball;
+
+  /// Activity type label for padel - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Padel'**
+  String get activityTypePadel;
+
+  /// Activity type label for windsurf - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Windsurf'**
+  String get activityTypeWindsurf;
+
+  /// Activity type label for stand up paddling - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Stand up paddling'**
+  String get activityTypeStandUpPaddling;
+
+  /// Activity type label for surf - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Surf'**
+  String get activityTypeSurf;
+
+  /// Activity type label for soccer - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Soccer'**
+  String get activityTypeSoccer;
+
+  /// Activity type label for cardio training - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Cardio training'**
+  String get activityTypeCardioTraining;
+
+  /// Activity type label for kayaking - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Kayaking'**
+  String get activityTypeKayaking;
+
+  /// Activity type label for sailing - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Sailing'**
+  String get activityTypeSailing;
+
+  /// Activity type label for snow shoeing - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Snow shoeing'**
+  String get activityTypeSnowShoeing;
+
+  /// Activity type label for inline skating - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Inline skating'**
+  String get activityTypeInlineSkating;
+
+  /// Activity type label for hiit - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'HIIT'**
+  String get activityTypeHiit;
 
   /// Tracking status when session has not started - Used in: tracking_controls.dart
   ///
@@ -673,6 +943,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Avg speed'**
   String get trackingAverageSpeed;
+
+  /// Label for live current speed metric in tracking controls - Used in: tracking_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Current speed'**
+  String get trackingCurrentSpeed;
 
   /// Speed unit for cycling metrics - Used in: tracking_controls.dart, activity_history_screen.dart
   ///
@@ -787,6 +1063,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Activity saved'**
   String get trackingActivitySavedCelebration;
+
+  /// Success message after uploading activity from map screen
+  ///
+  /// In en, this message translates to:
+  /// **'Activity uploaded successfully'**
+  String get trackingUploadSuccess;
 
   /// Status label when route is matched via OSRM - Used in: map_screen.dart, activity_history_screen.dart
   ///
@@ -925,6 +1207,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'High contrast'**
   String get settingsHighContrast;
+
+  /// Settings section header for theme controls - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get settingsSectionTheme;
+
+  /// Settings section header for route display options - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Route display'**
+  String get settingsSectionRouteDisplay;
+
+  /// Settings section header for server configuration - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Server'**
+  String get settingsSectionServer;
+
+  /// Settings section header for app metadata - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'About app'**
+  String get settingsSectionAboutApp;
+
+  /// Label for miniature current theme preview card - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Theme preview'**
+  String get settingsThemePreviewTitle;
+
+  /// Explanation for high contrast toggle impact - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'High contrast strengthens text and borders in key UI surfaces.'**
+  String get settingsThemePreviewSubtitle;
+
+  /// Label for app version/build info tile - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'App version'**
+  String get settingsAppVersionTitle;
 
   /// Settings section title for route matching preview - Used in: settings_screen.dart
   ///

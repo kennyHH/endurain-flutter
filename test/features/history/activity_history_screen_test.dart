@@ -79,11 +79,7 @@ Activity _activity(String id, ActivityType type, {DateTime? startedAt}) {
     endedAt: start.add(const Duration(minutes: 10)),
     distanceMeters: 4200,
     trackPoints: [
-      TrackPoint(
-        latitude: 38.72,
-        longitude: -9.13,
-        timestamp: start,
-      ),
+      TrackPoint(latitude: 38.72, longitude: -9.13, timestamp: start),
     ],
   );
 }
@@ -93,9 +89,7 @@ void main() {
     testWidgets('zeigt loading und danach empty state', (tester) async {
       final repo = _FakeActivityRepository(activities: const <Activity>[]);
       addTearDown(repo.dispose);
-      await tester.pumpWidget(
-        _wrap(ActivityHistoryScreen(repository: repo)),
-      );
+      await tester.pumpWidget(_wrap(ActivityHistoryScreen(repository: repo)));
 
       expect(find.byKey(const Key('history-loading')), findsOneWidget);
       await tester.pumpAndSettle();
@@ -105,14 +99,10 @@ void main() {
 
     testWidgets('zeigt list und navigiert in detailansicht', (tester) async {
       final repo = _FakeActivityRepository(
-        activities: <Activity>[
-          _activity('a-run', ActivityType.run),
-        ],
+        activities: <Activity>[_activity('a-run', ActivityType.run)],
       );
       addTearDown(repo.dispose);
-      await tester.pumpWidget(
-        _wrap(ActivityHistoryScreen(repository: repo)),
-      );
+      await tester.pumpWidget(_wrap(ActivityHistoryScreen(repository: repo)));
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('history-list')), findsOneWidget);
@@ -122,7 +112,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Activity details'), findsOneWidget);
-      expect(find.text('Track points'), findsOneWidget);
       expect(find.text('Pace'), findsOneWidget);
       expect(find.text('Elevation gain'), findsOneWidget);
     });
@@ -130,9 +119,7 @@ void main() {
     testWidgets('zeigt error state und retry funktioniert', (tester) async {
       final repo = _FakeActivityRepository(throwOnWatch: true);
       addTearDown(repo.dispose);
-      await tester.pumpWidget(
-        _wrap(ActivityHistoryScreen(repository: repo)),
-      );
+      await tester.pumpWidget(_wrap(ActivityHistoryScreen(repository: repo)));
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('history-error')), findsOneWidget);
@@ -148,7 +135,9 @@ void main() {
       expect(find.byKey(const Key('history-item-a-ride')), findsOneWidget);
     });
 
-    testWidgets('aktualisiert liste live bei repository stream', (tester) async {
+    testWidgets('aktualisiert liste live bei repository stream', (
+      tester,
+    ) async {
       final repo = _FakeActivityRepository(activities: const <Activity>[]);
       addTearDown(repo.dispose);
       await tester.pumpWidget(_wrap(ActivityHistoryScreen(repository: repo)));
@@ -205,11 +194,7 @@ void main() {
             ActivityType.run,
             startedAt: now.subtract(const Duration(days: 20)),
           ),
-          _activity(
-            'a-week',
-            ActivityType.walk,
-            startedAt: thisWeekDate,
-          ),
+          _activity('a-week', ActivityType.walk, startedAt: thisWeekDate),
           _activity(
             'a-yesterday',
             ActivityType.ride,

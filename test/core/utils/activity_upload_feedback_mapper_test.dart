@@ -36,7 +36,7 @@ void main() {
 
       expect(
         ActivityUploadFeedbackMapper.toUserMessage(result, l10n),
-        l10n.savedSuccessfully,
+        l10n.trackingUploadSuccess,
       );
     });
   });

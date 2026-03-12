@@ -10,21 +10,26 @@ class LocationService {
     if (defaultTargetPlatform == TargetPlatform.android) {
       return AndroidSettings(
         accuracy: LocationAccuracy.bestForNavigation,
-        distanceFilter: 3,
+        distanceFilter: 0,
         intervalDuration: const Duration(seconds: 1),
+        foregroundNotificationConfig: const ForegroundNotificationConfig(
+          notificationTitle: "Endurain Tracking",
+          notificationText: "Recording your activity in background",
+          enableWakeLock: true,
+        ),
       );
     }
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       return AppleSettings(
         accuracy: LocationAccuracy.bestForNavigation,
-        distanceFilter: 3,
+        distanceFilter: 0,
         activityType: ActivityType.fitness,
         pauseLocationUpdatesAutomatically: false,
       );
     }
     return const LocationSettings(
       accuracy: LocationAccuracy.bestForNavigation,
-      distanceFilter: 3,
+      distanceFilter: 0,
     );
   }
 
@@ -45,6 +50,23 @@ class LocationService {
 
   /// Get current position
   /// Returns null if permission is denied or location service is disabled
+    /// Get last known position (faster than waiting for a fix)
+  Future<Position?> getLastKnownPosition() async {
+    final serviceEnabled = await isLocationServiceEnabled();
+    if (!serviceEnabled) return null;
+    
+    final permission = await checkPermission();
+    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      return null;
+    }
+
+    try {
+      return await Geolocator.getLastKnownPosition();
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<Position?> getCurrentPosition() async {
     // Check if location services are enabled
     final serviceEnabled = await isLocationServiceEnabled();
