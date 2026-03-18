@@ -10,4 +10,6 @@ class UploadConstants {
   ];
   static const String defaultGpxFilename = 'activity.gpx';
   static const int defaultUploadRetries = 2;
+  static const String idempotencyHeader = 'Idempotency-Key';
+  static const String uploadActivityIdHeader = 'X-Upload-Activity-Id';
 }

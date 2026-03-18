@@ -2,7 +2,6 @@ import 'package:endurain/core/constants/activity_type_catalog.dart';
 import 'package:endurain/core/constants/tracking_ui_tokens.dart';
 import 'package:endurain/core/models/activity.dart';
 import 'package:endurain/core/services/tracking_session_engine.dart';
-import 'package:endurain/core/services/audio_feedback_service.dart';
 import 'package:endurain/core/theme/endurain_design_system.dart';
 import 'package:endurain/core/utils/activity_type_localization.dart';
 import 'package:endurain/core/utils/metric_formatter.dart';
@@ -11,6 +10,7 @@ import 'package:endurain/features/map/widgets/activity_type_picker_sheet.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/core/models/metric_type.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
+import 'package:endurain/core/di/service_locator.dart';
 import 'dart:convert';
 import 'dart:math';
 
@@ -33,7 +33,7 @@ class TrackingControls extends StatefulWidget {
   });
 
   final TrackingSessionSnapshot snapshot;
-  final ValueChanged<ActivityType> onStart;
+  final void Function(ActivityType activityType, int activityTypeId) onStart;
   final VoidCallback onPause;
   final VoidCallback onResume;
   final VoidCallback onStop;
@@ -54,15 +54,15 @@ class _TrackingControlsState extends State<TrackingControls> {
     MetricType.distance,
     MetricType.elevation,
     MetricType.speed,
-    MetricType.pace
+    MetricType.pace,
   ];
   List<MetricType?> _page2Metrics = [
     MetricType.none,
     MetricType.none,
     MetricType.none,
-    MetricType.none
+    MetricType.none,
   ];
-  final _storage = SecureStorageService();
+  final _storage = serviceLocator<SecureStorageService>();
 
   @override
   void initState() {
@@ -127,74 +127,107 @@ class _TrackingControlsState extends State<TrackingControls> {
     );
   }
 
-  String _formatMetricValue(MetricType type, AppLocalizations l10n, TrackingSessionSnapshot snapshot, ActivityType effectiveType) {
+  String _formatMetricValue(
+    MetricType type,
+    AppLocalizations l10n,
+    TrackingSessionSnapshot snapshot,
+    ActivityType effectiveType,
+  ) {
     switch (type) {
       case MetricType.distance:
-        return MetricFormatter.formatDistanceKm(snapshot.distanceMeters, l10n.trackingDistanceUnitKm);
+        return MetricFormatter.formatDistanceKm(
+          snapshot.distanceMeters,
+          l10n.trackingDistanceUnitKm,
+        );
       case MetricType.duration:
         return MetricFormatter.formatDurationClock(snapshot.duration);
       case MetricType.speed:
-        return MetricFormatter.formatSpeedKmh(_currentSpeedKmh(snapshot.trackPoints), l10n.trackingSpeedUnitKmh);
+        return MetricFormatter.formatSpeedKmh(
+          _currentSpeedKmh(snapshot.trackPoints),
+          l10n.trackingSpeedUnitKmh,
+        );
       case MetricType.avgSpeed:
-         final avgSpeed = snapshot.duration.inSeconds > 0 
-             ? (snapshot.distanceMeters / snapshot.duration.inSeconds) * 3.6 
-             : 0.0;
-         return MetricFormatter.formatSpeedKmh(avgSpeed, l10n.trackingSpeedUnitKmh);
+        final avgSpeed = snapshot.duration.inSeconds > 0
+            ? (snapshot.distanceMeters / snapshot.duration.inSeconds) * 3.6
+            : 0.0;
+        return MetricFormatter.formatSpeedKmh(
+          avgSpeed,
+          l10n.trackingSpeedUnitKmh,
+        );
       case MetricType.pace:
         final speedKmh = _currentSpeedKmh(snapshot.trackPoints);
-        if (speedKmh == null || speedKmh <= 0.1) return "-:--";
+        if (speedKmh == null || speedKmh <= 0.1) return '-:--';
         final paceMinKm = 60 / speedKmh;
         final min = paceMinKm.floor();
         final sec = ((paceMinKm - min) * 60).round();
         return '$min:${sec.toString().padLeft(2, '0')}';
       case MetricType.avgPace:
-         final avgSpeed = snapshot.duration.inSeconds > 0 
-             ? (snapshot.distanceMeters / snapshot.duration.inSeconds) * 3.6 
-             : 0.0;
-         if (avgSpeed <= 0.1) return "-:--";
-         final paceMinKm = 60 / avgSpeed;
-         final min = paceMinKm.floor();
-         final sec = ((paceMinKm - min) * 60).round();
-         return '$min:${sec.toString().padLeft(2, '0')}';
+        final avgSpeed = snapshot.duration.inSeconds > 0
+            ? (snapshot.distanceMeters / snapshot.duration.inSeconds) * 3.6
+            : 0.0;
+        if (avgSpeed <= 0.1) return '-:--';
+        final paceMinKm = 60 / avgSpeed;
+        final min = paceMinKm.floor();
+        final sec = ((paceMinKm - min) * 60).round();
+        return '$min:${sec.toString().padLeft(2, '0')}';
       case MetricType.elevation:
         return '${snapshot.elevationGainMeters.toStringAsFixed(0)} ${l10n.trackingElevationUnitM}';
+      case MetricType.heartRate:
+        final hr = snapshot.currentHeartRate;
+        return hr != null ? '$hr' : '--';
+      case MetricType.cadence:
+        final cad = snapshot.currentCadence;
+        return cad != null ? '$cad' : '--';
       case MetricType.none:
-        return "";
+        return '';
     }
   }
-  
+
   void _showMetricPicker(int pageIndex, int slotIndex) {
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       builder: (context) {
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-               Padding(
-                 padding: const EdgeInsets.all(16),
-                 child: Text("Select Metric", style: Theme.of(context).textTheme.titleLarge),
-               ),
-               Expanded(
-                 child: ListView(
-                   shrinkWrap: true,
-                   children: MetricType.values.map((type) => ListTile(
-                     leading: type == MetricType.none ? const Icon(Icons.close) : null,
-                     title: Text(type == MetricType.none ? "Empty / Remove" : type.label(AppLocalizations.of(context)!)),
-                     onTap: () {
-                       setState(() {
-                         if (pageIndex == 0) {
-                           _page1Metrics[slotIndex] = type;
-                         } else {
-                           _page2Metrics[slotIndex] = type;
-                         }
-                       });
-                       _saveMetricConfig();
-                       Navigator.pop(context);
-                     },
-                   )).toList(),
-                 ),
-               ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Select Metric',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: MetricType.values
+                      .map(
+                        (type) => ListTile(
+                          leading: type == MetricType.none
+                              ? const Icon(Icons.close)
+                              : null,
+                          title: Text(
+                            type == MetricType.none
+                                ? 'Empty / Remove'
+                                : type.label(AppLocalizations.of(context)!),
+                          ),
+                          onTap: () {
+                            setState(() {
+                              if (pageIndex == 0) {
+                                _page1Metrics[slotIndex] = type;
+                              } else {
+                                _page2Metrics[slotIndex] = type;
+                              }
+                            });
+                            _saveMetricConfig();
+                            Navigator.pop(context);
+                          },
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
             ],
           ),
         );
@@ -203,40 +236,51 @@ class _TrackingControlsState extends State<TrackingControls> {
   }
 
   Widget _buildMetricSlot(
-      int pageIndex,
-      int slotIndex,
-      AppLocalizations l10n,
-      TrackingSessionSnapshot snapshot,
-      ActivityType effectiveType,
-      TextStyle valueStyle,
-      TextStyle labelStyle,
+    int pageIndex,
+    int slotIndex,
+    AppLocalizations l10n,
+    TrackingSessionSnapshot snapshot,
+    ActivityType effectiveType,
+    TextStyle valueStyle,
+    TextStyle labelStyle,
   ) {
     final metrics = pageIndex == 0 ? _page1Metrics : _page2Metrics;
     if (metrics.length <= slotIndex) return const SizedBox();
-    
+
     final type = metrics[slotIndex] ?? MetricType.none;
-    
+
     if (type == MetricType.none) {
       return GestureDetector(
         onTap: () => _showMetricPicker(pageIndex, slotIndex),
         child: Container(
-          height: 70, 
+          height: 70,
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+            color: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.2), style: BorderStyle.solid),
+            border: Border.all(
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: 0.2),
+              style: BorderStyle.solid,
+            ),
           ),
           child: Center(
-            child: Icon(Icons.add, size: 24, color: Theme.of(context).colorScheme.outline),
+            child: Icon(
+              Icons.add,
+              size: 24,
+              color: Theme.of(context).colorScheme.outline,
+            ),
           ),
         ),
       );
     }
-    
+
     return GestureDetector(
       onLongPress: () {
-          HapticFeedback.mediumImpact();
-          _showMetricPicker(pageIndex, slotIndex);
+        HapticFeedback.mediumImpact();
+        _showMetricPicker(pageIndex, slotIndex);
       },
       child: _MetricCell(
         label: type.label(l10n),
@@ -269,17 +313,18 @@ class _TrackingControlsState extends State<TrackingControls> {
         final metricValueStyle =
             EndurainTypography.metricValue(theme.colorScheme).copyWith(
               color: theme.colorScheme.onSurface,
-              fontSize: isLiveTracking ? (isCompact ? 44 : 56) : (isCompact ? 40 : 48),
+              fontSize: isLiveTracking
+                  ? (isCompact ? 44 : 56)
+                  : (isCompact ? 40 : 48),
               fontWeight: FontWeight.w900,
               height: 1.0,
             );
-        final metricMetaStyle = EndurainTypography.metricLabel(
-          theme.colorScheme,
-        ).copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-          fontSize: isCompact ? 12.0 : 13.5,
-          fontWeight: FontWeight.w600,
-        );
+        final metricMetaStyle =
+            EndurainTypography.metricLabel(theme.colorScheme).copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: isCompact ? 12.0 : 13.5,
+              fontWeight: FontWeight.w600,
+            );
 
         final metricsPager = _MetricPager(
           pageController: _metricsPageController,
@@ -293,33 +338,113 @@ class _TrackingControlsState extends State<TrackingControls> {
           firstPageTop: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-               Expanded(child: _buildMetricSlot(0, 0, l10n, widget.snapshot, effectiveType, metricValueStyle, metricMetaStyle)),
-               const SizedBox(width: 8),
-               Expanded(child: _buildMetricSlot(0, 1, l10n, widget.snapshot, effectiveType, metricValueStyle, metricMetaStyle)),
+              Expanded(
+                child: _buildMetricSlot(
+                  0,
+                  0,
+                  l10n,
+                  widget.snapshot,
+                  effectiveType,
+                  metricValueStyle,
+                  metricMetaStyle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildMetricSlot(
+                  0,
+                  1,
+                  l10n,
+                  widget.snapshot,
+                  effectiveType,
+                  metricValueStyle,
+                  metricMetaStyle,
+                ),
+              ),
             ],
           ),
           firstPageBottom: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-               Expanded(child: _buildMetricSlot(0, 2, l10n, widget.snapshot, effectiveType, metricValueStyle, metricMetaStyle)),
-               const SizedBox(width: 8),
-               Expanded(child: _buildMetricSlot(0, 3, l10n, widget.snapshot, effectiveType, metricValueStyle, metricMetaStyle)),
+              Expanded(
+                child: _buildMetricSlot(
+                  0,
+                  2,
+                  l10n,
+                  widget.snapshot,
+                  effectiveType,
+                  metricValueStyle,
+                  metricMetaStyle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildMetricSlot(
+                  0,
+                  3,
+                  l10n,
+                  widget.snapshot,
+                  effectiveType,
+                  metricValueStyle,
+                  metricMetaStyle,
+                ),
+              ),
             ],
           ),
           secondPageTop: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-               Expanded(child: _buildMetricSlot(1, 0, l10n, widget.snapshot, effectiveType, metricValueStyle, metricMetaStyle)),
-               const SizedBox(width: 8),
-               Expanded(child: _buildMetricSlot(1, 1, l10n, widget.snapshot, effectiveType, metricValueStyle, metricMetaStyle)),
+              Expanded(
+                child: _buildMetricSlot(
+                  1,
+                  0,
+                  l10n,
+                  widget.snapshot,
+                  effectiveType,
+                  metricValueStyle,
+                  metricMetaStyle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildMetricSlot(
+                  1,
+                  1,
+                  l10n,
+                  widget.snapshot,
+                  effectiveType,
+                  metricValueStyle,
+                  metricMetaStyle,
+                ),
+              ),
             ],
           ),
           secondPageBottom: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-               Expanded(child: _buildMetricSlot(1, 2, l10n, widget.snapshot, effectiveType, metricValueStyle, metricMetaStyle)),
-               const SizedBox(width: 8),
-               Expanded(child: _buildMetricSlot(1, 3, l10n, widget.snapshot, effectiveType, metricValueStyle, metricMetaStyle)),
+              Expanded(
+                child: _buildMetricSlot(
+                  1,
+                  2,
+                  l10n,
+                  widget.snapshot,
+                  effectiveType,
+                  metricValueStyle,
+                  metricMetaStyle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildMetricSlot(
+                  1,
+                  3,
+                  l10n,
+                  widget.snapshot,
+                  effectiveType,
+                  metricValueStyle,
+                  metricMetaStyle,
+                ),
+              ),
             ],
           ),
         );
@@ -421,7 +546,7 @@ class _TrackingControlsState extends State<TrackingControls> {
     final stopLabel = isRecording || isPaused
         ? l10n.trackingStop
         : l10n.trackingStart;
-        
+
     void pausePressed() {
       if (isRecording) {
         widget.onPause();
@@ -435,8 +560,28 @@ class _TrackingControlsState extends State<TrackingControls> {
       if (isRecording || isPaused) {
         widget.onStop();
       } else {
-        widget.onStart(_selectedActivity.trackingMode);
+        widget.onStart(_selectedActivity.trackingMode, _selectedActivity.id);
       }
+    }
+
+    // NEW: If initializing, show "Starting in X..." button
+    if (widget.isPreparingStart) {
+      return SizedBox(
+        width: double.infinity,
+        height: 56,
+        child: FilledButton.tonal(
+          onPressed: null,
+          child: Text(
+            l10n.trackingGpsPreparingCountdown(
+              widget.startCountdownSeconds,
+              widget.hasGpsFix
+                  ? l10n.trackingGpsReady
+                  : l10n.trackingGpsSearching,
+            ),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+        ),
+      );
     }
 
     if (canPauseOrResume) {
@@ -490,43 +635,70 @@ class _TrackingControlsState extends State<TrackingControls> {
     }
 
     // IDLE State
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+    final canStartNow = widget.hasGpsFix;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          flex: 4, 
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l10n.activityTypeLabel,
-                style: EndurainTypography.helper(Theme.of(context).colorScheme),
-              ),
-              const SizedBox(height: 4),
-              _buildActivityTypeSelector(l10n, isEnabled: true),
-            ],
-          ),
-        ),
-        const SizedBox(width: TrackingSpacing.md),
-        Expanded(
-          flex: 6,
-          child: FilledButton(
-            key: const Key('tracking-start-stop-button'),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(56),
-              backgroundColor: TrackingSemanticColors.success,
-              foregroundColor: Colors.white,
-              textStyle: EndurainTypography.metricLabel(
-                Theme.of(context).colorScheme,
-              ).copyWith(fontSize: 20, fontWeight: FontWeight.w800),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(TrackingRadius.md),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              flex: 4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.activityTypeLabel,
+                    style: EndurainTypography.helper(
+                      Theme.of(context).colorScheme,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  _buildActivityTypeSelector(l10n, isEnabled: true),
+                ],
               ),
             ),
-            onPressed: widget.isPreparingStart ? null : stopPressed,
-            child: Text(stopLabel),
-          ),
+            const SizedBox(width: TrackingSpacing.md),
+            Expanded(
+              flex: 6,
+              child: FilledButton(
+                key: const Key('tracking-start-stop-button'),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(56),
+                  backgroundColor: TrackingSemanticColors.success,
+                  disabledBackgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest,
+                  foregroundColor: Colors.white,
+                  disabledForegroundColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant,
+                  textStyle: EndurainTypography.metricLabel(
+                    Theme.of(context).colorScheme,
+                  ).copyWith(fontSize: 20, fontWeight: FontWeight.w800),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(TrackingRadius.md),
+                  ),
+                ),
+                onPressed:
+                    widget.isPreparingStart || !canStartNow ? null : stopPressed,
+                child: Text(stopLabel),
+              ),
+            ),
+          ],
         ),
+        if (!canStartNow) ...[
+          const SizedBox(height: 6),
+          Text(
+            l10n.trackingGpsNeedStableFix,
+            key: const Key('tracking-start-disabled-reason'),
+            style: EndurainTypography.helper(
+              Theme.of(context).colorScheme,
+            ).copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -636,6 +808,8 @@ class _TrackingControlsState extends State<TrackingControls> {
 
   String _statusText(AppLocalizations l10n, TrackingSessionState state) {
     switch (state) {
+      case TrackingSessionState.initializing:
+        return 'Initializing...';
       case TrackingSessionState.idle:
         return l10n.trackingIdle;
       case TrackingSessionState.recording:
@@ -649,6 +823,8 @@ class _TrackingControlsState extends State<TrackingControls> {
 
   TrackingStatusTone _statusTone(TrackingSessionState state) {
     switch (state) {
+      case TrackingSessionState.initializing:
+        return TrackingStatusTone.idle;
       case TrackingSessionState.idle:
         return TrackingStatusTone.idle;
       case TrackingSessionState.recording:
@@ -671,12 +847,6 @@ class _TrackingControlsState extends State<TrackingControls> {
     }
   }
 
-  String _movementLabel(ActivityType type, AppLocalizations l10n) {
-    if (type == ActivityType.ride) {
-      return l10n.trackingAverageSpeed;
-    }
-    return l10n.trackingPace;
-  }
 }
 
 class _StatusGpsLine extends StatelessWidget {
@@ -765,12 +935,12 @@ class _MetricPager extends StatelessWidget {
   Widget build(BuildContext context) {
     final active = Theme.of(context).colorScheme.primary;
     final inactive = Theme.of(context).colorScheme.outlineVariant;
-    
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(
-          height: 160, 
+          height: 160,
           child: PageView(
             controller: pageController,
             onPageChanged: onPageChanged,
@@ -866,14 +1036,14 @@ class _MetricCell extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        border: Border.all(color: Theme.of(context).colorScheme.outline, width: 1),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline,
+          width: 1,
+        ),
         borderRadius: BorderRadius.circular(TrackingRadius.md),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: 4,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,

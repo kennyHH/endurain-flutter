@@ -1,10 +1,16 @@
 import 'package:endurain/core/models/activity.dart';
+import 'package:endurain/core/services/secure_storage_service.dart';
+import 'package:endurain/core/di/service_locator.dart';
+import 'package:endurain/features/settings/controllers/settings_controller.dart';
 import 'package:endurain/core/services/tracking_session_engine.dart';
 import 'package:endurain/features/map/widgets/tracking_controls.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
+import 'tracking_controls_test.mocks.dart';
 
 Widget _wrapWithL10n(Widget child) {
   return MaterialApp(
@@ -38,7 +44,7 @@ class _TrackingControlsHarness extends StatefulWidget {
     this.suggestedActivityType,
   });
 
-  final ValueChanged<ActivityType> onStart;
+  final void Function(ActivityType activityType, int activityTypeId) onStart;
   final ActivityType? suggestedActivityType;
 
   @override
@@ -63,12 +69,14 @@ class _TrackingControlsHarnessState extends State<_TrackingControlsHarness> {
         body: TrackingControls(
           snapshot: snapshot,
           suggestedActivityType: widget.suggestedActivityType,
-          onStart: (type) {
-            widget.onStart(type);
+          hasGpsFix: true,
+          onStart: (type, activityTypeId) {
+            widget.onStart(type, activityTypeId);
             setState(() {
               snapshot = TrackingSessionSnapshot(
                 state: TrackingSessionState.recording,
                 activityType: type,
+                activityTypeId: activityTypeId,
                 startTime: DateTime.utc(2026, 3, 9, 10, 0, 0),
                 duration: const Duration(seconds: 3),
                 distanceMeters: 12,
@@ -108,13 +116,36 @@ class _TrackingControlsHarnessState extends State<_TrackingControlsHarness> {
   }
 }
 
+@GenerateMocks([
+  TrackingSessionEngine,
+  SettingsController,
+  SecureStorageService,
+])
 void main() {
+  late MockTrackingSessionEngine mockEngine;
+  late MockSettingsController mockSettings;
+  late MockSecureStorageService mockStorage;
+
+  setUp(() async {
+    mockEngine = MockTrackingSessionEngine();
+    mockSettings = MockSettingsController();
+    mockStorage = MockSecureStorageService();
+
+    when(mockStorage.getMetricConfig()).thenAnswer((_) async => null);
+
+    await serviceLocator.reset();
+    serviceLocator.registerSingleton<SecureStorageService>(mockStorage);
+    serviceLocator.registerSingleton<TrackingSessionEngine>(mockEngine);
+    serviceLocator.registerSingleton<SettingsController>(mockSettings);
+  });
+
   group('TrackingControls', () {
     testWidgets('idle state: Start sichtbar, Stop nicht aktiv', (tester) async {
       await tester.pumpWidget(
         _wrapWithL10n(
           const TrackingControls(
             snapshot: TrackingSessionSnapshot.idle(),
+            hasGpsFix: true,
             onStart: _ignoreStart,
             onPause: _ignoreVoid,
             onResume: _ignoreVoid,
@@ -140,6 +171,7 @@ void main() {
         _wrapWithL10n(
           TrackingControls(
             snapshot: _snapshot(TrackingSessionState.recording),
+            hasGpsFix: true,
             onStart: _ignoreStart,
             onPause: _ignoreVoid,
             onResume: _ignoreVoid,
@@ -171,6 +203,7 @@ void main() {
         _wrapWithL10n(
           TrackingControls(
             snapshot: _snapshot(TrackingSessionState.stopped),
+            hasGpsFix: true,
             onStart: _ignoreStart,
             onPause: _ignoreVoid,
             onResume: _ignoreVoid,
@@ -225,7 +258,7 @@ void main() {
         ActivityType? startedType;
         await tester.pumpWidget(
           _TrackingControlsHarness(
-            onStart: (type) {
+            onStart: (type, _) {
               startedType = type;
             },
           ),
@@ -255,7 +288,7 @@ void main() {
       await tester.pumpWidget(
         _TrackingControlsHarness(
           suggestedActivityType: ActivityType.walk,
-          onStart: (type) => startedType = type,
+          onStart: (type, _) => startedType = type,
         ),
       );
 
@@ -269,10 +302,42 @@ void main() {
       expect(startedType, ActivityType.walk);
       expect(find.text('Recording'), findsOneWidget);
     });
+
+    testWidgets('ohne GPS Fix ist Start disabled mit Hinweistext', (
+      tester,
+    ) async {
+      var startCalls = 0;
+      await tester.pumpWidget(
+        _wrapWithL10n(
+          TrackingControls(
+            snapshot: const TrackingSessionSnapshot.idle(),
+            hasGpsFix: false,
+            onStart: (_, activityTypeId) => startCalls++,
+            onPause: _ignoreVoid,
+            onResume: _ignoreVoid,
+            onStop: _ignoreStop,
+          ),
+        ),
+      );
+
+      expect(
+        find.byKey(const Key('tracking-start-disabled-reason')),
+        findsOneWidget,
+      );
+      expect(find.text('Start tracking'), findsOneWidget);
+
+      final buttonFinder = find.byKey(const Key('tracking-start-stop-button'));
+      final button = tester.widget<FilledButton>(buttonFinder);
+      expect(button.onPressed, isNull);
+
+      await tester.tap(buttonFinder);
+      await tester.pump();
+      expect(startCalls, equals(0));
+    });
   });
 }
 
-void _ignoreStart(ActivityType _) {}
+void _ignoreStart(ActivityType activityType, int activityTypeId) {}
 
 void _ignoreStop() {}
 
