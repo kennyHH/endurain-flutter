@@ -91,6 +91,18 @@
   "@retry": {
     "description": "Rótulo do botão de tentar novamente - Usado em: sso_webview_screen.dart"
   },
+  "connectUploadTitle": "Ligar ao servidor",
+  "@connectUploadTitle": {
+    "description": "Título do sheet de login sob demanda antes de upload/eliminação - Usado em: app_bottom_nav.dart"
+  },
+  "connectUploadMessage": "Pode usar o Endurain totalmente offline. Ligue-se agora para enviar ou remover atividades no servidor.",
+  "@connectUploadMessage": {
+    "description": "Mensagem do sheet de login sob demanda antes de upload/eliminação - Usado em: app_bottom_nav.dart"
+  },
+  "connectUploadAction": "Ligar e enviar",
+  "@connectUploadAction": {
+    "description": "CTA principal no sheet de login sob demanda - Usado em: app_bottom_nav.dart"
+  },
   "ssoWebViewTitle": "Entrar",
   "@ssoWebViewTitle": {
     "description": "Título da tela WebView SSO - Usado em: sso_webview_screen.dart"
@@ -270,6 +282,14 @@
   "@historyFilterSort": {
     "description": "Título do botão para abrir o painel de filtros e ordenação do histórico - Usado em: activity_history_screen.dart"
   },
+  "historyFilterReset": "Repor",
+  "@historyFilterReset": {
+    "description": "Rótulo do botão para repor filtros do histórico para os valores padrão - Usado em: activity_history_screen.dart"
+  },
+  "historyFilterCategorySearchHint": "Pesquisar categoria",
+  "@historyFilterCategorySearchHint": {
+    "description": "Placeholder da pesquisa de categorias no painel de filtros do histórico - Usado em: activity_history_screen.dart"
+  },
   "historyDateRange": "Período",
   "@historyDateRange": {
     "description": "Rótulo da secção para filtros de período no histórico - Usado em: activity_history_screen.dart"
@@ -306,6 +326,14 @@
   "@historyUploadDone": {
     "description": "Badge para atividades já enviadas ao servidor - Used in: activity_history_screen.dart"
   },
+  "historyConnectionOffline": "Offline",
+  "@historyConnectionOffline": {
+    "description": "Chip de status quando a ligação ao servidor não está ativa - Usado em: activity_history_screen.dart"
+  },
+  "historyConnectionOnline": "Ligado",
+  "@historyConnectionOnline": {
+    "description": "Chip de status quando a ligação ao servidor está ativa - Usado em: activity_history_screen.dart"
+  },
   "historyRenameTitle": "Nome da atividade",
   "@historyRenameTitle": {
     "description": "Título do diálogo para renomear atividade - Usado em: activity_history_screen.dart"
@@ -329,6 +357,58 @@
   "historyDeletedSuccess": "Atividade eliminada",
   "@historyDeletedSuccess": {
     "description": "Snackbar após eliminar uma atividade com sucesso - Usado em: activity_history_screen.dart"
+  },
+  "historyHeartRate": "Zonas de frequência cardíaca",
+  "@historyHeartRate": {
+    "description": "Título para o gráfico de frequência cardíaca - Usado em: activity_charts.dart"
+  },
+  "historyNoHeartRateData": "Sem dados de frequência cardíaca disponíveis",
+  "@historyNoHeartRateData": {
+    "description": "Mensagem mostrada quando o gráfico de frequência cardíaca está vazio - Usado em: activity_charts.dart"
+  },
+  "heartRateZone": "Zona",
+  "@heartRateZone": {
+    "description": "Rótulo para zonas de frequência cardíaca - Usado em: activity_charts.dart"
+  },
+  "historyQualityTtffLabel": "TTFF",
+  "@historyQualityTtffLabel": {
+    "description": "Rótulo da métrica tempo até primeiro fix no cartão de qualidade - Usado em: activity_detail_screen.dart"
+  },
+  "historyQualityGpsLossLabel": "Perdas de GPS",
+  "@historyQualityGpsLossLabel": {
+    "description": "Rótulo da métrica de número de perdas de sinal GPS - Usado em: activity_detail_screen.dart"
+  },
+  "historyQualityRejectedPointsLabel": "Pontos rejeitados",
+  "@historyQualityRejectedPointsLabel": {
+    "description": "Rótulo da métrica de pontos rejeitados - Usado em: activity_detail_screen.dart"
+  },
+  "historyQualitySignalLossDurationLabel": "Duração de perda de sinal",
+  "@historyQualitySignalLossDurationLabel": {
+    "description": "Rótulo da métrica de duração total de perda de sinal GPS - Usado em: activity_detail_screen.dart"
+  },
+  "historyQualitySecondsValue": "{seconds} s",
+  "@historyQualitySecondsValue": {
+    "description": "Valor formatado em segundos para métricas de qualidade - Usado em: activity_detail_screen.dart, activity_history_screen.dart",
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "historyQualitySummary": "TTFF {ttff} • Perdas de GPS {losses} • Rejeitados {rejected}",
+  "@historyQualitySummary": {
+    "description": "Resumo compacto de qualidade mostrado nos cartões do histórico - Usado em: activity_history_screen.dart",
+    "placeholders": {
+      "ttff": {
+        "type": "String"
+      },
+      "losses": {
+        "type": "int"
+      },
+      "rejected": {
+        "type": "int"
+      }
+    }
   },
   "mapCenterOnLocation": "Centrar na minha localização",
   "@mapCenterOnLocation": {
@@ -741,6 +821,26 @@
   "@savedSuccessfully": {
     "description": "Mensagem de sucesso ao guardar configurações - Usado em: server_settings_screen.dart"
   },
+  "settingsTrackingPermissionsTitle": "Permissões de tracking",
+  "@settingsTrackingPermissionsTitle": {
+    "description": "Título da secção e do diálogo para configuração de permissões de tracking - Usado em: server_settings_screen.dart"
+  },
+  "settingsTrackingPermissionsAction": "Configurar permissões de tracking",
+  "@settingsTrackingPermissionsAction": {
+    "description": "Rótulo da ação para iniciar configuração de permissões de tracking - Usado em: server_settings_screen.dart"
+  },
+  "settingsTrackingPermissionsDescription": "Reconfigurar permissões de localização e bateria/segundo plano.",
+  "@settingsTrackingPermissionsDescription": {
+    "description": "Texto descritivo da entrada de configuração manual de permissões de tracking - Usado em: server_settings_screen.dart"
+  },
+  "settingsTrackingPermissionsDialogMessage": "Quer reconfigurar agora as permissões de localização e bateria/segundo plano para tracking confiável?",
+  "@settingsTrackingPermissionsDialogMessage": {
+    "description": "Mensagem de confirmação antes de executar configuração de permissões de tracking - Usado em: server_settings_screen.dart"
+  },
+  "settingsTrackingPermissionsSuccess": "Configuração de permissões de tracking concluída.",
+  "@settingsTrackingPermissionsSuccess": {
+    "description": "Mensagem de sucesso após configuração de permissões de tracking - Usado em: server_settings_screen.dart"
+  },
   "settingsThemeMode": "Tema",
   "@settingsThemeMode": {
     "description": "Rótulo da seleção de modo de tema - Usado em: settings_screen.dart"
@@ -761,7 +861,7 @@
   "@settingsThemePreset": {
     "description": "Rótulo para escolha de preset de cores - Usado em: settings_screen.dart"
   },
-  "settingsThemePresetEndurain": "Endurain",
+  "settingsThemePresetEndurain": "Slate",
   "@settingsThemePresetEndurain": {
     "description": "Opção de preset para a paleta padrão Endurain - Usado em: settings_screen.dart"
   },
@@ -780,6 +880,59 @@
   "settingsSectionTheme": "Tema",
   "@settingsSectionTheme": {
     "description": "Cabeçalho da secção de tema - Used in: settings_screen.dart"
+  },
+  "settingsSectionVoiceCoach": "Voice Coach",
+  "@settingsSectionVoiceCoach": {
+    "description": "Cabeçalho da secção de controlos do Voice Coach - Used in: settings_screen.dart"
+  },
+  "settingsVoiceCoachEnabled": "Ativar Voice Coach",
+  "@settingsVoiceCoachEnabled": {
+    "description": "Rótulo do toggle para ativar ou desativar todos os anúncios de voz - Used in: settings_screen.dart"
+  },
+  "settingsVoiceCoachEnabledDescription": "Reproduz anúncios de contagem regressiva, split e estado do GPS durante o tracking.",
+  "@settingsVoiceCoachEnabledDescription": {
+    "description": "Texto de apoio para o toggle do Voice Coach - Used in: settings_screen.dart"
+  },
+  "settingsVoiceCoachVolume": "Volume do Voice Coach",
+  "@settingsVoiceCoachVolume": {
+    "description": "Rótulo para controlo de volume do Voice Coach - Used in: settings_screen.dart"
+  },
+  "settingsVoiceCoachVolumeDescription": "Controla o nível de saída de voz da app. O padrão é 80%.",
+  "@settingsVoiceCoachVolumeDescription": {
+    "description": "Texto de apoio para slider de volume do Voice Coach - Used in: settings_screen.dart"
+  },
+  "settingsVoiceCoachVolumeValue": "{percent}%",
+  "@settingsVoiceCoachVolumeValue": {
+    "description": "Valor percentual atual do volume do Voice Coach - Used in: settings_screen.dart",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsVoiceCoachStartPrompts": "Prompts de início",
+  "@settingsVoiceCoachStartPrompts": {
+    "description": "Rótulo do toggle para prompts de voz de contagem regressiva e início - Used in: settings_screen.dart"
+  },
+  "settingsVoiceCoachStartPromptsDescription": "Anuncia a contagem regressiva e o sinal de início ao começar uma atividade.",
+  "@settingsVoiceCoachStartPromptsDescription": {
+    "description": "Texto de apoio para o toggle de prompts de início - Used in: settings_screen.dart"
+  },
+  "settingsVoiceCoachSplitAnnouncements": "Anúncios de split",
+  "@settingsVoiceCoachSplitAnnouncements": {
+    "description": "Rótulo do toggle para anúncios de voz por quilómetro - Used in: settings_screen.dart"
+  },
+  "settingsVoiceCoachSplitAnnouncementsDescription": "Anuncia o ritmo e a velocidade média em cada split de quilómetro.",
+  "@settingsVoiceCoachSplitAnnouncementsDescription": {
+    "description": "Texto de apoio para o toggle de anúncios de split - Used in: settings_screen.dart"
+  },
+  "settingsVoiceCoachGpsAnnouncements": "Alertas de estado do GPS",
+  "@settingsVoiceCoachGpsAnnouncements": {
+    "description": "Rótulo do toggle para alertas de voz de estado do sinal GPS - Used in: settings_screen.dart"
+  },
+  "settingsVoiceCoachGpsAnnouncementsDescription": "Anuncia quando o sinal GPS é perdido ou recuperado.",
+  "@settingsVoiceCoachGpsAnnouncementsDescription": {
+    "description": "Texto de apoio para o toggle de anúncios de GPS - Used in: settings_screen.dart"
   },
   "settingsSectionRouteDisplay": "Exibição de rota",
   "@settingsSectionRouteDisplay": {
@@ -857,10 +1010,49 @@
   "@settingsGpsFilterModeStrict": {
     "description": "Opção de modo GPS com filtragem rígida para ambientes urbanos - Usado em: settings_screen.dart"
   },
-  "settingsGpsFilterModeStrictDescription": "Rejeita pontos ruidosos de forma mais agressiva. Útil em áreas urbanas densas.",
+  "settingsGpsFilterModeStrictDescription": "Rejeita pontos ruidosos agressivamente. Útil em áreas urbanas densas.",
   "@settingsGpsFilterModeStrictDescription": {
     "description": "Descrição do modo rígido de filtragem GPS - Usado em: settings_screen.dart"
   },
+  "settingsDynamicMapZoomTitle": "Zoom dinâmico do mapa",
+  "@settingsDynamicMapZoomTitle": {
+    "description": "Rótulo do toggle para zoom adaptativo por velocidade com modo de seguimento ativo - Usado em: settings_screen.dart"
+  },
+  "settingsDynamicMapZoomDescription": "Ajusta o zoom conforme a velocidade de movimento quando o modo de seguimento está ativo.",
+  "@settingsDynamicMapZoomDescription": {
+    "description": "Texto de apoio para o toggle de zoom dinâmico do mapa - Usado em: settings_screen.dart"
+  },
+  "settingsDynamicMapZoomPresetTitle": "Estilo de zoom dinâmico",
+  "@settingsDynamicMapZoomPresetTitle": {
+    "description": "Título para selecionar o preset de estilo de zoom dinâmico - Usado em: settings_screen.dart"
+  },
+  "settingsDynamicMapZoomPresetConservative": "Conservador",
+  "@settingsDynamicMapZoomPresetConservative": {
+    "description": "Rótulo de preset de zoom dinâmico com mudanças menores - Usado em: settings_screen.dart"
+  },
+  "settingsDynamicMapZoomPresetBalanced": "Equilibrado",
+  "@settingsDynamicMapZoomPresetBalanced": {
+    "description": "Rótulo de preset de zoom dinâmico com mudanças médias - Usado em: settings_screen.dart"
+  },
+  "settingsDynamicMapZoomPresetAggressive": "Agressivo",
+  "@settingsDynamicMapZoomPresetAggressive": {
+    "description": "Rótulo de preset de zoom dinâmico com zoom-out mais forte em alta velocidade - Usado em: settings_screen.dart"
+  },
+  "settingsEcoModeDescription": "Reduz a frequência de atualização do GPS",
+  "settingsEcoMode": "Modo Eco",
+  "settingsAccordionTrackingTitle": "Tracking",
+  "settingsAccordionTrackingSubtitle": "Voice Coach · Modo Eco · Avisos de GPS",
+  "settingsAccordionDisplayTitle": "Visual",
+  "settingsAccordionDisplaySubtitle": "Tema · Preset de cores · Exibição de rota",
+  "settingsAccordionDeviceTitle": "Dispositivo e Sensores",
+  "settingsAccordionDeviceSubtitle": "Sensores Bluetooth · Otimização de bateria",
+  "settingsAccordionServerTitle": "Servidor e Sync",
+  "settingsAccordionServerSubtitle": "Servidor · Login · Sync de upload",
+  "settingsServerConnected": "Ligado",
+  "settingsServerDisconnected": "Não ligado",
+  "settingsSectionSensors": "Sensores e Acessórios",
+  "settingsSectionServer": "Servidor",
+  "serverSettings": "Servidor",
   "settingsRouteMatchingEnabledLabel": "Pré-visualização ajustada ativa",
   "@settingsRouteMatchingEnabledLabel": {
     "description": "Rótulo pequeno no mapa quando pré-visualização de rota ajustada está ativa - Usado em: map_screen.dart"

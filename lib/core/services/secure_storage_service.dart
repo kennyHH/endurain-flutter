@@ -1,7 +1,9 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:injectable/injectable.dart';
 
+@singleton
 class SecureStorageService {
   static const _storage = FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
@@ -25,7 +27,14 @@ class SecureStorageService {
   static const _mapMatchingPreviewEnabledKey = 'map_matching_preview_enabled';
   static const _allowInsecureTlsKey = 'allow_insecure_tls';
   static const _metricConfigKey = 'metric_config';
-  
+  static const _lastLatitudeKey = 'last_known_latitude';
+  static const _lastLongitudeKey = 'last_known_longitude';
+  static const _lastLocationTimeKey = 'last_known_location_time';
+  static const _ecoModeKey = 'eco_mode_enabled';
+  static const _audioEnabledKey = 'audio_enabled';
+  static const _audioVolumeKey = 'audio_volume';
+  static const _permissionsOnboardingCompletedKey =
+      'permissions_onboarding_completed';
 
   // Read a value
   Future<String?> read({required String key}) async {
@@ -94,14 +103,72 @@ class SecureStorageService {
   Future<String?> getMapBackgroundColor() => read(key: _mapBackgroundColorKey);
   Future<void> setMapBackgroundColor(String color) =>
       write(key: _mapBackgroundColorKey, value: color);
+
+  Future<bool> getEcoModeEnabled() async {
+    final value = await read(key: _ecoModeKey);
+    return value == 'true';
+  }
+
+  Future<void> setEcoModeEnabled(bool enabled) =>
+      write(key: _ecoModeKey, value: enabled.toString());
   Future<void> deleteMapBackgroundColor() =>
       delete(key: _mapBackgroundColorKey);
+
+  Future<bool> getAudioEnabled() async {
+    final raw = await read(key: _audioEnabledKey);
+    if (raw == null) return true;
+    return raw == 'true';
+  }
+
+  Future<void> setAudioEnabled(bool enabled) =>
+      write(key: _audioEnabledKey, value: enabled.toString());
+
+  Future<double?> getAudioVolume() async {
+    final raw = await read(key: _audioVolumeKey);
+    if (raw == null) return null;
+    return double.tryParse(raw);
+  }
+
+  Future<void> setAudioVolume(double volume) =>
+      write(key: _audioVolumeKey, value: volume.toString());
+
+  // Location caching
+  Future<void> setLastLocation(double lat, double lng) async {
+    await write(key: _lastLatitudeKey, value: lat.toString());
+    await write(key: _lastLongitudeKey, value: lng.toString());
+    await write(
+      key: _lastLocationTimeKey,
+      value: DateTime.now().toIso8601String(),
+    );
+  }
+
+  Future<(double, double)?> getLastLocation() async {
+    final latStr = await read(key: _lastLatitudeKey);
+    final lngStr = await read(key: _lastLongitudeKey);
+    final timeStr = await read(key: _lastLocationTimeKey);
+
+    if (latStr == null || lngStr == null || timeStr == null) return null;
+
+    try {
+      final lat = double.parse(latStr);
+      final lng = double.parse(lngStr);
+      final time = DateTime.parse(timeStr);
+
+      // If location is older than 24 hours, discard it
+      if (DateTime.now().difference(time).inHours > 24) return null;
+
+      return (lat, lng);
+    } catch (_) {
+      return null;
+    }
+  }
 
   // Token-specific methods
   Future<String?> getAccessToken() => read(key: _accessTokenKey);
 
   Future<String?> getMetricConfig() => read(key: _metricConfigKey);
-  Future<void> setMetricConfig(String config) => write(key: _metricConfigKey, value: config);
+  Future<void> setMetricConfig(String config) =>
+      write(key: _metricConfigKey, value: config);
   Future<void> setAccessToken(String token) =>
       write(key: _accessTokenKey, value: token);
   Future<void> deleteAccessToken() => delete(key: _accessTokenKey);
@@ -177,4 +244,18 @@ class SecureStorageService {
     await deleteRefreshToken();
     await deleteSessionId();
   }
+
+  Future<bool> getPermissionsOnboardingCompleted() async {
+    final raw = await read(key: _permissionsOnboardingCompletedKey);
+    return raw == 'true';
+  }
+
+  Future<void> setPermissionsOnboardingCompleted(bool completed) =>
+      write(
+        key: _permissionsOnboardingCompletedKey,
+        value: completed.toString(),
+      );
+
+  Future<void> deletePermissionsOnboardingCompleted() =>
+      delete(key: _permissionsOnboardingCompletedKey);
 }

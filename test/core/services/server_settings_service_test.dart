@@ -34,21 +34,22 @@ class _FakeStorage extends SecureStorageService {
 
 void main() {
   group('ServerSettingsService', () {
-    test('200 Response wird korrekt geparst und optionale Felder gespeichert', () async {
-      final storage = _FakeStorage(serverUrl: 'https://endurain.example.com');
-      final service = ServerSettingsService(
-        storage: storage,
-        requestExecutor: ApiRequestExecutor(
-          httpClient: MockClient((request) async {
-            expect(request.method, equals('GET'));
-            expect(
-              request.url.toString(),
-              equals(
-                'https://endurain.example.com/api/v1/public/server_settings',
-              ),
-            );
-            return http.Response(
-              '''
+    test(
+      '200 Response wird korrekt geparst und optionale Felder gespeichert',
+      () async {
+        final storage = _FakeStorage(serverUrl: 'https://endurain.example.com');
+        final service = ServerSettingsService(
+          storage: storage,
+          requestExecutor: ApiRequestExecutor(
+            MockClient((request) async {
+              expect(request.method, equals('GET'));
+              expect(
+                request.url.toString(),
+                equals(
+                  'https://endurain.example.com/api/v1/public/server_settings',
+                ),
+              );
+              return http.Response('''
               {
                 "units": "imperial",
                 "currency": "usd",
@@ -59,59 +60,57 @@ void main() {
                 "tileserver_attribution": "Map data",
                 "map_background_color": "#112233"
               }
-              ''',
-              200,
-            );
-          }),
-        ),
-      );
-
-      final result = await service.getServerSettings();
-
-      expect(result.units, equals('imperial'));
-      expect(result.currency, equals('usd'));
-      expect(result.ssoEnabled, isTrue);
-      expect(result.localLoginEnabled, isFalse);
-      expect(result.ssoAutoRedirect, isTrue);
-      expect(
-        storage.savedTileServerUrl,
-        equals('https://tiles.example.com/{z}/{x}/{y}.png'),
-      );
-      expect(storage.savedTileServerAttribution, equals('Map data'));
-      expect(storage.savedMapBackgroundColor, equals('#112233'));
-    });
-
-    test('fehlende optionale Felder nutzen Defaults und erzeugen keine Storage-Side-Effects', () async {
-      final storage = _FakeStorage(serverUrl: 'https://endurain.example.com');
-      final service = ServerSettingsService(
-        storage: storage,
-        requestExecutor: ApiRequestExecutor(
-          httpClient: MockClient(
-            (_) async => http.Response('{"units":"metric"}', 200),
+              ''', 200);
+            }),
           ),
-        ),
-      );
+        );
 
-      final result = await service.getServerSettings();
+        final result = await service.getServerSettings();
 
-      expect(result.units, equals('metric'));
-      expect(result.currency, equals('euro'));
-      expect(result.numRecordsPerPage, equals(25));
-      expect(result.ssoEnabled, isFalse);
-      expect(result.localLoginEnabled, isTrue);
-      expect(result.tileserverUrl, isNull);
-      expect(storage.savedTileServerUrl, isNull);
-      expect(storage.savedTileServerAttribution, isNull);
-      expect(storage.savedMapBackgroundColor, isNull);
-    });
+        expect(result.units, equals('imperial'));
+        expect(result.currency, equals('usd'));
+        expect(result.ssoEnabled, isTrue);
+        expect(result.localLoginEnabled, isFalse);
+        expect(result.ssoAutoRedirect, isTrue);
+        expect(
+          storage.savedTileServerUrl,
+          equals('https://tiles.example.com/{z}/{x}/{y}.png'),
+        );
+        expect(storage.savedTileServerAttribution, equals('Map data'));
+        expect(storage.savedMapBackgroundColor, equals('#112233'));
+      },
+    );
+
+    test(
+      'fehlende optionale Felder nutzen Defaults und erzeugen keine Storage-Side-Effects',
+      () async {
+        final storage = _FakeStorage(serverUrl: 'https://endurain.example.com');
+        final service = ServerSettingsService(
+          storage: storage,
+          requestExecutor: ApiRequestExecutor(
+            MockClient((_) async => http.Response('{"units":"metric"}', 200)),
+          ),
+        );
+
+        final result = await service.getServerSettings();
+
+        expect(result.units, equals('metric'));
+        expect(result.currency, equals('euro'));
+        expect(result.numRecordsPerPage, equals(25));
+        expect(result.ssoEnabled, isFalse);
+        expect(result.localLoginEnabled, isTrue);
+        expect(result.tileserverUrl, isNull);
+        expect(storage.savedTileServerUrl, isNull);
+        expect(storage.savedTileServerAttribution, isNull);
+        expect(storage.savedMapBackgroundColor, isNull);
+      },
+    );
 
     test('Nicht-200 Response fuehrt zu erwartetem Fehlerpfad', () async {
       final service = ServerSettingsService(
         storage: _FakeStorage(serverUrl: 'https://endurain.example.com'),
         requestExecutor: ApiRequestExecutor(
-          httpClient: MockClient(
-            (_) async => http.Response('{"detail":"Forbidden"}', 403),
-          ),
+          MockClient((_) async => http.Response('{"detail":"Forbidden"}', 403)),
         ),
       );
 
@@ -131,7 +130,7 @@ void main() {
       final service = ServerSettingsService(
         storage: _FakeStorage(serverUrl: null),
         requestExecutor: ApiRequestExecutor(
-          httpClient: MockClient((_) async => throw UnimplementedError()),
+          MockClient((_) async => throw UnimplementedError()),
         ),
       );
 
@@ -151,7 +150,7 @@ void main() {
       final service = ServerSettingsService(
         storage: _FakeStorage(serverUrl: ''),
         requestExecutor: ApiRequestExecutor(
-          httpClient: MockClient((_) async => throw UnimplementedError()),
+          MockClient((_) async => throw UnimplementedError()),
         ),
       );
 

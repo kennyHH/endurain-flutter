@@ -4,6 +4,8 @@ class TrackPoint {
     required this.longitude,
     required this.timestamp,
     this.altitudeMeters,
+    this.heartRate,
+    this.cadence,
   }) {
     _validateLatitude(latitude);
     _validateLongitude(longitude);
@@ -14,12 +16,16 @@ class TrackPoint {
   final double longitude;
   final DateTime timestamp;
   final double? altitudeMeters;
+  final int? heartRate;
+  final int? cadence;
 
   TrackPoint copyWith({
     double? latitude,
     double? longitude,
     DateTime? timestamp,
     double? altitudeMeters,
+    int? heartRate,
+    int? cadence,
     bool clearAltitude = false,
   }) {
     return TrackPoint(
@@ -29,6 +35,8 @@ class TrackPoint {
       altitudeMeters: clearAltitude
           ? null
           : (altitudeMeters ?? this.altitudeMeters),
+      heartRate: heartRate ?? this.heartRate,
+      cadence: cadence ?? this.cadence,
     );
   }
 
@@ -38,6 +46,8 @@ class TrackPoint {
       'longitude': longitude,
       'timestamp': timestamp.toIso8601String(),
       'altitudeMeters': altitudeMeters,
+      'heartRate': heartRate,
+      'cadence': cadence,
     };
   }
 
@@ -47,6 +57,8 @@ class TrackPoint {
       longitude: (json['longitude'] as num).toDouble(),
       timestamp: DateTime.parse(json['timestamp'] as String),
       altitudeMeters: (json['altitudeMeters'] as num?)?.toDouble(),
+      heartRate: (json['heartRate'] as num?)?.toInt(),
+      cadence: (json['cadence'] as num?)?.toInt(),
     );
   }
 
@@ -103,13 +115,20 @@ class Activity {
   Activity({
     required this.id,
     required this.activityType,
+    this.activityTypeId,
     required this.startedAt,
     this.endedAt,
     this.name,
     this.uploaded = false,
     required this.distanceMeters,
+    Map<String, dynamic>? qualityMetrics,
     required List<TrackPoint> trackPoints,
-  }) : trackPoints = List<TrackPoint>.unmodifiable(trackPoints) {
+  }) : trackPoints = List<TrackPoint>.unmodifiable(trackPoints),
+       qualityMetrics = qualityMetrics == null
+           ? null
+           : Map<String, dynamic>.unmodifiable(
+               Map<String, dynamic>.from(qualityMetrics),
+             ) {
     if (id.trim().isEmpty) {
       throw ArgumentError.value(id, 'id', 'Activity id cannot be empty');
     }
@@ -134,12 +153,15 @@ class Activity {
 
   final String id;
   final ActivityType activityType;
+  final int? activityTypeId;
   final DateTime startedAt;
   final DateTime? endedAt;
   final String? name;
   final bool uploaded;
   final double distanceMeters;
+  final Map<String, dynamic>? qualityMetrics;
   final List<TrackPoint> trackPoints;
+  static const double _elevationDeltaNoiseThresholdMeters = 1.5;
 
   int get durationSeconds {
     final end = endedAt;
@@ -161,15 +183,49 @@ class Activity {
     return metersPerSecond * 3.6;
   }
 
+  double? get averageHeartRateBpm {
+    if (trackPoints.isNotEmpty) {
+      final values = trackPoints
+          .map((p) => p.heartRate)
+          .whereType<int>()
+          .where((value) => value > 0)
+          .toList();
+      if (values.isNotEmpty) {
+        final total = values.fold<int>(0, (sum, value) => sum + value);
+        return total / values.length;
+      }
+    }
+    return _metricAsDouble('avg_heart_rate_bpm');
+  }
+
+  double? get averageCadenceRpm {
+    if (trackPoints.isNotEmpty) {
+      final values = trackPoints
+          .map((p) => p.cadence)
+          .whereType<int>()
+          .where((value) => value > 0)
+          .toList();
+      if (values.isNotEmpty) {
+        final total = values.fold<int>(0, (sum, value) => sum + value);
+        return total / values.length;
+      }
+    }
+    return _metricAsDouble('avg_cadence_rpm');
+  }
+
   double get elevationGainMeters {
-    if (trackPoints.length < 2) return 0;
+    if (trackPoints.length < 2) {
+      return _metricAsDouble('filtered_elevation_gain_meters') ??
+          _metricAsDouble('elevation_gain_meters') ??
+          0;
+    }
     var gain = 0.0;
     for (var i = 1; i < trackPoints.length; i++) {
       final previous = trackPoints[i - 1].altitudeMeters;
       final current = trackPoints[i].altitudeMeters;
       if (previous == null || current == null) continue;
       final delta = current - previous;
-      if (delta > 0) {
+      if (delta >= _elevationDeltaNoiseThresholdMeters) {
         gain += delta;
       }
     }
@@ -177,14 +233,18 @@ class Activity {
   }
 
   double get elevationLossMeters {
-    if (trackPoints.length < 2) return 0;
+    if (trackPoints.length < 2) {
+      return _metricAsDouble('filtered_elevation_loss_meters') ??
+          _metricAsDouble('elevation_loss_meters') ??
+          0;
+    }
     var loss = 0.0;
     for (var i = 1; i < trackPoints.length; i++) {
       final previous = trackPoints[i - 1].altitudeMeters;
       final current = trackPoints[i].altitudeMeters;
       if (previous == null || current == null) continue;
       final delta = current - previous;
-      if (delta < 0) {
+      if (delta <= -_elevationDeltaNoiseThresholdMeters) {
         loss += -delta;
       }
     }
@@ -197,6 +257,8 @@ class Activity {
   Activity copyWith({
     String? id,
     ActivityType? activityType,
+    int? activityTypeId,
+    bool clearActivityTypeId = false,
     DateTime? startedAt,
     DateTime? endedAt,
     bool clearEndedAt = false,
@@ -204,16 +266,24 @@ class Activity {
     bool clearName = false,
     bool? uploaded,
     double? distanceMeters,
+    Map<String, dynamic>? qualityMetrics,
+    bool clearQualityMetrics = false,
     List<TrackPoint>? trackPoints,
   }) {
     return Activity(
       id: id ?? this.id,
       activityType: activityType ?? this.activityType,
+      activityTypeId: clearActivityTypeId
+          ? null
+          : (activityTypeId ?? this.activityTypeId),
       startedAt: startedAt ?? this.startedAt,
       endedAt: clearEndedAt ? null : (endedAt ?? this.endedAt),
       name: clearName ? null : (name ?? this.name),
       uploaded: uploaded ?? this.uploaded,
       distanceMeters: distanceMeters ?? this.distanceMeters,
+      qualityMetrics: clearQualityMetrics
+          ? null
+          : (qualityMetrics ?? this.qualityMetrics),
       trackPoints: trackPoints ?? this.trackPoints,
     );
   }
@@ -222,12 +292,14 @@ class Activity {
     return {
       'id': id,
       'activityType': activityTypeToJson(activityType),
+      'activityTypeId': activityTypeId,
       'startedAt': startedAt.toIso8601String(),
       'endedAt': endedAt?.toIso8601String(),
       'name': name,
       'uploaded': uploaded,
       'durationSeconds': durationSeconds,
       'distanceMeters': distanceMeters,
+      'qualityMetrics': qualityMetrics,
       'trackPoints': trackPoints.map((point) => point.toJson()).toList(),
     };
   }
@@ -240,6 +312,7 @@ class Activity {
     return Activity(
       id: json['id'] as String,
       activityType: activityTypeFromJson(json['activityType'] as String),
+      activityTypeId: (json['activityTypeId'] as num?)?.toInt(),
       startedAt: DateTime.parse(json['startedAt'] as String),
       endedAt: json['endedAt'] == null
           ? null
@@ -247,7 +320,21 @@ class Activity {
       name: json['name'] as String?,
       uploaded: json['uploaded'] as bool? ?? false,
       distanceMeters: (json['distanceMeters'] as num).toDouble(),
+      qualityMetrics: json['qualityMetrics'] == null
+          ? null
+          : Map<String, dynamic>.from(
+              json['qualityMetrics'] as Map<dynamic, dynamic>,
+            ),
       trackPoints: points,
     );
+  }
+
+  double? _metricAsDouble(String key) {
+    final metrics = qualityMetrics;
+    if (metrics == null) return null;
+    final raw = metrics[key];
+    if (raw is num) return raw.toDouble();
+    if (raw is String) return double.tryParse(raw);
+    return null;
   }
 }

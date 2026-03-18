@@ -77,7 +77,67 @@ class AppLocalizationsPt extends AppLocalizations {
       'Não foi possível sair do servidor, mas saiu localmente';
 
   @override
+  String get settingsEcoModeDescription =>
+      'Reduz a frequência de atualização do GPS';
+
+  @override
+  String get settingsEcoMode => 'Modo Eco';
+
+  @override
+  String get settingsAccordionTrackingTitle => 'Tracking';
+
+  @override
+  String get settingsAccordionTrackingSubtitle =>
+      'Voice Coach · Modo Eco · Avisos de GPS';
+
+  @override
+  String get settingsAccordionDisplayTitle => 'Visual';
+
+  @override
+  String get settingsAccordionDisplaySubtitle =>
+      'Tema · Preset de cores · Exibição de rota';
+
+  @override
+  String get settingsAccordionDeviceTitle => 'Dispositivo e Sensores';
+
+  @override
+  String get settingsAccordionDeviceSubtitle =>
+      'Sensores Bluetooth · Otimização de bateria';
+
+  @override
+  String get settingsAccordionServerTitle => 'Servidor e Sync';
+
+  @override
+  String get settingsAccordionServerSubtitle =>
+      'Servidor · Login · Sync de upload';
+
+  @override
+  String get settingsServerConnected => 'Ligado';
+
+  @override
+  String get settingsServerDisconnected => 'Não ligado';
+
+  @override
+  String get settingsSectionSensors => 'Sensores e Acessórios';
+
+  @override
+  String get settingsSectionServer => 'Servidor';
+
+  @override
+  String get serverSettings => 'Servidor';
+
+  @override
   String get retry => 'Tentar Novamente';
+
+  @override
+  String get connectUploadTitle => 'Ligar ao servidor';
+
+  @override
+  String get connectUploadMessage =>
+      'Pode usar o Endurain totalmente offline. Ligue-se agora para enviar ou remover atividades no servidor.';
+
+  @override
+  String get connectUploadAction => 'Ligar e enviar';
 
   @override
   String get ssoWebViewTitle => 'Entrar';
@@ -219,6 +279,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get historyFilterSort => 'Filtrar e ordenar';
 
   @override
+  String get historyFilterReset => 'Repor';
+
+  @override
+  String get historyFilterCategorySearchHint => 'Pesquisar categoria';
+
+  @override
   String get historyDateRange => 'Período';
 
   @override
@@ -246,6 +312,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get historyUploadDone => 'Enviado';
 
   @override
+  String get historyConnectionOffline => 'Offline';
+
+  @override
+  String get historyConnectionOnline => 'Ligado';
+
+  @override
   String get historyRenameTitle => 'Nome da atividade';
 
   @override
@@ -263,6 +335,45 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get historyDeletedSuccess => 'Atividade eliminada';
+
+  @override
+  String get historyElevationProfile => 'Perfil de elevação';
+
+  @override
+  String get historyNoAltitudeData => 'Sem dados de altitude disponíveis';
+
+  @override
+  String get historyHeartRate => 'Zonas de frequência cardíaca';
+
+  @override
+  String get historyNoHeartRateData =>
+      'Sem dados de frequência cardíaca disponíveis';
+
+  @override
+  String get heartRateZone => 'Zona';
+
+  @override
+  String get historyQualityTtffLabel => 'TTFF';
+
+  @override
+  String get historyQualityGpsLossLabel => 'Perdas de GPS';
+
+  @override
+  String get historyQualityRejectedPointsLabel => 'Pontos rejeitados';
+
+  @override
+  String get historyQualitySignalLossDurationLabel =>
+      'Duração de perda de sinal';
+
+  @override
+  String historyQualitySecondsValue(String seconds) {
+    return '$seconds s';
+  }
+
+  @override
+  String historyQualitySummary(String ttff, int losses, int rejected) {
+    return 'TTFF $ttff • Perdas de GPS $losses • Rejeitados $rejected';
+  }
 
   @override
   String get mapCenterOnLocation => 'Centrar na minha localização';
@@ -463,12 +574,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get historyElevationLoss => 'Perda de elevação';
 
   @override
-  String get historyElevationProfile => 'Perfil de elevação';
-
-  @override
-  String get historyNoAltitudeData => 'Sem dados de altitude disponíveis';
-
-  @override
   String get trackingPermissionRequired =>
       'A permissão de localização é necessária para iniciar o tracking.';
 
@@ -538,9 +643,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get settingsScreen => 'Configurações';
 
   @override
-  String get serverSettings => 'Servidor';
-
-  @override
   String get serverSettingsTitle => 'Definições do servidor';
 
   @override
@@ -562,6 +664,25 @@ class AppLocalizationsPt extends AppLocalizations {
   String get savedSuccessfully => 'Definições guardadas com sucesso';
 
   @override
+  String get settingsTrackingPermissionsTitle => 'Permissões de tracking';
+
+  @override
+  String get settingsTrackingPermissionsAction =>
+      'Configurar permissões de tracking';
+
+  @override
+  String get settingsTrackingPermissionsDescription =>
+      'Reconfigurar permissões de localização e bateria/segundo plano.';
+
+  @override
+  String get settingsTrackingPermissionsDialogMessage =>
+      'Quer reconfigurar agora as permissões de localização e bateria/segundo plano para tracking confiável?';
+
+  @override
+  String get settingsTrackingPermissionsSuccess =>
+      'Configuração de permissões de tracking concluída.';
+
+  @override
   String get settingsThemeMode => 'Tema';
 
   @override
@@ -577,7 +698,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get settingsThemePreset => 'Preset de cores';
 
   @override
-  String get settingsThemePresetEndurain => 'Endurain';
+  String get settingsThemePresetEndurain => 'Slate';
 
   @override
   String get settingsThemePresetOcean => 'Oceano';
@@ -592,10 +713,50 @@ class AppLocalizationsPt extends AppLocalizations {
   String get settingsSectionTheme => 'Tema';
 
   @override
-  String get settingsSectionRouteDisplay => 'Exibição de rota';
+  String get settingsSectionVoiceCoach => 'Voice Coach';
 
   @override
-  String get settingsSectionServer => 'Servidor';
+  String get settingsVoiceCoachEnabled => 'Ativar Voice Coach';
+
+  @override
+  String get settingsVoiceCoachEnabledDescription =>
+      'Reproduz anúncios de contagem regressiva, split e estado do GPS durante o tracking.';
+
+  @override
+  String get settingsVoiceCoachVolume => 'Volume do Voice Coach';
+
+  @override
+  String get settingsVoiceCoachVolumeDescription =>
+      'Controla o nível de saída de voz da app. O padrão é 80%.';
+
+  @override
+  String settingsVoiceCoachVolumeValue(int percent) {
+    return '$percent%';
+  }
+
+  @override
+  String get settingsVoiceCoachStartPrompts => 'Prompts de início';
+
+  @override
+  String get settingsVoiceCoachStartPromptsDescription =>
+      'Anuncia a contagem regressiva e o sinal de início ao começar uma atividade.';
+
+  @override
+  String get settingsVoiceCoachSplitAnnouncements => 'Anúncios de split';
+
+  @override
+  String get settingsVoiceCoachSplitAnnouncementsDescription =>
+      'Anuncia o ritmo e a velocidade média em cada split de quilómetro.';
+
+  @override
+  String get settingsVoiceCoachGpsAnnouncements => 'Alertas de estado do GPS';
+
+  @override
+  String get settingsVoiceCoachGpsAnnouncementsDescription =>
+      'Anuncia quando o sinal GPS é perdido ou recuperado.';
+
+  @override
+  String get settingsSectionRouteDisplay => 'Exibição de rota';
 
   @override
   String get settingsSectionAboutApp => 'Sobre a app';
@@ -655,7 +816,26 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get settingsGpsFilterModeStrictDescription =>
-      'Rejeita pontos ruidosos de forma mais agressiva. Útil em áreas urbanas densas.';
+      'Rejeita pontos ruidosos agressivamente. Útil em áreas urbanas densas.';
+
+  @override
+  String get settingsDynamicMapZoomTitle => 'Zoom dinâmico do mapa';
+
+  @override
+  String get settingsDynamicMapZoomDescription =>
+      'Ajusta o zoom conforme a velocidade de movimento quando o modo de seguimento está ativo.';
+
+  @override
+  String get settingsDynamicMapZoomPresetTitle => 'Estilo de zoom dinâmico';
+
+  @override
+  String get settingsDynamicMapZoomPresetConservative => 'Conservador';
+
+  @override
+  String get settingsDynamicMapZoomPresetBalanced => 'Equilibrado';
+
+  @override
+  String get settingsDynamicMapZoomPresetAggressive => 'Agressivo';
 
   @override
   String get settingsRouteMatchingEnabledLabel =>

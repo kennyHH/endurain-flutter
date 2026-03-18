@@ -3,14 +3,15 @@ import 'package:endurain/core/models/server_settings.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/api_constants.dart';
 import 'package:endurain/core/services/api_request_executor.dart';
+import 'package:injectable/injectable.dart';
 
-/// Service for fetching and managing server settings
+@singleton
 class ServerSettingsService {
   ServerSettingsService({
-    SecureStorageService? storage,
-    ApiRequestExecutor? requestExecutor,
-  }) : _storage = storage ?? SecureStorageService(),
-       _requestExecutor = requestExecutor ?? ApiRequestExecutor();
+    required SecureStorageService storage,
+    required ApiRequestExecutor requestExecutor,
+  }) : _storage = storage,
+       _requestExecutor = requestExecutor;
 
   final SecureStorageService _storage;
   final ApiRequestExecutor _requestExecutor;

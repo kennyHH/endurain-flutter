@@ -1,0 +1,19 @@
+appId: com.endurain.mobile
+---
+- launchApp
+- assertVisible: "Login"
+- tapOn: "Username"
+- inputText: "testuser"
+- tapOn: "Password"
+- inputText: "password123"
+- tapOn: "Login"
+- assertVisible: "Start tracking" # Map screen loaded
+- tapOn: "Start tracking"
+- assertVisible: "Pause"
+- tapOn: "Pause"
+- tapOn: "Resume"
+- tapOn: "Settings"
+- assertVisible: "Eco Mode"
+- tapOn: "Eco Mode"
+- tapOn: "Sensors & Accessories"
+- assertVisible: "Manage Bluetooth devices"

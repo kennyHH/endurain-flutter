@@ -9,7 +9,7 @@ import 'package:http/testing.dart';
 void main() {
   group('ApiRequestExecutor', () {
     test('baut URL korrekt aus baseUrl + endpoint', () {
-      final executor = ApiRequestExecutor();
+      final executor = ApiRequestExecutor(http.Client());
 
       final uri = executor.buildUri(
         serverUrl: 'https://endurain.example.com',
@@ -25,7 +25,7 @@ void main() {
     });
 
     test('normalisiert base URL und endpoint zuverlässig', () {
-      final executor = ApiRequestExecutor();
+      final executor = ApiRequestExecutor(http.Client());
 
       final uri = executor.buildUri(
         serverUrl: 'https://endurain.example.com/',
@@ -39,7 +39,7 @@ void main() {
     });
 
     test('behält Query-Parameter aus endpoint bei', () {
-      final executor = ApiRequestExecutor();
+      final executor = ApiRequestExecutor(http.Client());
 
       final uri = executor.buildUri(
         serverUrl: 'https://endurain.example.com',
@@ -55,8 +55,22 @@ void main() {
       );
     });
 
+    test('vermeidet doppelte Pfadsegmente bei überlappender baseUrl und endpoint', () {
+      final executor = ApiRequestExecutor(http.Client());
+
+      final uri = executor.buildUri(
+        serverUrl: 'https://endurain.example.com/api/v1',
+        endpoint: '/api/v1/activities/create/upload',
+      );
+
+      expect(
+        uri.toString(),
+        equals('https://endurain.example.com/api/v1/activities/create/upload'),
+      );
+    });
+
     test('wirft invalidRequest bei nicht-http(s) URL', () {
-      final executor = ApiRequestExecutor();
+      final executor = ApiRequestExecutor(http.Client());
 
       expect(
         () => executor.buildUri(
@@ -79,7 +93,7 @@ void main() {
         capturedRequest = request;
         return http.Response('{}', 200);
       });
-      final executor = ApiRequestExecutor(httpClient: client);
+      final executor = ApiRequestExecutor(client);
 
       await executor.request(
         method: 'GET',
@@ -99,7 +113,7 @@ void main() {
         return http.Response(json.encode(<String, dynamic>{}), 200);
       });
       final executor = ApiRequestExecutor(
-        httpClient: client,
+        client,
         defaultTimeout: const Duration(milliseconds: 10),
       );
 

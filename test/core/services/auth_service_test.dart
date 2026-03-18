@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:endurain/core/constants/api_constants.dart';
+import 'package:endurain/core/services/api_request_executor.dart';
 import 'package:endurain/core/services/auth_service.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:http/http.dart' as http;
@@ -78,13 +79,12 @@ void main() {
         }
         return http.Response('not found', 404);
       });
-      final service = AuthService(httpClient: client, storage: storage);
-
-      final result = await service.login(
-        'alice',
-        'secret',
-        serverUrl: baseUrl,
+      final service = AuthService(
+        storage: storage,
+        requestExecutor: ApiRequestExecutor(client),
       );
+
+      final result = await service.login('alice', 'secret', serverUrl: baseUrl);
 
       expect(result.success, isTrue);
       expect(result.mfaRequired, isFalse);
@@ -112,13 +112,9 @@ void main() {
         }
         return http.Response('not found', 404);
       });
-      final service = AuthService(httpClient: client, storage: storage);
+      final service = AuthService(storage: storage, requestExecutor: ApiRequestExecutor(client));
 
-      final result = await service.login(
-        'alice',
-        'secret',
-        serverUrl: baseUrl,
-      );
+      final result = await service.login('alice', 'secret', serverUrl: baseUrl);
 
       expect(result.success, isTrue);
       expect(result.mfaRequired, isTrue);
@@ -131,10 +127,7 @@ void main() {
       final client = MockClient((request) async {
         if (request.url.path == ApiConstants.tokenEndpoint) {
           return http.Response(
-            json.encode({
-              'mfa_required': true,
-              'username': 'alice',
-            }),
+            json.encode({'mfa_required': true, 'username': 'alice'}),
             200,
           );
         }
@@ -154,7 +147,7 @@ void main() {
         }
         return http.Response('not found', 404);
       });
-      final service = AuthService(httpClient: client, storage: storage);
+      final service = AuthService(storage: storage, requestExecutor: ApiRequestExecutor(client));
 
       await service.login('alice', 'secret', serverUrl: baseUrl);
       final result = await service.verifyMfa('alice', '123456');
@@ -170,19 +163,19 @@ void main() {
       final client = MockClient((request) async {
         if (request.url.path == ApiConstants.tokenEndpoint) {
           return http.Response(
-            json.encode({
-              'mfa_required': true,
-              'username': 'alice',
-            }),
+            json.encode({'mfa_required': true, 'username': 'alice'}),
             200,
           );
         }
         if (request.url.path == ApiConstants.mfaVerifyEndpoint) {
-          return http.Response(json.encode({'detail': 'Invalid MFA code'}), 401);
+          return http.Response(
+            json.encode({'detail': 'Invalid MFA code'}),
+            401,
+          );
         }
         return http.Response('not found', 404);
       });
-      final service = AuthService(httpClient: client, storage: storage);
+      final service = AuthService(storage: storage, requestExecutor: ApiRequestExecutor(client));
       await service.login('alice', 'secret', serverUrl: baseUrl);
 
       expect(
@@ -213,7 +206,7 @@ void main() {
         }
         return http.Response('not found', 404);
       });
-      final service = AuthService(httpClient: client, storage: storage);
+      final service = AuthService(storage: storage, requestExecutor: ApiRequestExecutor(client));
 
       final refreshed = await service.refreshToken();
 
@@ -225,6 +218,7 @@ void main() {
     test('refreshToken failure', () async {
       final storage = FakeSecureStorageService()
         ..serverUrl = baseUrl
+        ..accessToken = 'access-old'
         ..refreshToken = 'refresh-old';
       final client = MockClient((request) async {
         if (request.url.path == ApiConstants.refreshEndpoint) {
@@ -232,11 +226,14 @@ void main() {
         }
         return http.Response('not found', 404);
       });
-      final service = AuthService(httpClient: client, storage: storage);
+      final service = AuthService(storage: storage, requestExecutor: ApiRequestExecutor(client));
 
       final refreshed = await service.refreshToken();
 
       expect(refreshed, isFalse);
+      expect(storage.clearAuthTokensCalls, equals(1));
+      expect(storage.accessToken, isNull);
+      expect(storage.refreshToken, isNull);
     });
 
     test('logout success + lokales Token-Clearing', () async {
@@ -251,7 +248,7 @@ void main() {
         }
         return http.Response('not found', 404);
       });
-      final service = AuthService(httpClient: client, storage: storage);
+      final service = AuthService(storage: storage, requestExecutor: ApiRequestExecutor(client));
 
       final result = await service.logout();
 
@@ -274,7 +271,7 @@ void main() {
         }
         return http.Response('not found', 404);
       });
-      final service = AuthService(httpClient: client, storage: storage);
+      final service = AuthService(storage: storage, requestExecutor: ApiRequestExecutor(client));
 
       final result = await service.logout();
 

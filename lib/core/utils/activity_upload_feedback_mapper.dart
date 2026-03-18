@@ -12,6 +12,11 @@ class ActivityUploadFeedbackMapper {
 
     switch (result.failureType) {
       case ActivityUploadFailureType.authentication:
+        final detail = result.serverDetail?.toLowerCase() ?? '';
+        if (detail.contains('session expired') ||
+            detail.contains('please login again')) {
+          return result.serverDetail!;
+        }
         return l10n.errorAuthentication;
       case ActivityUploadFailureType.configuration:
         return l10n.errorConfiguration;
@@ -23,5 +28,27 @@ class ActivityUploadFeedbackMapper {
       case null:
         return l10n.errorGeneric;
     }
+  }
+
+  static String toDisplayMessage(
+    ActivityUploadResult result,
+    AppLocalizations l10n,
+  ) {
+    final base = toUserMessage(result, l10n);
+    if (result.success) return base;
+
+    final status = result.statusCode;
+    final detail = result.serverDetail?.trim();
+    final withStatus = status != null ? '$base (HTTP $status)' : base;
+    if (detail == null || detail.isEmpty) return withStatus;
+
+    final baseNormalized = base.trim().toLowerCase();
+    final detailNormalized = detail.toLowerCase();
+    if (baseNormalized == detailNormalized ||
+        baseNormalized.contains(detailNormalized) ||
+        detailNormalized.contains(baseNormalized)) {
+      return withStatus;
+    }
+    return '$withStatus - $detail';
   }
 }

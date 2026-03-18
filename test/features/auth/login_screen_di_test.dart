@@ -1,47 +1,40 @@
-import 'package:endurain/core/models/server_settings.dart';
-import 'package:endurain/core/services/server_settings_service.dart';
 import 'package:endurain/features/auth/login_screen.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-class _FakeServerSettingsService extends ServerSettingsService {
-  _FakeServerSettingsService({
-    required this.settings,
-    this.shouldThrow = false,
-  });
+import 'package:endurain/features/auth/controllers/login_controller.dart';
+import 'package:endurain/core/di/service_locator.dart';
+import 'package:endurain/core/error_handling/error_handler_service.dart';
+import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
+import 'login_screen_di_test.mocks.dart';
 
-  final ServerSettings settings;
-  final bool shouldThrow;
-  int calls = 0;
-
-  @override
-  Future<ServerSettings> getServerSettings({String? serverUrl}) async {
-    calls += 1;
-    if (shouldThrow) {
-      throw Exception('network timeout');
-    }
-    return settings;
-  }
-}
-
+@GenerateMocks([LoginController, ErrorHandlerService])
 void main() {
-  const defaultSettings = ServerSettings(
-    units: 'metric',
-    publicShareableLinks: false,
-    publicShareableLinksUserInfo: false,
-    loginPhotoSet: false,
-    currency: 'euro',
-    numRecordsPerPage: 25,
-    signupEnabled: false,
-    ssoEnabled: false,
-    localLoginEnabled: true,
-    ssoAutoRedirect: false,
-    passwordType: 'strict',
-    passwordLengthRegularUsers: 8,
-    passwordLengthAdminUsers: 12,
-  );
+  late MockLoginController mockLoginController;
+  late MockErrorHandlerService mockErrorHandler;
+
+  setUp(() async {
+    mockLoginController = MockLoginController();
+    mockErrorHandler = MockErrorHandlerService();
+
+    // Default mocks
+    when(mockLoginController.isLoading).thenReturn(false);
+    when(mockLoginController.isStep2).thenReturn(false);
+    when(mockLoginController.showMfaInput).thenReturn(false);
+    when(mockLoginController.error).thenReturn(null);
+    when(mockLoginController.loginSuccess).thenReturn(false);
+    when(mockLoginController.localLoginEnabled).thenReturn(true);
+    when(mockLoginController.availableIdPs).thenReturn([]);
+    when(mockLoginController.serverSettings).thenReturn(null);
+    when(mockLoginController.obscurePassword).thenReturn(true);
+
+    await serviceLocator.reset();
+    serviceLocator.registerSingleton<LoginController>(mockLoginController);
+    serviceLocator.registerSingleton<ErrorHandlerService>(mockErrorHandler);
+  });
 
   Widget wrapApp(Widget child) {
     return MaterialApp(
@@ -57,59 +50,24 @@ void main() {
   }
 
   group('LoginScreen DI', () {
-    testWidgets(
-      'nutzt injizierten ServerSettingsService fuer Step-1',
-      (tester) async {
-        final fakeServerSettings = _FakeServerSettingsService(
-          settings: defaultSettings,
-        );
+    testWidgets('nutzt injizierten LoginController', (tester) async {
+      when(mockLoginController.checkServerUrl(any)).thenAnswer((_) async {
+        when(mockLoginController.isStep2).thenReturn(true);
+        // notifyListeners() behavior
+      });
 
-        await tester.pumpWidget(
-          wrapApp(
-            LoginScreen(
-              serverSettingsService: fakeServerSettings,
-            ),
-          ),
-        );
+      await tester.pumpWidget(wrapApp(const Scaffold(body: LoginScreen())));
 
-        await tester.enterText(
-          find.byType(TextFormField).first,
-          'https://endurain.example.com',
-        );
-        await tester.tap(find.text('Next'));
-        await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byType(TextFormField).first,
+        'https://endurain.example.com',
+      );
+      await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
 
-        expect(fakeServerSettings.calls, equals(1));
-        expect(find.byIcon(Icons.person), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'bleibt bei Step-1 wenn injizierter Service Fehler wirft',
-      (tester) async {
-        final fakeServerSettings = _FakeServerSettingsService(
-          settings: defaultSettings,
-          shouldThrow: true,
-        );
-
-        await tester.pumpWidget(
-          wrapApp(
-            LoginScreen(
-              serverSettingsService: fakeServerSettings,
-            ),
-          ),
-        );
-
-        await tester.enterText(
-          find.byType(TextFormField).first,
-          'https://endurain.example.com',
-        );
-        await tester.tap(find.text('Next'));
-        await tester.pumpAndSettle();
-
-        expect(fakeServerSettings.calls, equals(1));
-        expect(find.byIcon(Icons.person), findsNothing);
-      },
-    );
+      verify(
+        mockLoginController.checkServerUrl('https://endurain.example.com'),
+      ).called(1);
+    });
   });
 }

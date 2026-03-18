@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:endurain/core/constants/api_constants.dart';
 import 'package:http/http.dart' as http;
+import 'package:injectable/injectable.dart';
 
 enum ApiRequestExceptionType { timeout, tls, network, invalidRequest, unknown }
 
@@ -28,11 +30,12 @@ class ApiRequestException implements Exception {
   }
 }
 
+@singleton
 class ApiRequestExecutor {
-  ApiRequestExecutor({
-    http.Client? httpClient,
+  ApiRequestExecutor(
+    this._httpClient, {
     this.defaultTimeout = const Duration(seconds: 15),
-  }) : _httpClient = httpClient ?? http.Client();
+  });
 
   final http.Client _httpClient;
   final Duration defaultTimeout;
@@ -226,13 +229,44 @@ class ApiRequestExecutor {
   }
 
   String _joinPaths(String basePath, String endpointPath) {
-    final normalizedBase = basePath.endsWith('/')
-        ? basePath.substring(0, basePath.length - 1)
-        : basePath;
+    final normalizedBase = basePath.trim();
     final normalizedEndpoint = endpointPath.startsWith('/')
         ? endpointPath
         : '/$endpointPath';
-    return '$normalizedBase$normalizedEndpoint';
+
+    final baseSegments = normalizedBase
+        .split('/')
+        .where((segment) => segment.isNotEmpty)
+        .toList();
+    final endpointSegments = normalizedEndpoint
+        .split('/')
+        .where((segment) => segment.isNotEmpty)
+        .toList();
+
+    var overlap = 0;
+    final maxOverlap = math.min(baseSegments.length, endpointSegments.length);
+    for (var length = maxOverlap; length > 0; length--) {
+      final baseSuffix = baseSegments.sublist(baseSegments.length - length);
+      final endpointPrefix = endpointSegments.sublist(0, length);
+      if (_segmentsEqual(baseSuffix, endpointPrefix)) {
+        overlap = length;
+        break;
+      }
+    }
+
+    final mergedSegments = <String>[
+      ...baseSegments,
+      ...endpointSegments.sublist(overlap),
+    ];
+    return '/${mergedSegments.join('/')}';
+  }
+
+  bool _segmentsEqual(List<String> left, List<String> right) {
+    if (left.length != right.length) return false;
+    for (var i = 0; i < left.length; i++) {
+      if (left[i] != right[i]) return false;
+    }
+    return true;
   }
 
   bool _looksLikeTlsError(Object error) {

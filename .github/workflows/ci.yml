@@ -54,6 +54,19 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Run tracking engine stability tests with timeout
+        run: |
+          timeout 180s flutter test --reporter expanded test/core/services/tracking_session_engine_test.dart
+          timeout 180s flutter test --reporter expanded test/core/services/tracking_session_engine_memory_test.dart
+
+      - name: Run voice coach localization tests with timeout
+        run: |
+          timeout 180s flutter test test/core/services/audio_feedback_service_localization_test.dart
+
+      - name: Run dynamic map zoom policy tests with timeout
+        run: |
+          timeout 180s flutter test test/features/map/controllers/dynamic_map_zoom_policy_test.dart
+
       - name: Run tests
         run: flutter test
 
