@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.0.32+33
+version: 0.0.33+85
 
 environment:
   sdk: ^3.10.3
@@ -68,9 +68,39 @@ dependencies:
   flutter_tts: ^4.2.5
   share_plus: ^12.0.1
 
+  # Database & Storage
+  drift: ^2.24.2
+  sqlcipher_flutter_libs: ^0.7.0
+  path_provider: ^2.1.2
+  path: ^1.9.0
+
+  # Bluetooth
+  flutter_blue_plus: ^1.30.0
+  permission_handler: ^11.0.0
+  
+  # Biometric Authentication
+  local_auth: ^2.3.0
+
+  # Support Libraries for Android 15 (SDK 35/36)
+  flutter_plugin_android_lifecycle: ^2.0.24
+  get_it: ^9.2.1
+  injectable: ^2.7.1+4
+  wakelock_plus: ^1.5.1
+  shared_preferences: ^2.5.4
+  flutter_map_tile_caching: ^10.1.1
+  go_router: ^17.1.0
+  fl_chart: ^1.2.0
+  audio_session: ^0.2.2
+
 dev_dependencies:
+  integration_test:
+    sdk: flutter
   flutter_test:
     sdk: flutter
+
+  # Code generation
+  build_runner: ^2.4.8
+  drift_dev: ^2.24.2
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -81,6 +111,8 @@ dev_dependencies:
   
   # Generate app icons for all platforms
   flutter_launcher_icons: ^0.14.1
+  injectable_generator: ^2.12.1
+  mockito: ^5.6.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -140,4 +172,3 @@ flutter_launcher_icons:
   macos:
     generate: true
     image_path: "assets/logo/app_icon_master_1024.png"
-

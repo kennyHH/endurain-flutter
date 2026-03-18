@@ -4,57 +4,32 @@ All notable changes to Endurain mobile app are documented in this file.
 
 ## [Unreleased]
 
+## [0.0.33] - 2026-03-18
+
+### Changed
+- Updated GPX export filename convention to a clear, human-readable format: `YYYY-MM-DD_HH-mm_Type[_Name].gpx`.
+- Improved tracking start UX by keeping `Start tracking` visible but disabled until a stable GPS fix is available, with explicit user guidance.
+- Added explicit upload visibility metadata (`hidden=false` / `visibility=public` variants) to align with server defaults and reduce hidden imports.
+- Added stable upload idempotency signaling via `Idempotency-Key` and `X-Upload-Activity-Id`.
+
+### Fixed
+- Fixed duplicate upload race windows for the same activity with in-flight deduplication per activity id.
+- Fixed repeated re-uploads after successful transfers by persisting upload success (`uploaded=true`) and short-circuiting already-uploaded activities.
+- Fixed queue replay behavior by persisting upload success after queued retries and removing stale queued ids.
+
+### Testing
+- Added regression tests for multipart upload metadata, in-flight deduplication, already-uploaded short-circuiting, and queue success persistence.
+
 ## [0.0.32] - 2026-03-12
 
 ### Changed
-- **Map Navigation:** Implemented Professional navigation logic.
-  - User position is always centered visually (slightly shifted up to avoid bottom UI).
-  - **Heading Up Mode (Default):** Map rotates smoothly based on user direction.
-  - **North Up Mode:** Map stays fixed to North.
-  - **Interaction:** Dragging the map unlocks the camera. Tapping the Compass/Arrow button re-locks and centers the user.
-- **Map UI:**
-  - Removed "Edit" indicator on map fields entirely to maximize space for metrics (long-press to edit still works).
-  - Improved smooth camera transitions during rotation and movement.
+- Introduced improved map navigation and camera behavior with heading-up and north-up workflows.
+- Updated tracking controls and activity selection to support full activity catalog usage.
+- Added configurable GPS filter modes (`Auto by activity`, `Normal`, `Strict`) with persisted settings.
 
 ### Fixed
-- **App Version:** Corrected version display in Settings and build artifacts.
-- **Camera Jitter:** Resolved issues with camera jumping during rotation updates.
-- **UI Overlap:** Ensured user marker is not obscured by the bottom tracking panel.
-
-
-
-### Added
-- Added `GPS filter mode` setting with manual override options: `Auto by activity`, `Normal`, and `Strict (urban)`.
-- Added user-facing explanations for each GPS filter mode in Settings (EN/PT localization).
-- Added full backend-aligned activity type catalog support (IDs `1..46`) with mapped icons for mobile tracking UI.
-- Added a dedicated activity type picker bottom sheet with full vertical list, icon + label rows, and selected-state checkmark accent.
-- Added complete EN/PT localization keys for all supported activity labels and centralized `activity_type_localization` mapping by backend type ID.
-
-### Changed
-- `Auto by activity` now acts as intelligent default GPS behavior: stricter for Walk/Run, balanced for Ride.
-- GPS filter mode is now persisted and applied live to tracking logic without requiring app restart.
-- Tracking controls now open the full activity selector sheet when tapping the current activity type, and selection updates start behavior immediately.
-- Recording/map overlay layout was refactored into a responsive bottom sheet/card composition for clearer metric hierarchy and better small-device behavior.
-- Map control styling was tuned for stronger in-map contrast using Endurain dark surfaces and cool accent tones (no industry standard-like beige/light-green palette).
-
-### Fixed
-- **App Version:** Corrected version display in Settings and build artifacts.
-- Resolved CI `Analyze` failure by removing remaining analyzer findings in map tracking flow, validators, location settings, and tracking controls.
-- Updated async handling in tracking actions/snackbar flows to satisfy `unawaited_futures`/context-safety analyzer checks.
-- Updated tracking selector/widget tests for the new bottom-sheet interaction flow and full-list selection behavior.
-
-### Testing
-- `flutter analyze` passes with the new activity selector, localization, and layout changes.
-- `flutter test` passes after updating selector interaction tests.
-
-### Documentation
-- Reduced `ROADMAP.md` to a lightweight support backlog to reflect maintenance-focused workflow.
-- Simplified `DOCS/OWNER_HANDOVER.md` into a compact maintainer note for faster PR review.
-- Kept `CHANGELOG.md` as the single long-term, release-oriented source of truth.
-
-### Maintainer delivery summary
-- PR branch includes the complete support stream for versions `0.0.1` through `0.0.17`, including tracking UX, upload robustness, map/detail improvements, deletion flows, suspicious-session safeguards, GPS quality tuning, and GPS mode override.
-- Current test APK artifact is published via GitHub Release in fork repository (`v0.0.17-support`) and linked for maintainer validation.
+- Corrected app version display and stabilized map camera behavior during movement.
+- Removed remaining analyzer issues in tracking/map flows and aligned tests with the updated selector interaction.
 
 
 ## [0.0.31] - 2026-03-12

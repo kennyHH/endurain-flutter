@@ -87,6 +87,37 @@ void main() {
       expect(gpx, contains('<time>2026-03-09T10:00:10.000Z</time>'));
     });
 
+    test('exportiert Herzfrequenz und Cadence als GPX-Extensions', () {
+      final exporter = GpxExporter();
+      final activity = Activity(
+        id: 'sensor-export',
+        activityType: ActivityType.ride,
+        startedAt: DateTime.parse('2026-03-09T10:00:00Z'),
+        endedAt: DateTime.parse('2026-03-09T10:05:00Z'),
+        distanceMeters: 2200,
+        trackPoints: [
+          TrackPoint(
+            latitude: 38.7223,
+            longitude: -9.1393,
+            timestamp: DateTime.parse('2026-03-09T10:00:00Z'),
+            heartRate: 147,
+            cadence: 88,
+          ),
+        ],
+      );
+
+      final gpx = exporter.export(activity);
+
+      expect(
+        gpx,
+        contains(
+          'xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1"',
+        ),
+      );
+      expect(gpx, contains('<gpxtpx:hr>147</gpxtpx:hr>'));
+      expect(gpx, contains('<gpxtpx:cad>88</gpxtpx:cad>'));
+    });
+
     test('ungueltige Punktdaten (NaN) werfen FormatException', () {
       final exporter = GpxExporter();
       final activity = Activity(
@@ -105,6 +136,51 @@ void main() {
       );
 
       expect(() => exporter.export(activity), throwsFormatException);
+    });
+
+    test(
+      'buildExportFilename erzeugt lesbaren Fallback ohne Activity-Name',
+      () {
+        final exporter = GpxExporter();
+        final activity = Activity(
+          id: 'upload-1',
+          activityType: ActivityType.run,
+          startedAt: DateTime.parse('2026-03-09T10:00:00Z'),
+          endedAt: DateTime.parse('2026-03-09T10:10:00Z'),
+          distanceMeters: 1000,
+          trackPoints: const <TrackPoint>[],
+        );
+
+        final filename = exporter.buildExportFilename(activity);
+
+        expect(filename, matches(RegExp(r'^2026-03-09_\d{2}-\d{2}_Run\.gpx$')));
+      },
+    );
+
+    test('buildExportFilename sanitizt Sonderzeichen und begrenzt Laenge', () {
+      final exporter = GpxExporter();
+      final activity = Activity(
+        id: 'id-äöü-123456789',
+        name: 'München Süd / Feierabend-Runde !!! Mit Sehr Langem Namen',
+        activityType: ActivityType.ride,
+        startedAt: DateTime.parse('2026-03-09T18:45:00Z'),
+        endedAt: DateTime.parse('2026-03-09T19:10:00Z'),
+        distanceMeters: 12000,
+        trackPoints: const <TrackPoint>[],
+      );
+
+      final filename = exporter.buildExportFilename(
+        activity,
+        maxBaseLength: 40,
+      );
+
+      expect(filename.endsWith('.gpx'), isTrue);
+      expect(filename, matches(RegExp(r'^2026-03-09_\d{2}-\d{2}_Ride_')));
+      expect(filename, contains('Muenchen'));
+      expect(filename.length, lessThanOrEqualTo(44));
+      expect(filename, isNot(contains(' ')));
+      expect(filename, isNot(contains('/')));
+      expect(filename, isNot(contains('!')));
     });
   });
 }

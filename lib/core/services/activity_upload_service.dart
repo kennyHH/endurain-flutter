@@ -1,13 +1,17 @@
 import 'dart:convert';
-
-import 'package:endurain/core/constants/api_constants.dart';
-import 'package:endurain/core/constants/upload_constants.dart';
-import 'package:endurain/core/models/activity.dart';
-import 'package:endurain/core/services/api_request_executor.dart';
-import 'package:endurain/core/services/auth_service.dart';
-import 'package:endurain/core/services/gpx_exporter.dart';
-import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:http/http.dart' as http;
+import 'package:endurain/core/models/activity.dart';
+import 'package:endurain/core/services/gpx_exporter.dart';
+import 'package:endurain/core/services/auth_service.dart';
+import 'package:endurain/core/services/secure_storage_service.dart';
+import 'package:endurain/core/services/api_client.dart';
+import 'package:endurain/core/services/api_request_executor.dart';
+import 'package:endurain/core/services/activity_repository.dart';
+import 'package:endurain/core/error_handling/app_error.dart';
+import 'package:endurain/core/constants/upload_constants.dart';
+import 'package:endurain/core/services/upload_queue/upload_queue_service.dart';
+import 'package:endurain/core/di/service_locator.dart';
+import 'package:injectable/injectable.dart';
 
 enum ActivityUploadFailureType {
   configuration,
@@ -61,25 +65,42 @@ class ActivityUploadResult {
   }
 }
 
+@singleton
 class ActivityUploadService {
   ActivityUploadService({
-    SecureStorageService? storage,
-    AuthService? authService,
-    ApiRequestExecutor? requestExecutor,
-    GpxExporter? gpxExporter,
-    this.uploadEndpoint = UploadConstants.activityUploadEndpoint,
-    this.maxRetries = UploadConstants.defaultUploadRetries,
-  }) : _storage = storage ?? SecureStorageService(),
-       _authService = authService ?? AuthService(),
-       _requestExecutor = requestExecutor ?? ApiRequestExecutor(),
-       _gpxExporter = gpxExporter ?? GpxExporter();
+    required ApiClient apiClient,
+    required SecureStorageService storage,
+    required AuthService authService,
+    required GpxExporter gpxExporter,
+    required UploadQueueService queueService,
+    ActivityRepository? activityRepository,
+  }) : _apiClient = apiClient,
+       _storage = storage,
+       _authService = authService,
+       _gpxExporter = gpxExporter,
+       _queueService = queueService,
+       _activityRepository = _resolveActivityRepository(activityRepository);
 
+  final ApiClient _apiClient;
   final SecureStorageService _storage;
   final AuthService _authService;
-  final ApiRequestExecutor _requestExecutor;
   final GpxExporter _gpxExporter;
-  final String uploadEndpoint;
-  final int maxRetries;
+  final UploadQueueService _queueService;
+  final ActivityRepository? _activityRepository;
+  final Map<String, Future<ActivityUploadResult>> _inFlightUploads =
+      <String, Future<ActivityUploadResult>>{};
+
+  static ActivityRepository? _resolveActivityRepository(
+    ActivityRepository? injected,
+  ) {
+    if (injected != null) return injected;
+    if (!serviceLocator.isRegistered<ActivityRepository>()) return null;
+    try {
+      return serviceLocator<ActivityRepository>();
+    } catch (_) {
+      return null;
+    }
+  }
 
   Future<ActivityUploadResult> deleteActivity(Activity activity) async {
     final serverUrl = await _storage.getServerUrl();
@@ -89,28 +110,20 @@ class ActivityUploadService {
         failureType: ActivityUploadFailureType.configuration,
       );
     }
-    final accessToken = await _storage.getAccessToken();
-    if (accessToken == null || accessToken.isEmpty) {
-      return ActivityUploadResult.failure(
-        attempts: 0,
-        failureType: ActivityUploadFailureType.authentication,
-      );
-    }
 
     final encodedId = Uri.encodeComponent(activity.id);
     final endpoints = <String>[
+      '/api/v1/activities/$encodedId/delete',
       '/api/v1/activities/$encodedId',
       '/api/v1/activities/delete/$encodedId',
+      '/activities/$encodedId/delete',
+      '/activities/$encodedId',
     ];
 
+    ActivityUploadResult? lastFailure;
     for (final endpoint in endpoints) {
       try {
-        final response = await _requestExecutor.request(
-          method: 'DELETE',
-          serverUrl: serverUrl,
-          endpoint: endpoint,
-          headers: {ApiConstants.authorizationHeader: 'Bearer $accessToken'},
-        );
+        final response = await _apiClient.delete(endpoint);
         if (response.statusCode >= 200 && response.statusCode < 300) {
           return ActivityUploadResult.success(
             attempts: 1,
@@ -118,18 +131,111 @@ class ActivityUploadService {
             serverDetail: _extractServerDetail(response),
           );
         }
+        lastFailure = ActivityUploadResult.failure(
+          attempts: 1,
+          statusCode: response.statusCode,
+          failureType: response.statusCode == 401
+              ? ActivityUploadFailureType.authentication
+              : ActivityUploadFailureType.server,
+          serverDetail: _extractServerDetail(response),
+        );
+      } on AuthenticationError catch (error) {
+        final isAuthenticated = await _authService.isAuthenticated();
+        return ActivityUploadResult.failure(
+          attempts: 1,
+          failureType: ActivityUploadFailureType.authentication,
+          serverDetail: isAuthenticated
+              ? error.message
+              : 'Session expired. Please login again.',
+        );
+      } on NetworkError catch (error) {
+        return ActivityUploadResult.failure(
+          attempts: 1,
+          failureType: ActivityUploadFailureType.network,
+          serverDetail: error.message,
+        );
       } catch (_) {
         // Try next endpoint fallback.
       }
     }
 
-    return ActivityUploadResult.failure(
-      attempts: 1,
-      failureType: ActivityUploadFailureType.server,
-    );
+    return lastFailure ??
+        ActivityUploadResult.failure(
+          attempts: 1,
+          failureType: ActivityUploadFailureType.server,
+        );
   }
 
   Future<ActivityUploadResult> uploadActivity(Activity activity) async {
+    final existing = _inFlightUploads[activity.id];
+    if (existing != null) return existing;
+
+    final uploadFuture = _uploadActivityInternal(activity).whenComplete(() {
+      _inFlightUploads.remove(activity.id);
+    });
+    _inFlightUploads[activity.id] = uploadFuture;
+    return uploadFuture;
+  }
+
+  Future<ActivityUploadResult> _uploadActivityInternal(
+    Activity activity,
+  ) async {
+    final alreadyUploaded = await _isAlreadyUploaded(activity.id);
+    if (alreadyUploaded) {
+      await _queueService.removeFromQueue(activity.id);
+      return ActivityUploadResult.success(
+        attempts: 0,
+        serverDetail: 'already_uploaded',
+      );
+    }
+
+    final result = await _performUpload(activity);
+
+    if (!result.success) {
+      final type = result.failureType;
+      if (type == ActivityUploadFailureType.network ||
+          type == ActivityUploadFailureType.server) {
+        await _queueService.addToQueue(activity);
+      }
+      return result;
+    }
+
+    await _persistUploaded(activity.id);
+    await _queueService.removeFromQueue(activity.id);
+    return result;
+  }
+
+  Future<bool> _isAlreadyUploaded(String activityId) async {
+    final repository = _activityRepository;
+    if (repository == null) return false;
+    final stored = await repository.getSummaryById(activityId);
+    return stored?.uploaded ?? false;
+  }
+
+  Future<void> _persistUploaded(String activityId) async {
+    final repository = _activityRepository;
+    if (repository == null) return;
+    final stored = await repository.getById(activityId);
+    if (stored == null || stored.uploaded) return;
+    await repository.update(stored.copyWith(uploaded: true));
+  }
+
+  /// Process the offline queue
+  Future<void> processQueue() async {
+    final queue = await _queueService.getQueue();
+    if (queue.isEmpty) return;
+
+    for (final activity in queue) {
+      final result = await uploadActivity(activity);
+      if (!result.success &&
+          (result.failureType == ActivityUploadFailureType.authentication ||
+              result.failureType == ActivityUploadFailureType.configuration)) {
+        break;
+      }
+    }
+  }
+
+  Future<ActivityUploadResult> _performUpload(Activity activity) async {
     final serverUrl = await _storage.getServerUrl();
     if (serverUrl == null || serverUrl.isEmpty) {
       return ActivityUploadResult.failure(
@@ -138,66 +244,78 @@ class ActivityUploadService {
       );
     }
 
-    String? accessToken = await _storage.getAccessToken();
-    if (accessToken == null || accessToken.isEmpty) {
-      return ActivityUploadResult.failure(
-        attempts: 0,
-        failureType: ActivityUploadFailureType.authentication,
-      );
-    }
-
     final gpx = _gpxExporter.export(activity);
-    final maxAttempts = maxRetries + 1;
-    var refreshAttempted = false;
+    final gpxFilename = _gpxExporter.buildExportFilename(activity);
+    final uploadHeaders = <String, String>{
+      UploadConstants.idempotencyHeader: 'endurain-upload-${activity.id}',
+      UploadConstants.uploadActivityIdHeader: activity.id,
+    };
+    const maxAttempts = UploadConstants.defaultUploadRetries + 1;
     final methodCandidates = <String>['POST', 'PUT', 'PATCH'];
     final fileFieldCandidates = <String>[
       UploadConstants.multipartFileField,
       ...UploadConstants.multipartFileFieldFallbacks,
     ];
-    final endpointCandidates = <String>{
-      uploadEndpoint,
-      '/api/v1/activities/create/upload',
-      '/api/v1/activities/import',
+    final visibilityFieldProfiles = <Map<String, String>>[
+      <String, String>{
+        'hidden': 'false',
+        'is_hidden': 'false',
+        'visibility': 'public',
+        'is_public': 'true',
+      },
+      <String, String>{'hidden': 'false'},
+      <String, String>{'is_hidden': 'false'},
+      <String, String>{'visibility': 'public'},
+      <String, String>{'is_public': 'true'},
+    ];
+    // Add variations to handle potential server path requirements (e.g. trailing slash)
+    final endpointCandidates = {
+      UploadConstants.activityUploadEndpoint,
+      '${UploadConstants.activityUploadEndpoint}/',
       '/api/v1/activities/upload',
+      '/api/v1/activities/import',
       '/api/v1/activities',
+      '/activities/create/upload',
+      '/activities/upload',
+      '/activities/import',
+      '/activities',
     }.toList();
+
+    ActivityUploadResult? last405Result;
 
     attemptLoop:
     for (var attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        var retryWithRefreshedToken = false;
         ActivityUploadResult? exhaustedClientFailure;
         endpointLoop:
         for (final endpoint in endpointCandidates) {
           methodLoop:
           for (final method in methodCandidates) {
-            for (final fileField in fileFieldCandidates) {
-              final response = await _requestExecutor.requestMultipart(
-                method: method,
-                serverUrl: serverUrl,
-                endpoint: endpoint,
-                headers: {
-                  ApiConstants.authorizationHeader: 'Bearer $accessToken',
-                },
-                files: [
-                  http.MultipartFile.fromString(
-                    fileField,
-                    gpx,
-                    filename: UploadConstants.defaultGpxFilename,
-                  ),
-                ],
-              );
-
-              if (response.statusCode >= 200 && response.statusCode < 300) {
-                return ActivityUploadResult.success(
-                  attempts: attempt,
-                  statusCode: response.statusCode,
-                  serverDetail: _extractServerDetail(response),
+            for (final fields in visibilityFieldProfiles) {
+              for (final fileField in fileFieldCandidates) {
+                final response = await _apiClient.requestMultipart(
+                  method: method,
+                  endpoint: endpoint,
+                  headers: uploadHeaders,
+                  fields: fields,
+                  files: [
+                    UploadableFile.fromString(
+                      field: fileField,
+                      content: gpx,
+                      filename: gpxFilename,
+                    ),
+                  ],
                 );
-              }
 
-              if (response.statusCode == 401) {
-                if (refreshAttempted) {
+                if (response.statusCode >= 200 && response.statusCode < 300) {
+                  return ActivityUploadResult.success(
+                    attempts: attempt,
+                    statusCode: response.statusCode,
+                    serverDetail: _extractServerDetail(response),
+                  );
+                }
+
+                if (response.statusCode == 401) {
                   return ActivityUploadResult.failure(
                     attempts: attempt,
                     statusCode: response.statusCode,
@@ -205,96 +323,70 @@ class ActivityUploadService {
                     serverDetail: _extractServerDetail(response),
                   );
                 }
-                refreshAttempted = true;
-                final refreshed = await _authService.refreshToken();
-                if (!refreshed) {
-                  return ActivityUploadResult.failure(
-                    attempts: attempt,
-                    statusCode: response.statusCode,
-                    failureType: ActivityUploadFailureType.authentication,
-                    serverDetail: _extractServerDetail(response),
-                  );
-                }
-                accessToken = await _storage.getAccessToken();
-                if (accessToken == null || accessToken.isEmpty) {
-                  return ActivityUploadResult.failure(
-                    attempts: attempt,
-                    statusCode: response.statusCode,
-                    failureType: ActivityUploadFailureType.authentication,
-                    serverDetail: _extractServerDetail(response),
-                  );
-                }
-                retryWithRefreshedToken = true;
-                break endpointLoop;
-              }
 
-              if (response.statusCode == 405 && method != methodCandidates.last) {
-                break;
-              }
-
-              final shouldTryNextField =
-                  response.statusCode == 400 ||
-                  response.statusCode == 404 ||
-                  response.statusCode == 415 ||
-                  response.statusCode == 422;
-              if (shouldTryNextField) {
-                if (fileField != fileFieldCandidates.last) {
-                  continue;
+                if (response.statusCode == 405 &&
+                    method != methodCandidates.last) {
+                  continue methodLoop;
                 }
-                // After all field candidates fail for this method, continue with
-                // next method/endpoint before returning a hard failure.
-                exhaustedClientFailure = ActivityUploadResult.failure(
-                  attempts: attempt,
-                  statusCode: response.statusCode,
-                  failureType: ActivityUploadFailureType.unknown,
-                  serverDetail: _extractServerDetail(response),
-                );
-                break;
-              }
 
-              if (response.statusCode >= 500) {
-                if (attempt < maxAttempts) {
-                  continue attemptLoop;
-                }
-                return ActivityUploadResult.failure(
-                  attempts: attempt,
-                  statusCode: response.statusCode,
-                  failureType: ActivityUploadFailureType.server,
-                  serverDetail: _extractServerDetail(response),
-                );
-              }
-
-              if (response.statusCode == 405 &&
-                  method == methodCandidates.last) {
-                final hasMoreEndpoints = endpoint != endpointCandidates.last;
-                if (hasMoreEndpoints) {
+                final shouldTryNextVariant =
+                    response.statusCode == 400 ||
+                    response.statusCode == 404 ||
+                    response.statusCode == 415 ||
+                    response.statusCode == 422;
+                if (shouldTryNextVariant) {
+                  if (fileField != fileFieldCandidates.last) {
+                    continue;
+                  }
+                  if (!identical(fields, visibilityFieldProfiles.last)) {
+                    continue;
+                  }
                   exhaustedClientFailure = ActivityUploadResult.failure(
+                    attempts: attempt,
+                    statusCode: response.statusCode,
+                    failureType: ActivityUploadFailureType.unknown,
+                    serverDetail: _extractServerDetail(response),
+                  );
+                  break;
+                }
+
+                if (response.statusCode >= 500) {
+                  if (attempt < maxAttempts) {
+                    continue attemptLoop;
+                  }
+                  return ActivityUploadResult.failure(
                     attempts: attempt,
                     statusCode: response.statusCode,
                     failureType: ActivityUploadFailureType.server,
                     serverDetail: _extractServerDetail(response),
                   );
-                  break methodLoop;
                 }
+
+                if (response.statusCode == 405 &&
+                    method == methodCandidates.last) {
+                  last405Result = ActivityUploadResult.failure(
+                    attempts: attempt,
+                    statusCode: response.statusCode,
+                    failureType: ActivityUploadFailureType.server,
+                    serverDetail:
+                        'Method Not Allowed (405) for endpoint: $endpoint',
+                  );
+                  final hasMoreEndpoints = endpoint != endpointCandidates.last;
+                  if (hasMoreEndpoints) {
+                    continue endpointLoop;
+                  }
+                  return last405Result;
+                }
+
                 return ActivityUploadResult.failure(
                   attempts: attempt,
                   statusCode: response.statusCode,
-                  failureType: ActivityUploadFailureType.server,
+                  failureType: ActivityUploadFailureType.unknown,
                   serverDetail: _extractServerDetail(response),
                 );
               }
-
-              return ActivityUploadResult.failure(
-                attempts: attempt,
-                statusCode: response.statusCode,
-                failureType: ActivityUploadFailureType.unknown,
-                serverDetail: _extractServerDetail(response),
-              );
             }
           }
-        }
-        if (retryWithRefreshedToken) {
-          continue;
         }
         if (exhaustedClientFailure != null) {
           return exhaustedClientFailure;
@@ -311,6 +403,26 @@ class ActivityUploadService {
           failureType: isRetryable
               ? ActivityUploadFailureType.network
               : ActivityUploadFailureType.unknown,
+          serverDetail: error.message,
+        );
+      } on AuthenticationError catch (error) {
+        final isAuthenticated = await _authService.isAuthenticated();
+        final detail = isAuthenticated
+            ? error.message
+            : 'Session expired. Please login again.';
+        return ActivityUploadResult.failure(
+          attempts: attempt,
+          failureType: ActivityUploadFailureType.authentication,
+          serverDetail: detail,
+        );
+      } on NetworkError catch (error) {
+        if (attempt < maxAttempts) {
+          continue;
+        }
+        return ActivityUploadResult.failure(
+          attempts: attempt,
+          failureType: ActivityUploadFailureType.network,
+          serverDetail: error.message,
         );
       } catch (_) {
         return ActivityUploadResult.failure(
