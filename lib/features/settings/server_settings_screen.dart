@@ -9,15 +9,19 @@ import 'package:endurain/core/utils/dialog_utils.dart';
 import 'package:endurain/core/utils/error_mapper.dart';
 import 'package:endurain/core/constants/ui_constants.dart';
 
+import 'package:endurain/core/di/service_locator.dart';
+
 class ServerSettingsScreen extends StatefulWidget {
   const ServerSettingsScreen({
     super.key,
     this.onLogout,
+    this.onOpenServerLogin,
     this.storage,
     this.authService,
   });
 
   final VoidCallback? onLogout;
+  final Future<void> Function()? onOpenServerLogin;
   final SecureStorageService? storage;
   final AuthService? authService;
 
@@ -28,14 +32,15 @@ class ServerSettingsScreen extends StatefulWidget {
 class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
   final _formKey = GlobalKey<FormState>();
   final _tileServerUrlController = TextEditingController();
-  final _defaultStorage = SecureStorageService();
-  final _defaultAuthService = AuthService();
   bool _isLoading = true;
   String _serverUrl = '';
   String _username = '';
+  bool _isServerConnected = false;
 
-  SecureStorageService get _storage => widget.storage ?? _defaultStorage;
-  AuthService get _authService => widget.authService ?? _defaultAuthService;
+  SecureStorageService get _storage =>
+      widget.storage ?? serviceLocator<SecureStorageService>();
+  AuthService get _authService =>
+      widget.authService ?? serviceLocator<AuthService>();
 
   @override
   void initState() {
@@ -53,11 +58,15 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
     final serverUrl = await _storage.getServerUrl();
     final username = await _storage.getUsername();
     final tileServerUrl = await _storage.getTileServerUrl();
+    final isAuthenticated = await _storage.isAuthenticated();
+    final isServerConnected =
+        isAuthenticated && serverUrl != null && serverUrl.isNotEmpty;
 
     if (mounted) {
       setState(() {
         _serverUrl = serverUrl ?? 'Not configured';
         _username = username ?? 'Not logged in';
+        _isServerConnected = isServerConnected;
         _tileServerUrlController.text =
             tileServerUrl ?? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
         _isLoading = false;
@@ -140,6 +149,13 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
     widget.onLogout?.call();
   }
 
+  Future<void> _openLoginFlow() async {
+    final openServerLogin = widget.onOpenServerLogin;
+    if (openServerLogin == null) return;
+    Navigator.of(context).pop();
+    await openServerLogin();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -164,7 +180,11 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
               padding: const EdgeInsets.all(UIConstants.paddingStandard),
               children: [
                 CupertinoListSection.insetGrouped(
-                  header: Text(l10n.loggedIn),
+                  header: Text(
+                    _isServerConnected
+                        ? l10n.loggedIn
+                        : l10n.settingsServerDisconnected,
+                  ),
                   children: [
                     CupertinoListTile(
                       title: Text(l10n.serverUrl),
@@ -174,19 +194,20 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
                       title: Text(l10n.username),
                       subtitle: Text(_username),
                     ),
-                    CupertinoListTile(
-                      leading: const Icon(
-                        CupertinoIcons.square_arrow_right,
-                        color: CupertinoColors.systemRed,
-                      ),
-                      title: Text(
-                        l10n.logout,
-                        style: const TextStyle(
+                    if (_isServerConnected)
+                      CupertinoListTile(
+                        leading: const Icon(
+                          CupertinoIcons.square_arrow_right,
                           color: CupertinoColors.systemRed,
                         ),
+                        title: Text(
+                          l10n.logout,
+                          style: const TextStyle(
+                            color: CupertinoColors.systemRed,
+                          ),
+                        ),
+                        onTap: _handleLogout,
                       ),
-                      onTap: _handleLogout,
-                    ),
                   ],
                 ),
                 CupertinoListSection.insetGrouped(
@@ -212,6 +233,15 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
                     child: Text(l10n.save),
                   ),
                 ),
+                if (!_isServerConnected)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    child: CupertinoButton(
+                      color: CupertinoColors.activeBlue,
+                      onPressed: _openLoginFlow,
+                      child: Text(l10n.login),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -234,7 +264,11 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _SettingsSectionHeader(title: l10n.loggedIn),
+            _SettingsSectionHeader(
+              title: _isServerConnected
+                  ? l10n.loggedIn
+                  : l10n.settingsServerDisconnected,
+            ),
             Card(
               clipBehavior: Clip.antiAlias,
               child: Column(
@@ -265,7 +299,10 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
             _SettingsSectionHeader(title: l10n.tileServerUrl),
             Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
                 child: TextFormField(
                   controller: _tileServerUrlController,
                   decoration: InputDecoration(
@@ -290,17 +327,30 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
                 minimumSize: const Size.fromHeight(48),
               ),
             ),
-            const SizedBox(height: 40),
-            OutlinedButton.icon(
-              onPressed: _handleLogout,
-              icon: const Icon(Icons.logout),
-              label: Text(l10n.logout),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.error,
-                side: BorderSide(color: Theme.of(context).colorScheme.error),
-                minimumSize: const Size.fromHeight(48),
+            if (!_isServerConnected) ...[
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: _openLoginFlow,
+                icon: const Icon(Icons.login_rounded),
+                label: Text(l10n.login),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                ),
               ),
-            ),
+            ],
+            if (_isServerConnected) ...[
+              const SizedBox(height: 40),
+              OutlinedButton.icon(
+                onPressed: _handleLogout,
+                icon: const Icon(Icons.logout),
+                label: Text(l10n.logout),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                  side: BorderSide(color: Theme.of(context).colorScheme.error),
+                  minimumSize: const Size.fromHeight(48),
+                ),
+              ),
+            ],
           ],
         ),
       ),

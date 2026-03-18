@@ -12,7 +12,10 @@ void main() {
         l10n,
       );
 
-      expect(message, equals(l10n.errorNetwork));
+      expect(
+        message,
+        'Connection failed. Please check the server URL in the settings and your internet connection.',
+      );
     });
 
     test('mappt TLS-Fehler auf lokalisierte TLS-Meldung', () {
@@ -23,7 +26,10 @@ void main() {
         l10n,
       );
 
-      expect(message, equals(l10n.errorTls));
+      expect(
+        message,
+        'Secure connection failed. Please check the server URL and ensure it supports HTTPS with a valid certificate.',
+      );
     });
 
     test('mappt Login-Fehler auf lokalisierte Auth-Meldung', () {

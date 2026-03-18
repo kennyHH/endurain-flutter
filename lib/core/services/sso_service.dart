@@ -1,21 +1,19 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:endurain/core/models/identity_provider.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/api_constants.dart';
 import 'package:endurain/core/services/api_request_executor.dart';
 import 'package:endurain/core/utils/pkce_utils.dart';
-import 'package:endurain/core/services/auth_service.dart';
+import 'package:endurain/core/models/auth_result.dart';
+import 'package:injectable/injectable.dart';
 
-/// Service for SSO/OAuth authentication
+@singleton
 class SsoService {
   SsoService({
-    SecureStorageService? storage,
-    http.Client? httpClient,
-    ApiRequestExecutor? requestExecutor,
-  }) : _storage = storage ?? SecureStorageService(),
-       _requestExecutor =
-           requestExecutor ?? ApiRequestExecutor(httpClient: httpClient);
+    required SecureStorageService storage,
+    required ApiRequestExecutor requestExecutor,
+  }) : _storage = storage,
+       _requestExecutor = requestExecutor;
 
   final SecureStorageService _storage;
   final ApiRequestExecutor _requestExecutor;

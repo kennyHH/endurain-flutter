@@ -1,4 +1,3 @@
-
 import 'package:endurain/l10n/app_localizations.dart';
 
 enum MetricType {
@@ -9,6 +8,8 @@ enum MetricType {
   pace,
   avgPace,
   elevation,
+  heartRate,
+  cadence,
   none; // Represents an empty slot
 
   String label(AppLocalizations l10n) {
@@ -20,15 +21,19 @@ enum MetricType {
       case MetricType.speed:
         return l10n.trackingCurrentSpeed;
       case MetricType.avgSpeed:
-        return "Avg Speed"; // TODO: Localize
+        return 'Avg Speed'; // TODO: Localize
       case MetricType.pace:
-        return "Pace"; // TODO: Localize
+        return 'Pace'; // TODO: Localize
       case MetricType.avgPace:
-        return "Avg Pace"; // TODO: Localize
+        return 'Avg Pace'; // TODO: Localize
       case MetricType.elevation:
         return l10n.trackingElevationGain;
+      case MetricType.heartRate:
+        return 'Heart Rate'; // TODO: Localize
+      case MetricType.cadence:
+        return 'Cadence'; // TODO: Localize
       case MetricType.none:
-        return "";
+        return '';
     }
   }
 }

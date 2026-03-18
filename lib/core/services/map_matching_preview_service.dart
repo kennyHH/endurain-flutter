@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:endurain/core/models/activity.dart';
 import 'package:http/http.dart' as http;
@@ -15,6 +16,8 @@ class RouteDisplayResult {
 class MapMatchingPreviewService {
   const MapMatchingPreviewService();
 
+  static const double fallbackSmoothingMinDistanceMeters = 180;
+
   static final Map<String, List<TrackPoint>> _matchedCache =
       <String, List<TrackPoint>>{};
 
@@ -27,6 +30,9 @@ class MapMatchingPreviewService {
     }
 
     try {
+      if (!_shouldApplyFallbackSmoothing(rawPoints)) {
+        return rawPoints;
+      }
       return _smoothByMovingAverage(rawPoints);
     } catch (_) {
       // Hard fallback: never break rendering because of preview matching.
@@ -77,7 +83,9 @@ class MapMatchingPreviewService {
     } catch (_) {
       // Network matching is best-effort only.
     }
-    final fallback = _smoothByMovingAverage(rawPoints);
+    final fallback = _shouldApplyFallbackSmoothing(rawPoints)
+        ? _smoothByMovingAverage(rawPoints)
+        : rawPoints;
     _matchedCache[cacheKey] = fallback;
     _storeSource(cacheKey, RouteMatchSource.fallback);
     return RouteDisplayResult(points: fallback, source: RouteMatchSource.fallback);
@@ -191,5 +199,35 @@ class MapMatchingPreviewService {
     }
     smoothed.add(rawPoints.last);
     return smoothed;
+  }
+
+  bool _shouldApplyFallbackSmoothing(List<TrackPoint> rawPoints) {
+    if (rawPoints.length < 3) return false;
+    final totalDistanceMeters = _totalDistanceMeters(rawPoints);
+    return totalDistanceMeters >= fallbackSmoothingMinDistanceMeters;
+  }
+
+  double _totalDistanceMeters(List<TrackPoint> points) {
+    if (points.length < 2) return 0;
+    var total = 0.0;
+    for (var i = 1; i < points.length; i++) {
+      total += _distanceMeters(points[i - 1], points[i]);
+    }
+    return total;
+  }
+
+  double _distanceMeters(TrackPoint a, TrackPoint b) {
+    const earthRadiusMeters = 6371000.0;
+    const radiansPerDegree = math.pi / 180.0;
+    final lat1 = a.latitude * radiansPerDegree;
+    final lat2 = b.latitude * radiansPerDegree;
+    final dLat = (b.latitude - a.latitude) * radiansPerDegree;
+    final dLon = (b.longitude - a.longitude) * radiansPerDegree;
+    final sinDLat = math.sin(dLat / 2);
+    final sinDLon = math.sin(dLon / 2);
+    final aa = sinDLat * sinDLat +
+        math.cos(lat1) * math.cos(lat2) * sinDLon * sinDLon;
+    final c = 2 * math.atan2(math.sqrt(aa), math.sqrt(1 - aa));
+    return earthRadiusMeters * c;
   }
 }

@@ -39,5 +39,30 @@ void main() {
         l10n.trackingUploadSuccess,
       );
     });
+
+    test('toDisplayMessage dupliziert Session-Detail nicht', () {
+      const detail = 'Session expired. Please login again.';
+      final result = ActivityUploadResult.failure(
+        attempts: 1,
+        failureType: ActivityUploadFailureType.authentication,
+        serverDetail: detail,
+      );
+
+      expect(ActivityUploadFeedbackMapper.toDisplayMessage(result, l10n), detail);
+    });
+
+    test('toDisplayMessage ergänzt HTTP-Status und Detail ohne Dopplung', () {
+      final result = ActivityUploadResult.failure(
+        attempts: 1,
+        statusCode: 500,
+        failureType: ActivityUploadFailureType.server,
+        serverDetail: 'Gateway timeout',
+      );
+
+      expect(
+        ActivityUploadFeedbackMapper.toDisplayMessage(result, l10n),
+        '${l10n.errorServer} (HTTP 500) - Gateway timeout',
+      );
+    });
   });
 }

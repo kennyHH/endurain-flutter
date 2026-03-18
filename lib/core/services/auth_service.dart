@@ -1,18 +1,18 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/api_constants.dart';
 import 'package:endurain/core/services/api_request_executor.dart';
 import 'package:endurain/core/utils/pkce_utils.dart';
+import 'package:endurain/core/models/auth_result.dart';
+import 'package:injectable/injectable.dart';
 
+@singleton
 class AuthService {
   AuthService({
-    SecureStorageService? storage,
-    http.Client? httpClient,
-    ApiRequestExecutor? requestExecutor,
-  }) : _storage = storage ?? SecureStorageService(),
-       _requestExecutor =
-           requestExecutor ?? ApiRequestExecutor(httpClient: httpClient);
+    required SecureStorageService storage,
+    required ApiRequestExecutor requestExecutor,
+  }) : _storage = storage,
+       _requestExecutor = requestExecutor;
 
   final SecureStorageService _storage;
   final ApiRequestExecutor _requestExecutor;
@@ -252,6 +252,10 @@ class AuthService {
         return true;
       }
 
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        await _storage.clearAuthTokens();
+      }
+
       return false;
     } catch (e) {
       return false;
@@ -298,25 +302,4 @@ class AuthService {
   Future<bool> isAuthenticated() {
     return _storage.isAuthenticated();
   }
-}
-
-/// Authentication result model
-class AuthResult {
-  final bool success;
-  final bool mfaRequired;
-  final String? username;
-  final String? message;
-  final String? accessToken;
-  final String? refreshToken;
-  final String? sessionId;
-
-  AuthResult({
-    required this.success,
-    this.mfaRequired = false,
-    this.username,
-    this.message,
-    this.accessToken,
-    this.refreshToken,
-    this.sessionId,
-  });
 }

@@ -7,4 +7,7 @@ class PlatformUtils {
 
   /// Check if the current platform is mobile (iOS or Android)
   static bool get isMobile => Platform.isIOS || Platform.isAndroid;
+
+  /// Check if the current platform is Android
+  static bool get isAndroid => Platform.isAndroid;
 }

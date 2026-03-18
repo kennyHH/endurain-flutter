@@ -77,7 +77,65 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not logout from server, but logged out locally';
 
   @override
+  String get settingsEcoModeDescription => 'Reduces GPS update frequency';
+
+  @override
+  String get settingsEcoMode => 'Eco mode';
+
+  @override
+  String get settingsAccordionTrackingTitle => 'Tracking';
+
+  @override
+  String get settingsAccordionTrackingSubtitle =>
+      'Voice Coach · Eco mode · GPS announcements';
+
+  @override
+  String get settingsAccordionDisplayTitle => 'Display';
+
+  @override
+  String get settingsAccordionDisplaySubtitle =>
+      'Theme · Color preset · Route display';
+
+  @override
+  String get settingsAccordionDeviceTitle => 'Device & Sensors';
+
+  @override
+  String get settingsAccordionDeviceSubtitle =>
+      'Bluetooth sensors · Battery optimization';
+
+  @override
+  String get settingsAccordionServerTitle => 'Server & Sync';
+
+  @override
+  String get settingsAccordionServerSubtitle => 'Server · Login · Upload sync';
+
+  @override
+  String get settingsServerConnected => 'Connected';
+
+  @override
+  String get settingsServerDisconnected => 'Not connected';
+
+  @override
+  String get settingsSectionSensors => 'Sensors & Accessories';
+
+  @override
+  String get settingsSectionServer => 'Server';
+
+  @override
+  String get serverSettings => 'Server';
+
+  @override
   String get retry => 'Retry';
+
+  @override
+  String get connectUploadTitle => 'Connect to server';
+
+  @override
+  String get connectUploadMessage =>
+      'You can use Endurain fully offline. Connect now to upload or remove activities on your server.';
+
+  @override
+  String get connectUploadAction => 'Connect & upload';
 
   @override
   String get ssoWebViewTitle => 'Sign In';
@@ -218,6 +276,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get historyFilterSort => 'Filter & sort';
 
   @override
+  String get historyFilterReset => 'Reset';
+
+  @override
+  String get historyFilterCategorySearchHint => 'Search category';
+
+  @override
   String get historyDateRange => 'Date range';
 
   @override
@@ -245,6 +309,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get historyUploadDone => 'Uploaded';
 
   @override
+  String get historyConnectionOffline => 'Offline';
+
+  @override
+  String get historyConnectionOnline => 'Connected';
+
+  @override
   String get historyRenameTitle => 'Name activity';
 
   @override
@@ -262,6 +332,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get historyDeletedSuccess => 'Activity deleted';
+
+  @override
+  String get historyElevationProfile => 'Elevation profile';
+
+  @override
+  String get historyNoAltitudeData => 'No altitude data available';
+
+  @override
+  String get historyHeartRate => 'Heart Rate Zones';
+
+  @override
+  String get historyNoHeartRateData => 'No heart rate data available';
+
+  @override
+  String get heartRateZone => 'Zone';
+
+  @override
+  String get historyQualityTtffLabel => 'TTFF';
+
+  @override
+  String get historyQualityGpsLossLabel => 'GPS Loss';
+
+  @override
+  String get historyQualityRejectedPointsLabel => 'Rejected Points';
+
+  @override
+  String get historyQualitySignalLossDurationLabel => 'Signal Loss Duration';
+
+  @override
+  String historyQualitySecondsValue(String seconds) {
+    return '$seconds s';
+  }
+
+  @override
+  String historyQualitySummary(String ttff, int losses, int rejected) {
+    return 'TTFF $ttff • GPS Loss $losses • Rejected $rejected';
+  }
 
   @override
   String get mapCenterOnLocation => 'Center on my location';
@@ -462,12 +569,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get historyElevationLoss => 'Elevation loss';
 
   @override
-  String get historyElevationProfile => 'Elevation profile';
-
-  @override
-  String get historyNoAltitudeData => 'No altitude data available';
-
-  @override
   String get trackingPermissionRequired =>
       'Location permission is required to start tracking.';
 
@@ -537,9 +638,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsScreen => 'Settings';
 
   @override
-  String get serverSettings => 'Server';
-
-  @override
   String get serverSettingsTitle => 'Server settings';
 
   @override
@@ -561,6 +659,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get savedSuccessfully => 'Settings saved successfully';
 
   @override
+  String get settingsTrackingPermissionsTitle => 'Tracking permissions';
+
+  @override
+  String get settingsTrackingPermissionsAction => 'Set up tracking permissions';
+
+  @override
+  String get settingsTrackingPermissionsDescription =>
+      'Reconfigure location and battery/background permissions.';
+
+  @override
+  String get settingsTrackingPermissionsDialogMessage =>
+      'Reconfigure location and background/battery permissions for reliable tracking now?';
+
+  @override
+  String get settingsTrackingPermissionsSuccess =>
+      'Tracking permissions setup completed.';
+
+  @override
   String get settingsThemeMode => 'Theme';
 
   @override
@@ -576,7 +692,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsThemePreset => 'Color preset';
 
   @override
-  String get settingsThemePresetEndurain => 'Endurain';
+  String get settingsThemePresetEndurain => 'Slate';
 
   @override
   String get settingsThemePresetOcean => 'Ocean';
@@ -591,10 +707,50 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsSectionTheme => 'Theme';
 
   @override
-  String get settingsSectionRouteDisplay => 'Route display';
+  String get settingsSectionVoiceCoach => 'Voice Coach';
 
   @override
-  String get settingsSectionServer => 'Server';
+  String get settingsVoiceCoachEnabled => 'Enable Voice Coach';
+
+  @override
+  String get settingsVoiceCoachEnabledDescription =>
+      'Plays countdown, split, and GPS status announcements during tracking.';
+
+  @override
+  String get settingsVoiceCoachVolume => 'Voice Coach volume';
+
+  @override
+  String get settingsVoiceCoachVolumeDescription =>
+      'Controls app voice output level. Default is 80%.';
+
+  @override
+  String settingsVoiceCoachVolumeValue(int percent) {
+    return '$percent%';
+  }
+
+  @override
+  String get settingsVoiceCoachStartPrompts => 'Start prompts';
+
+  @override
+  String get settingsVoiceCoachStartPromptsDescription =>
+      'Announces countdown and start cue when beginning an activity.';
+
+  @override
+  String get settingsVoiceCoachSplitAnnouncements => 'Split announcements';
+
+  @override
+  String get settingsVoiceCoachSplitAnnouncementsDescription =>
+      'Announces pace and average speed at each kilometer split.';
+
+  @override
+  String get settingsVoiceCoachGpsAnnouncements => 'GPS status alerts';
+
+  @override
+  String get settingsVoiceCoachGpsAnnouncementsDescription =>
+      'Announces when GPS signal is lost or recovered.';
+
+  @override
+  String get settingsSectionRouteDisplay => 'Route display';
 
   @override
   String get settingsSectionAboutApp => 'About app';
@@ -654,6 +810,25 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsGpsFilterModeStrictDescription =>
       'Rejects noisy points more aggressively. Useful in dense city areas.';
+
+  @override
+  String get settingsDynamicMapZoomTitle => 'Dynamic map zoom';
+
+  @override
+  String get settingsDynamicMapZoomDescription =>
+      'Adjusts zoom based on movement speed while follow mode is active.';
+
+  @override
+  String get settingsDynamicMapZoomPresetTitle => 'Dynamic zoom style';
+
+  @override
+  String get settingsDynamicMapZoomPresetConservative => 'Conservative';
+
+  @override
+  String get settingsDynamicMapZoomPresetBalanced => 'Balanced';
+
+  @override
+  String get settingsDynamicMapZoomPresetAggressive => 'Aggressive';
 
   @override
   String get settingsRouteMatchingEnabledLabel => 'Matched preview active';

@@ -87,9 +87,81 @@
   "@logoutServerFailedWarning": {
     "description": "Warning shown when server logout fails but local logout succeeds - Used in: server_settings_screen.dart"
   },
+  "settingsEcoModeDescription": "Reduces GPS update frequency",
+  "@settingsEcoModeDescription": {
+    "description": "Description for Eco Mode setting"
+  },
+  "settingsEcoMode": "Eco mode",
+  "@settingsEcoMode": {
+    "description": "Label for Eco mode toggle in settings"
+  },
+  "settingsAccordionTrackingTitle": "Tracking",
+  "@settingsAccordionTrackingTitle": {
+    "description": "Accordion title for tracking settings group"
+  },
+  "settingsAccordionTrackingSubtitle": "Voice Coach · Eco mode · GPS announcements",
+  "@settingsAccordionTrackingSubtitle": {
+    "description": "Accordion subtitle preview for tracking settings group"
+  },
+  "settingsAccordionDisplayTitle": "Display",
+  "@settingsAccordionDisplayTitle": {
+    "description": "Accordion title for display settings group"
+  },
+  "settingsAccordionDisplaySubtitle": "Theme · Color preset · Route display",
+  "@settingsAccordionDisplaySubtitle": {
+    "description": "Accordion subtitle preview for display settings group"
+  },
+  "settingsAccordionDeviceTitle": "Device & Sensors",
+  "@settingsAccordionDeviceTitle": {
+    "description": "Accordion title for device and sensor settings group"
+  },
+  "settingsAccordionDeviceSubtitle": "Bluetooth sensors · Battery optimization",
+  "@settingsAccordionDeviceSubtitle": {
+    "description": "Accordion subtitle preview for device and sensor settings group"
+  },
+  "settingsAccordionServerTitle": "Server & Sync",
+  "@settingsAccordionServerTitle": {
+    "description": "Accordion title for server and sync settings group"
+  },
+  "settingsAccordionServerSubtitle": "Server · Login · Upload sync",
+  "@settingsAccordionServerSubtitle": {
+    "description": "Accordion subtitle preview for server and sync settings group"
+  },
+  "settingsServerConnected": "Connected",
+  "@settingsServerConnected": {
+    "description": "Server connection status label when authenticated"
+  },
+  "settingsServerDisconnected": "Not connected",
+  "@settingsServerDisconnected": {
+    "description": "Server connection status label when not authenticated"
+  },
+  "settingsSectionSensors": "Sensors & Accessories",
+  "@settingsSectionSensors": {
+    "description": "Header for Sensors section"
+  },
+  "settingsSectionServer": "Server",
+  "@settingsSectionServer": {
+    "description": "Header for Server section"
+  },
+  "serverSettings": "Server",
+  "@serverSettings": {
+    "description": "Title for Server Settings screen"
+  },
   "retry": "Retry",
   "@retry": {
     "description": "Retry button label - Used in: sso_webview_screen.dart"
+  },
+  "connectUploadTitle": "Connect to server",
+  "@connectUploadTitle": {
+    "description": "Title for on-demand login sheet before upload/delete - Used in: app_bottom_nav.dart"
+  },
+  "connectUploadMessage": "You can use Endurain fully offline. Connect now to upload or remove activities on your server.",
+  "@connectUploadMessage": {
+    "description": "Message in on-demand login sheet before upload/delete - Used in: app_bottom_nav.dart"
+  },
+  "connectUploadAction": "Connect & upload",
+  "@connectUploadAction": {
+    "description": "Primary CTA in on-demand login sheet - Used in: app_bottom_nav.dart"
   },
   "ssoWebViewTitle": "Sign In",
   "@ssoWebViewTitle": {
@@ -270,6 +342,14 @@
   "@historyFilterSort": {
     "description": "Button title to open history filter and sort bottom sheet - Used in: activity_history_screen.dart"
   },
+  "historyFilterReset": "Reset",
+  "@historyFilterReset": {
+    "description": "Button label to reset history filter state to defaults - Used in: activity_history_screen.dart"
+  },
+  "historyFilterCategorySearchHint": "Search category",
+  "@historyFilterCategorySearchHint": {
+    "description": "Placeholder for category search input in history filter sheet - Used in: activity_history_screen.dart"
+  },
   "historyDateRange": "Date range",
   "@historyDateRange": {
     "description": "Section label for history date range filters - Used in: activity_history_screen.dart"
@@ -306,6 +386,14 @@
   "@historyUploadDone": {
     "description": "Badge for activities already uploaded to server - Used in: activity_history_screen.dart"
   },
+  "historyConnectionOffline": "Offline",
+  "@historyConnectionOffline": {
+    "description": "Status chip when server connection is not active - Used in: activity_history_screen.dart"
+  },
+  "historyConnectionOnline": "Connected",
+  "@historyConnectionOnline": {
+    "description": "Status chip when server connection is active - Used in: activity_history_screen.dart"
+  },
   "historyRenameTitle": "Name activity",
   "@historyRenameTitle": {
     "description": "Dialog title to rename an activity - Used in: activity_history_screen.dart"
@@ -329,6 +417,66 @@
   "historyDeletedSuccess": "Activity deleted",
   "@historyDeletedSuccess": {
     "description": "Snackbar text after successfully deleting an activity - Used in: activity_history_screen.dart"
+  },
+  "historyElevationProfile": "Elevation Profile",
+  "@historyElevationProfile": {
+    "description": "Title for elevation chart - Used in: activity_charts.dart"
+  },
+  "historyNoAltitudeData": "No altitude data available",
+  "@historyNoAltitudeData": {
+    "description": "Message shown when elevation chart is empty - Used in: activity_charts.dart"
+  },
+  "historyHeartRate": "Heart Rate Zones",
+  "@historyHeartRate": {
+    "description": "Title for heart rate chart - Used in: activity_charts.dart"
+  },
+  "historyNoHeartRateData": "No heart rate data available",
+  "@historyNoHeartRateData": {
+    "description": "Message shown when heart rate chart is empty - Used in: activity_charts.dart"
+  },
+  "heartRateZone": "Zone",
+  "@heartRateZone": {
+    "description": "Label for heart rate zones - Used in: activity_charts.dart"
+  },
+  "historyQualityTtffLabel": "TTFF",
+  "@historyQualityTtffLabel": {
+    "description": "Label for time to first fix metric in activity quality card - Used in: activity_detail_screen.dart"
+  },
+  "historyQualityGpsLossLabel": "GPS Loss",
+  "@historyQualityGpsLossLabel": {
+    "description": "Label for gps signal loss count metric in activity quality card - Used in: activity_detail_screen.dart"
+  },
+  "historyQualityRejectedPointsLabel": "Rejected Points",
+  "@historyQualityRejectedPointsLabel": {
+    "description": "Label for rejected points metric in activity quality card - Used in: activity_detail_screen.dart"
+  },
+  "historyQualitySignalLossDurationLabel": "Signal Loss Duration",
+  "@historyQualitySignalLossDurationLabel": {
+    "description": "Label for total gps signal loss duration metric in activity quality card - Used in: activity_detail_screen.dart"
+  },
+  "historyQualitySecondsValue": "{seconds} s",
+  "@historyQualitySecondsValue": {
+    "description": "Formatted seconds value for quality metrics - Used in: activity_detail_screen.dart, activity_history_screen.dart",
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "historyQualitySummary": "TTFF {ttff} • GPS Loss {losses} • Rejected {rejected}",
+  "@historyQualitySummary": {
+    "description": "Compact quality summary shown in activity history cards - Used in: activity_history_screen.dart",
+    "placeholders": {
+      "ttff": {
+        "type": "String"
+      },
+      "losses": {
+        "type": "int"
+      },
+      "rejected": {
+        "type": "int"
+      }
+    }
   },
   "mapCenterOnLocation": "Center on my location",
   "@mapCenterOnLocation": {
@@ -741,6 +889,26 @@
   "@savedSuccessfully": {
     "description": "Settings save success message - Used in: server_settings_screen.dart"
   },
+  "settingsTrackingPermissionsTitle": "Tracking permissions",
+  "@settingsTrackingPermissionsTitle": {
+    "description": "Section and dialog title for tracking permission setup in server settings - Used in: server_settings_screen.dart"
+  },
+  "settingsTrackingPermissionsAction": "Set up tracking permissions",
+  "@settingsTrackingPermissionsAction": {
+    "description": "Action label to trigger tracking permissions setup - Used in: server_settings_screen.dart"
+  },
+  "settingsTrackingPermissionsDescription": "Reconfigure location and battery/background permissions.",
+  "@settingsTrackingPermissionsDescription": {
+    "description": "Description text for manual tracking permission setup entry - Used in: server_settings_screen.dart"
+  },
+  "settingsTrackingPermissionsDialogMessage": "Reconfigure location and background/battery permissions for reliable tracking now?",
+  "@settingsTrackingPermissionsDialogMessage": {
+    "description": "Confirmation dialog message before running tracking permission setup - Used in: server_settings_screen.dart"
+  },
+  "settingsTrackingPermissionsSuccess": "Tracking permissions setup completed.",
+  "@settingsTrackingPermissionsSuccess": {
+    "description": "Success message shown after tracking permission setup finishes - Used in: server_settings_screen.dart"
+  },
   "settingsThemeMode": "Theme",
   "@settingsThemeMode": {
     "description": "Label for theme mode setting selector - Used in: settings_screen.dart"
@@ -761,7 +929,7 @@
   "@settingsThemePreset": {
     "description": "Label for choosing a color preset theme - Used in: settings_screen.dart"
   },
-  "settingsThemePresetEndurain": "Endurain",
+  "settingsThemePresetEndurain": "Slate",
   "@settingsThemePresetEndurain": {
     "description": "Color preset option for default Endurain palette - Used in: settings_screen.dart"
   },
@@ -780,6 +948,59 @@
   "settingsSectionTheme": "Theme",
   "@settingsSectionTheme": {
     "description": "Settings section header for theme controls - Used in: settings_screen.dart"
+  },
+  "settingsSectionVoiceCoach": "Voice Coach",
+  "@settingsSectionVoiceCoach": {
+    "description": "Settings section header for voice coach controls - Used in: settings_screen.dart"
+  },
+  "settingsVoiceCoachEnabled": "Enable Voice Coach",
+  "@settingsVoiceCoachEnabled": {
+    "description": "Toggle label to enable or disable all voice announcements - Used in: settings_screen.dart"
+  },
+  "settingsVoiceCoachEnabledDescription": "Plays countdown, split, and GPS status announcements during tracking.",
+  "@settingsVoiceCoachEnabledDescription": {
+    "description": "Supporting text for voice coach enable toggle - Used in: settings_screen.dart"
+  },
+  "settingsVoiceCoachVolume": "Voice Coach volume",
+  "@settingsVoiceCoachVolume": {
+    "description": "Label for voice coach volume control - Used in: settings_screen.dart"
+  },
+  "settingsVoiceCoachVolumeDescription": "Controls app voice output level. Default is 80%.",
+  "@settingsVoiceCoachVolumeDescription": {
+    "description": "Supporting text for voice coach volume slider - Used in: settings_screen.dart"
+  },
+  "settingsVoiceCoachVolumeValue": "{percent}%",
+  "@settingsVoiceCoachVolumeValue": {
+    "description": "Current voice coach volume percentage value - Used in: settings_screen.dart",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsVoiceCoachStartPrompts": "Start prompts",
+  "@settingsVoiceCoachStartPrompts": {
+    "description": "Toggle label for start countdown and start cue voice prompts - Used in: settings_screen.dart"
+  },
+  "settingsVoiceCoachStartPromptsDescription": "Announces countdown and start cue when beginning an activity.",
+  "@settingsVoiceCoachStartPromptsDescription": {
+    "description": "Supporting text for start prompts toggle - Used in: settings_screen.dart"
+  },
+  "settingsVoiceCoachSplitAnnouncements": "Split announcements",
+  "@settingsVoiceCoachSplitAnnouncements": {
+    "description": "Toggle label for per-kilometer split voice announcements - Used in: settings_screen.dart"
+  },
+  "settingsVoiceCoachSplitAnnouncementsDescription": "Announces pace and average speed at each kilometer split.",
+  "@settingsVoiceCoachSplitAnnouncementsDescription": {
+    "description": "Supporting text for split announcements toggle - Used in: settings_screen.dart"
+  },
+  "settingsVoiceCoachGpsAnnouncements": "GPS status alerts",
+  "@settingsVoiceCoachGpsAnnouncements": {
+    "description": "Toggle label for GPS signal status voice alerts - Used in: settings_screen.dart"
+  },
+  "settingsVoiceCoachGpsAnnouncementsDescription": "Announces when GPS signal is lost or recovered.",
+  "@settingsVoiceCoachGpsAnnouncementsDescription": {
+    "description": "Supporting text for GPS announcements toggle - Used in: settings_screen.dart"
   },
   "settingsSectionRouteDisplay": "Route display",
   "@settingsSectionRouteDisplay": {
@@ -860,6 +1081,30 @@
   "settingsGpsFilterModeStrictDescription": "Rejects noisy points more aggressively. Useful in dense city areas.",
   "@settingsGpsFilterModeStrictDescription": {
     "description": "Description for strict GPS filtering mode - Used in: settings_screen.dart"
+  },
+  "settingsDynamicMapZoomTitle": "Dynamic map zoom",
+  "@settingsDynamicMapZoomTitle": {
+    "description": "Toggle label for speed-adaptive map zoom while following location - Used in: settings_screen.dart"
+  },
+  "settingsDynamicMapZoomDescription": "Adjusts zoom based on movement speed while follow mode is active.",
+  "@settingsDynamicMapZoomDescription": {
+    "description": "Supporting text for dynamic map zoom toggle - Used in: settings_screen.dart"
+  },
+  "settingsDynamicMapZoomPresetTitle": "Dynamic zoom style",
+  "@settingsDynamicMapZoomPresetTitle": {
+    "description": "Title for selecting dynamic map zoom style preset - Used in: settings_screen.dart"
+  },
+  "settingsDynamicMapZoomPresetConservative": "Conservative",
+  "@settingsDynamicMapZoomPresetConservative": {
+    "description": "Dynamic map zoom preset label with minimal zoom changes - Used in: settings_screen.dart"
+  },
+  "settingsDynamicMapZoomPresetBalanced": "Balanced",
+  "@settingsDynamicMapZoomPresetBalanced": {
+    "description": "Dynamic map zoom preset label with medium zoom changes - Used in: settings_screen.dart"
+  },
+  "settingsDynamicMapZoomPresetAggressive": "Aggressive",
+  "@settingsDynamicMapZoomPresetAggressive": {
+    "description": "Dynamic map zoom preset label with stronger zoom-out behavior at speed - Used in: settings_screen.dart"
   },
   "settingsRouteMatchingEnabledLabel": "Matched preview active",
   "@settingsRouteMatchingEnabledLabel": {

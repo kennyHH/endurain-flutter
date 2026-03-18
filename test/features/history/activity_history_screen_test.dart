@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:endurain/core/models/activity.dart';
 import 'package:endurain/core/services/activity_repository.dart';
+import 'package:endurain/core/services/activity_upload_service.dart';
 import 'package:endurain/features/history/activity_history_screen.dart';
+import 'package:endurain/features/history/activity_detail_screen.dart';
+import 'package:endurain/features/history/widgets/activity_route_map.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -17,6 +20,9 @@ class _FakeActivityRepository implements ActivityRepository {
   List<Activity> activities;
   bool throwOnWatch;
   int watchCalls = 0;
+  int getByIdCalls = 0;
+  int getTrackPointsPageCalls = 0;
+  final Map<String, Activity> byId = <String, Activity>{};
   final StreamController<List<Activity>> controller =
       StreamController<List<Activity>>.broadcast();
 
@@ -24,10 +30,45 @@ class _FakeActivityRepository implements ActivityRepository {
   Future<void> create(Activity activity) async {}
 
   @override
-  Future<void> delete(String id) async {}
+  Future<void> delete(String id) async {
+    activities = activities.where((item) => item.id != id).toList();
+    byId.remove(id);
+    controller.add(activities);
+  }
 
   @override
-  Future<Activity?> getById(String id) async => null;
+  Future<void> insertTrackPoint(String activityId, TrackPoint point) async {}
+
+  @override
+  Future<Activity?> getById(String id) async {
+    getByIdCalls++;
+    return byId[id];
+  }
+
+  @override
+  Future<Activity?> getSummaryById(String id) async {
+    final activity = byId[id];
+    if (activity == null) return null;
+    return activity.copyWith(trackPoints: const <TrackPoint>[]);
+  }
+
+  @override
+  Future<int> countTrackPoints(String activityId) async {
+    return byId[activityId]?.trackPoints.length ?? 0;
+  }
+
+  @override
+  Future<List<TrackPoint>> getTrackPointsPage(
+    String activityId, {
+    required int limit,
+    int offset = 0,
+  }) async {
+    getTrackPointsPageCalls++;
+    final points = byId[activityId]?.trackPoints ?? const <TrackPoint>[];
+    if (offset >= points.length) return const <TrackPoint>[];
+    final end = (offset + limit).clamp(0, points.length);
+    return points.sublist(offset, end);
+  }
 
   @override
   Future<List<Activity>> listAll() async {
@@ -70,11 +111,17 @@ Widget _wrap(Widget child) {
   );
 }
 
-Activity _activity(String id, ActivityType type, {DateTime? startedAt}) {
+Activity _activity(
+  String id,
+  ActivityType type, {
+  DateTime? startedAt,
+  int? activityTypeId,
+}) {
   final start = startedAt ?? DateTime.parse('2026-03-09T10:00:00Z');
   return Activity(
     id: id,
     activityType: type,
+    activityTypeId: activityTypeId,
     startedAt: start,
     endedAt: start.add(const Duration(minutes: 10)),
     distanceMeters: 4200,
@@ -89,7 +136,9 @@ void main() {
     testWidgets('zeigt loading und danach empty state', (tester) async {
       final repo = _FakeActivityRepository(activities: const <Activity>[]);
       addTearDown(repo.dispose);
-      await tester.pumpWidget(_wrap(ActivityHistoryScreen(repository: repo)));
+      await tester.pumpWidget(
+        _wrap(Scaffold(body: ActivityHistoryScreen(repository: repo))),
+      );
 
       expect(find.byKey(const Key('history-loading')), findsOneWidget);
       await tester.pumpAndSettle();
@@ -98,28 +147,147 @@ void main() {
     });
 
     testWidgets('zeigt list und navigiert in detailansicht', (tester) async {
+      final full = _activity('a-run', ActivityType.run);
       final repo = _FakeActivityRepository(
-        activities: <Activity>[_activity('a-run', ActivityType.run)],
+        activities: <Activity>[full.copyWith(trackPoints: const [])],
       );
+      repo.byId[full.id] = full;
       addTearDown(repo.dispose);
-      await tester.pumpWidget(_wrap(ActivityHistoryScreen(repository: repo)));
+      await tester.pumpWidget(
+        _wrap(Scaffold(body: ActivityHistoryScreen(repository: repo))),
+      );
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('history-list')), findsOneWidget);
-      expect(find.byKey(const Key('history-item-a-run')), findsOneWidget);
+      expect(find.byType(Card), findsWidgets);
 
-      await tester.tap(find.byKey(const Key('history-item-a-run')));
+      await tester.tap(find.byType(Card).first);
       await tester.pumpAndSettle();
 
       expect(find.text('Activity details'), findsOneWidget);
-      expect(find.text('Pace'), findsOneWidget);
+      expect(find.text('Pace'), findsWidgets);
       expect(find.text('Elevation gain'), findsOneWidget);
+      expect(repo.getByIdCalls, greaterThan(0));
     });
+
+    testWidgets('tap auf Kartenvorschau oeffnet detailansicht', (tester) async {
+      final full = Activity(
+        id: 'a-map-tap',
+        activityType: ActivityType.run,
+        startedAt: DateTime.parse('2026-03-09T10:00:00Z'),
+        endedAt: DateTime.parse('2026-03-09T10:10:00Z'),
+        distanceMeters: 4200,
+        trackPoints: [
+          TrackPoint(
+            latitude: 38.7200,
+            longitude: -9.1300,
+            timestamp: DateTime.parse('2026-03-09T10:00:00Z'),
+          ),
+          TrackPoint(
+            latitude: 38.7210,
+            longitude: -9.1310,
+            timestamp: DateTime.parse('2026-03-09T10:01:00Z'),
+          ),
+        ],
+      );
+      final repo = _FakeActivityRepository(
+        activities: <Activity>[full.copyWith(trackPoints: const [])],
+      );
+      repo.byId[full.id] = full;
+      addTearDown(repo.dispose);
+
+      await tester.pumpWidget(
+        _wrap(Scaffold(body: ActivityHistoryScreen(repository: repo))),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byType(ActivityRouteMap).first,
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Activity details'), findsOneWidget);
+    });
+
+    testWidgets('zeigt Elevation-Fallback aus vollstaendigen Trackpunkten', (
+      tester,
+    ) async {
+      final summary = Activity(
+        id: 'a-elev',
+        activityType: ActivityType.run,
+        startedAt: DateTime.parse('2026-03-09T10:00:00Z'),
+        endedAt: DateTime.parse('2026-03-09T10:10:00Z'),
+        distanceMeters: 1200,
+        trackPoints: const <TrackPoint>[],
+      );
+      final full = summary.copyWith(
+        trackPoints: [
+          TrackPoint(
+            latitude: 38.7200,
+            longitude: -9.1300,
+            altitudeMeters: 10,
+            timestamp: DateTime.parse('2026-03-09T10:00:00Z'),
+          ),
+          TrackPoint(
+            latitude: 38.7210,
+            longitude: -9.1310,
+            altitudeMeters: 26,
+            timestamp: DateTime.parse('2026-03-09T10:01:00Z'),
+          ),
+        ],
+      );
+      final repo = _FakeActivityRepository(activities: <Activity>[summary]);
+      repo.byId[summary.id] = full;
+      addTearDown(repo.dispose);
+
+      await tester.pumpWidget(
+        _wrap(Scaffold(body: ActivityHistoryScreen(repository: repo))),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('16 m'), findsAtLeastNWidgets(1));
+    });
+
+    testWidgets(
+      'nach Loeschen aus Detailansicht landet Nutzer wieder in History',
+      (tester) async {
+        final full = _activity('a-delete', ActivityType.run);
+        final repo = _FakeActivityRepository(
+          activities: <Activity>[full.copyWith(trackPoints: const [])],
+        );
+        repo.byId[full.id] = full;
+        addTearDown(repo.dispose);
+
+        await tester.pumpWidget(
+          _wrap(Scaffold(body: ActivityHistoryScreen(repository: repo))),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(Card).first);
+        await tester.pumpAndSettle();
+
+        final detailContext = tester.element(find.byType(ActivityDetailScreen));
+        final l10n = AppLocalizations.of(detailContext)!;
+
+        await tester.tap(find.byIcon(Icons.delete_outline));
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.widgetWithText(FilledButton, l10n.historyDeleteAction),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Activity details'), findsNothing);
+        expect(find.byKey(const Key('history-list')), findsNothing);
+        expect(find.byKey(const Key('history-empty-title')), findsOneWidget);
+      },
+    );
 
     testWidgets('zeigt error state und retry funktioniert', (tester) async {
       final repo = _FakeActivityRepository(throwOnWatch: true);
       addTearDown(repo.dispose);
-      await tester.pumpWidget(_wrap(ActivityHistoryScreen(repository: repo)));
+      await tester.pumpWidget(
+        _wrap(Scaffold(body: ActivityHistoryScreen(repository: repo))),
+      );
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('history-error')), findsOneWidget);
@@ -140,7 +308,9 @@ void main() {
     ) async {
       final repo = _FakeActivityRepository(activities: const <Activity>[]);
       addTearDown(repo.dispose);
-      await tester.pumpWidget(_wrap(ActivityHistoryScreen(repository: repo)));
+      await tester.pumpWidget(
+        _wrap(Scaffold(body: ActivityHistoryScreen(repository: repo))),
+      );
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('history-empty-title')), findsOneWidget);
@@ -149,6 +319,42 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('history-item-a-walk')), findsOneWidget);
+    });
+
+    testWidgets('lädt Trackpunkte für History-Kartenvorschau nach', (
+      tester,
+    ) async {
+      final full = Activity(
+        id: 'a-preview',
+        activityType: ActivityType.run,
+        startedAt: DateTime.parse('2026-03-09T10:00:00Z'),
+        endedAt: DateTime.parse('2026-03-09T10:10:00Z'),
+        distanceMeters: 4200,
+        trackPoints: [
+          TrackPoint(
+            latitude: 38.7200,
+            longitude: -9.1300,
+            timestamp: DateTime.parse('2026-03-09T10:00:00Z'),
+          ),
+          TrackPoint(
+            latitude: 38.7210,
+            longitude: -9.1310,
+            timestamp: DateTime.parse('2026-03-09T10:01:00Z'),
+          ),
+        ],
+      );
+      final repo = _FakeActivityRepository(
+        activities: <Activity>[full.copyWith(trackPoints: const [])],
+      );
+      repo.byId[full.id] = full;
+      addTearDown(repo.dispose);
+
+      await tester.pumpWidget(
+        _wrap(Scaffold(body: ActivityHistoryScreen(repository: repo))),
+      );
+      await tester.pumpAndSettle();
+
+      expect(repo.getTrackPointsPageCalls, greaterThan(0));
     });
 
     testWidgets('retry upload button im detail wird ausgelöst', (tester) async {
@@ -205,12 +411,242 @@ void main() {
       );
       addTearDown(repo.dispose);
 
-      await tester.pumpWidget(_wrap(ActivityHistoryScreen(repository: repo)));
+      await tester.pumpWidget(
+        _wrap(Scaffold(body: ActivityHistoryScreen(repository: repo))),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Today'), findsOneWidget);
       expect(find.byKey(const Key('history-item-a-today')), findsOneWidget);
       expect(find.textContaining('4.20 km'), findsAtLeastNWidgets(1));
+    });
+
+    testWidgets('zeigt Apply-Button im Filter-Dialog ohne Scrollen sichtbar', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1080, 2160);
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final repo = _FakeActivityRepository(
+        activities: <Activity>[_activity('a-run', ActivityType.run)],
+      );
+      addTearDown(repo.dispose);
+
+      await tester.pumpWidget(
+        _wrap(Scaffold(body: ActivityHistoryScreen(repository: repo))),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Filter & sort'));
+      await tester.pumpAndSettle();
+
+      final applyFinder = find.byKey(const Key('history-filter-apply'));
+      final resetFinder = find.byKey(const Key('history-filter-reset'));
+      expect(applyFinder, findsOneWidget);
+      expect(resetFinder, findsOneWidget);
+
+      final applyRect = tester.getRect(applyFinder);
+      final viewportHeight =
+          tester.view.physicalSize.height / tester.view.devicePixelRatio;
+      expect(applyRect.bottom, lessThanOrEqualTo(viewportHeight));
+    });
+
+    testWidgets('zeigt alle Kategorien im Filterdialog', (tester) async {
+      final repo = _FakeActivityRepository(
+        activities: <Activity>[_activity('a-run', ActivityType.run)],
+      );
+      addTearDown(repo.dispose);
+
+      await tester.pumpWidget(
+        _wrap(Scaffold(body: ActivityHistoryScreen(repository: repo))),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Filter & sort'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Trail run'), findsOneWidget);
+      expect(find.text('Kayaking'), findsOneWidget);
+    });
+
+    testWidgets(
+      'zeigt Sync-Infobox bei ausstehendem Upload und startet Connect',
+      (tester) async {
+        var connectCalls = 0;
+        final repo = _FakeActivityRepository(
+          activities: <Activity>[_activity('a-offline', ActivityType.run)],
+        );
+        addTearDown(repo.dispose);
+
+        await tester.pumpWidget(
+          _wrap(
+            Scaffold(
+              body: ActivityHistoryScreen(
+                repository: repo,
+                isServerConnected: false,
+                onAuthRequired: () => connectCalls++,
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(const Key('history-sync-hint-card')), findsOneWidget);
+        expect(find.text('Connect to server'), findsOneWidget);
+
+        await tester.tap(find.byKey(const Key('history-sync-hint-connect')));
+        await tester.pumpAndSettle();
+
+        expect(connectCalls, equals(1));
+      },
+    );
+
+    testWidgets('Sync-Infobox ist schließbar', (tester) async {
+      var connectCalls = 0;
+      final repo = _FakeActivityRepository(
+        activities: <Activity>[_activity('a-close', ActivityType.run)],
+      );
+      addTearDown(repo.dispose);
+
+      await tester.pumpWidget(
+        _wrap(
+          Scaffold(
+            body: ActivityHistoryScreen(
+              repository: repo,
+              isServerConnected: false,
+              onAuthRequired: () => connectCalls++,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('history-sync-hint-card')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('history-sync-hint-close')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('history-sync-hint-card')), findsNothing);
+      expect(connectCalls, equals(0));
+    });
+
+    testWidgets('filtert exakt nach Kategorie-ID wenn vorhanden', (
+      tester,
+    ) async {
+      final repo = _FakeActivityRepository(
+        activities: <Activity>[
+          _activity('a-run', ActivityType.run, activityTypeId: 1),
+          _activity('a-trail', ActivityType.run, activityTypeId: 2),
+        ],
+      );
+      addTearDown(repo.dispose);
+
+      await tester.pumpWidget(
+        _wrap(Scaffold(body: ActivityHistoryScreen(repository: repo))),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Filter & sort'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Trail run'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('history-filter-apply')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('history-item-a-trail')), findsOneWidget);
+      expect(find.byKey(const Key('history-item-a-run')), findsNothing);
+    });
+
+    testWidgets('Reset setzt Filter auf All, All time und Newest zurueck', (
+      tester,
+    ) async {
+      final repo = _FakeActivityRepository(
+        activities: <Activity>[_activity('a-run', ActivityType.run)],
+      );
+      addTearDown(repo.dispose);
+
+      await tester.pumpWidget(
+        _wrap(Scaffold(body: ActivityHistoryScreen(repository: repo))),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Filter & sort'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Trail run'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('7d'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('7d'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Oldest'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Oldest'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('history-filter-reset')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('history-filter-apply')));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('All • All time • Newest'), findsOneWidget);
+    });
+
+    testWidgets('zeigt bei Auth-Fehler Login-Aktion statt Upload-Retry', (
+      tester,
+    ) async {
+      var authRequiredCalls = 0;
+      var retryUploadCalls = 0;
+      final activity = _activity('a-auth', ActivityType.run);
+      final repo = _FakeActivityRepository(
+        activities: <Activity>[activity.copyWith(trackPoints: const [])],
+      );
+      repo.byId[activity.id] = activity;
+      addTearDown(repo.dispose);
+
+      await tester.pumpWidget(
+        _wrap(
+          Scaffold(
+            body: ActivityHistoryScreen(
+              repository: repo,
+              onAuthRequired: () => authRequiredCalls++,
+              onRetryUpload: (_) async {
+                retryUploadCalls++;
+                return ActivityUploadResult.failure(
+                  attempts: 1,
+                  failureType: ActivityUploadFailureType.authentication,
+                  serverDetail: 'Session expired. Please login again.',
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(Card).first);
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('history-retry-upload-button')),
+        200,
+        scrollable: find.byType(Scrollable),
+      );
+      await tester.tap(find.byKey(const Key('history-retry-upload-button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Session expired. Please login again.'), findsOneWidget);
+      expect(find.text('Login'), findsOneWidget);
+      await tester.tap(find.text('Login'));
+      await tester.pumpAndSettle();
+
+      expect(retryUploadCalls, equals(1));
+      expect(authRequiredCalls, equals(1));
     });
   });
 }

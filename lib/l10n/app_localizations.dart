@@ -224,11 +224,119 @@ abstract class AppLocalizations {
   /// **'Could not logout from server, but logged out locally'**
   String get logoutServerFailedWarning;
 
+  /// Description for Eco Mode setting
+  ///
+  /// In en, this message translates to:
+  /// **'Reduces GPS update frequency'**
+  String get settingsEcoModeDescription;
+
+  /// Label for Eco mode toggle in settings
+  ///
+  /// In en, this message translates to:
+  /// **'Eco mode'**
+  String get settingsEcoMode;
+
+  /// Accordion title for tracking settings group
+  ///
+  /// In en, this message translates to:
+  /// **'Tracking'**
+  String get settingsAccordionTrackingTitle;
+
+  /// Accordion subtitle preview for tracking settings group
+  ///
+  /// In en, this message translates to:
+  /// **'Voice Coach · Eco mode · GPS announcements'**
+  String get settingsAccordionTrackingSubtitle;
+
+  /// Accordion title for display settings group
+  ///
+  /// In en, this message translates to:
+  /// **'Display'**
+  String get settingsAccordionDisplayTitle;
+
+  /// Accordion subtitle preview for display settings group
+  ///
+  /// In en, this message translates to:
+  /// **'Theme · Color preset · Route display'**
+  String get settingsAccordionDisplaySubtitle;
+
+  /// Accordion title for device and sensor settings group
+  ///
+  /// In en, this message translates to:
+  /// **'Device & Sensors'**
+  String get settingsAccordionDeviceTitle;
+
+  /// Accordion subtitle preview for device and sensor settings group
+  ///
+  /// In en, this message translates to:
+  /// **'Bluetooth sensors · Battery optimization'**
+  String get settingsAccordionDeviceSubtitle;
+
+  /// Accordion title for server and sync settings group
+  ///
+  /// In en, this message translates to:
+  /// **'Server & Sync'**
+  String get settingsAccordionServerTitle;
+
+  /// Accordion subtitle preview for server and sync settings group
+  ///
+  /// In en, this message translates to:
+  /// **'Server · Login · Upload sync'**
+  String get settingsAccordionServerSubtitle;
+
+  /// Server connection status label when authenticated
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get settingsServerConnected;
+
+  /// Server connection status label when not authenticated
+  ///
+  /// In en, this message translates to:
+  /// **'Not connected'**
+  String get settingsServerDisconnected;
+
+  /// Header for Sensors section
+  ///
+  /// In en, this message translates to:
+  /// **'Sensors & Accessories'**
+  String get settingsSectionSensors;
+
+  /// Settings section header for server configuration - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Server'**
+  String get settingsSectionServer;
+
+  /// Server settings navigation label - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Server'**
+  String get serverSettings;
+
   /// Retry button label - Used in: sso_webview_screen.dart
   ///
   /// In en, this message translates to:
   /// **'Retry'**
   String get retry;
+
+  /// Title for on-demand login sheet before upload/delete - Used in: app_bottom_nav.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to server'**
+  String get connectUploadTitle;
+
+  /// Message in on-demand login sheet before upload/delete - Used in: app_bottom_nav.dart
+  ///
+  /// In en, this message translates to:
+  /// **'You can use Endurain fully offline. Connect now to upload or remove activities on your server.'**
+  String get connectUploadMessage;
+
+  /// Primary CTA in on-demand login sheet - Used in: app_bottom_nav.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Connect & upload'**
+  String get connectUploadAction;
 
   /// SSO WebView screen title - Used in: sso_webview_screen.dart
   ///
@@ -488,6 +596,18 @@ abstract class AppLocalizations {
   /// **'Filter & sort'**
   String get historyFilterSort;
 
+  /// Button label to reset history filter state to defaults - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get historyFilterReset;
+
+  /// Placeholder for category search input in history filter sheet - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Search category'**
+  String get historyFilterCategorySearchHint;
+
   /// Section label for history date range filters - Used in: activity_history_screen.dart
   ///
   /// In en, this message translates to:
@@ -542,6 +662,18 @@ abstract class AppLocalizations {
   /// **'Uploaded'**
   String get historyUploadDone;
 
+  /// Status chip when server connection is not active - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get historyConnectionOffline;
+
+  /// Status chip when server connection is active - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get historyConnectionOnline;
+
   /// Dialog title to rename an activity - Used in: activity_history_screen.dart
   ///
   /// In en, this message translates to:
@@ -577,6 +709,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Activity deleted'**
   String get historyDeletedSuccess;
+
+  /// Title for altitude chart in activity details - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Elevation profile'**
+  String get historyElevationProfile;
+
+  /// Fallback text when no altitude samples exist for an activity - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'No altitude data available'**
+  String get historyNoAltitudeData;
+
+  /// Title for heart rate chart - Used in: activity_charts.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Heart Rate Zones'**
+  String get historyHeartRate;
+
+  /// Message shown when heart rate chart is empty - Used in: activity_charts.dart
+  ///
+  /// In en, this message translates to:
+  /// **'No heart rate data available'**
+  String get historyNoHeartRateData;
+
+  /// Label for heart rate zones - Used in: activity_charts.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Zone'**
+  String get heartRateZone;
+
+  /// Label for time to first fix metric in activity quality card - Used in: activity_detail_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'TTFF'**
+  String get historyQualityTtffLabel;
+
+  /// Label for gps signal loss count metric in activity quality card - Used in: activity_detail_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'GPS Loss'**
+  String get historyQualityGpsLossLabel;
+
+  /// Label for rejected points metric in activity quality card - Used in: activity_detail_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected Points'**
+  String get historyQualityRejectedPointsLabel;
+
+  /// Label for total gps signal loss duration metric in activity quality card - Used in: activity_detail_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Signal Loss Duration'**
+  String get historyQualitySignalLossDurationLabel;
+
+  /// Formatted seconds value for quality metrics - Used in: activity_detail_screen.dart, activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds} s'**
+  String historyQualitySecondsValue(String seconds);
+
+  /// Compact quality summary shown in activity history cards - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'TTFF {ttff} • GPS Loss {losses} • Rejected {rejected}'**
+  String historyQualitySummary(String ttff, int losses, int rejected);
 
   /// Tooltip for map location lock/center button - Used in: map_screen.dart
   ///
@@ -974,18 +1172,6 @@ abstract class AppLocalizations {
   /// **'Elevation loss'**
   String get historyElevationLoss;
 
-  /// Title for altitude chart in activity details - Used in: activity_history_screen.dart
-  ///
-  /// In en, this message translates to:
-  /// **'Elevation profile'**
-  String get historyElevationProfile;
-
-  /// Fallback text when no altitude samples exist for an activity - Used in: activity_history_screen.dart
-  ///
-  /// In en, this message translates to:
-  /// **'No altitude data available'**
-  String get historyNoAltitudeData;
-
   /// Error message when tracking starts without location permission - Used in: map_screen.dart
   ///
   /// In en, this message translates to:
@@ -1106,12 +1292,6 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settingsScreen;
 
-  /// Server settings navigation label - Used in: settings_screen.dart
-  ///
-  /// In en, this message translates to:
-  /// **'Server'**
-  String get serverSettings;
-
   /// Server settings screen title - Used in: server_settings_screen.dart
   ///
   /// In en, this message translates to:
@@ -1154,6 +1334,36 @@ abstract class AppLocalizations {
   /// **'Settings saved successfully'**
   String get savedSuccessfully;
 
+  /// Section and dialog title for tracking permission setup in server settings - Used in: server_settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Tracking permissions'**
+  String get settingsTrackingPermissionsTitle;
+
+  /// Action label to trigger tracking permissions setup - Used in: server_settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Set up tracking permissions'**
+  String get settingsTrackingPermissionsAction;
+
+  /// Description text for manual tracking permission setup entry - Used in: server_settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Reconfigure location and battery/background permissions.'**
+  String get settingsTrackingPermissionsDescription;
+
+  /// Confirmation dialog message before running tracking permission setup - Used in: server_settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Reconfigure location and background/battery permissions for reliable tracking now?'**
+  String get settingsTrackingPermissionsDialogMessage;
+
+  /// Success message shown after tracking permission setup finishes - Used in: server_settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Tracking permissions setup completed.'**
+  String get settingsTrackingPermissionsSuccess;
+
   /// Label for theme mode setting selector - Used in: settings_screen.dart
   ///
   /// In en, this message translates to:
@@ -1187,7 +1397,7 @@ abstract class AppLocalizations {
   /// Color preset option for default Endurain palette - Used in: settings_screen.dart
   ///
   /// In en, this message translates to:
-  /// **'Endurain'**
+  /// **'Slate'**
   String get settingsThemePresetEndurain;
 
   /// Color preset option for ocean palette - Used in: settings_screen.dart
@@ -1214,17 +1424,83 @@ abstract class AppLocalizations {
   /// **'Theme'**
   String get settingsSectionTheme;
 
+  /// Settings section header for voice coach controls - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Voice Coach'**
+  String get settingsSectionVoiceCoach;
+
+  /// Toggle label to enable or disable all voice announcements - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Enable Voice Coach'**
+  String get settingsVoiceCoachEnabled;
+
+  /// Supporting text for voice coach enable toggle - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Plays countdown, split, and GPS status announcements during tracking.'**
+  String get settingsVoiceCoachEnabledDescription;
+
+  /// Label for voice coach volume control - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Voice Coach volume'**
+  String get settingsVoiceCoachVolume;
+
+  /// Supporting text for voice coach volume slider - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Controls app voice output level. Default is 80%.'**
+  String get settingsVoiceCoachVolumeDescription;
+
+  /// Current voice coach volume percentage value - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}%'**
+  String settingsVoiceCoachVolumeValue(int percent);
+
+  /// Toggle label for start countdown and start cue voice prompts - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Start prompts'**
+  String get settingsVoiceCoachStartPrompts;
+
+  /// Supporting text for start prompts toggle - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Announces countdown and start cue when beginning an activity.'**
+  String get settingsVoiceCoachStartPromptsDescription;
+
+  /// Toggle label for per-kilometer split voice announcements - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Split announcements'**
+  String get settingsVoiceCoachSplitAnnouncements;
+
+  /// Supporting text for split announcements toggle - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Announces pace and average speed at each kilometer split.'**
+  String get settingsVoiceCoachSplitAnnouncementsDescription;
+
+  /// Toggle label for GPS signal status voice alerts - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'GPS status alerts'**
+  String get settingsVoiceCoachGpsAnnouncements;
+
+  /// Supporting text for GPS announcements toggle - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Announces when GPS signal is lost or recovered.'**
+  String get settingsVoiceCoachGpsAnnouncementsDescription;
+
   /// Settings section header for route display options - Used in: settings_screen.dart
   ///
   /// In en, this message translates to:
   /// **'Route display'**
   String get settingsSectionRouteDisplay;
-
-  /// Settings section header for server configuration - Used in: settings_screen.dart
-  ///
-  /// In en, this message translates to:
-  /// **'Server'**
-  String get settingsSectionServer;
 
   /// Settings section header for app metadata - Used in: settings_screen.dart
   ///
@@ -1333,6 +1609,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rejects noisy points more aggressively. Useful in dense city areas.'**
   String get settingsGpsFilterModeStrictDescription;
+
+  /// Toggle label for speed-adaptive map zoom while following location - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Dynamic map zoom'**
+  String get settingsDynamicMapZoomTitle;
+
+  /// Supporting text for dynamic map zoom toggle - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Adjusts zoom based on movement speed while follow mode is active.'**
+  String get settingsDynamicMapZoomDescription;
+
+  /// Title for selecting dynamic map zoom style preset - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Dynamic zoom style'**
+  String get settingsDynamicMapZoomPresetTitle;
+
+  /// Dynamic map zoom preset label with minimal zoom changes - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Conservative'**
+  String get settingsDynamicMapZoomPresetConservative;
+
+  /// Dynamic map zoom preset label with medium zoom changes - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Balanced'**
+  String get settingsDynamicMapZoomPresetBalanced;
+
+  /// Dynamic map zoom preset label with stronger zoom-out behavior at speed - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Aggressive'**
+  String get settingsDynamicMapZoomPresetAggressive;
 
   /// Small in-map label when matched route preview is enabled - Used in: map_screen.dart
   ///
