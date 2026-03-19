@@ -182,5 +182,25 @@ void main() {
       expect(filename, isNot(contains('/')));
       expect(filename, isNot(contains('!')));
     });
+
+    test('buildExportFilename nutzt Naming Convention mit Typ und Name', () {
+      final exporter = GpxExporter();
+      final activity = Activity(
+        id: 'id-100',
+        name: 'Morning Tempo',
+        activityType: ActivityType.run,
+        startedAt: DateTime.parse('2026-03-19T09:53:00Z'),
+        endedAt: DateTime.parse('2026-03-19T10:10:00Z'),
+        distanceMeters: 4200,
+        trackPoints: const <TrackPoint>[],
+      );
+
+      final filename = exporter.buildExportFilename(activity);
+
+      expect(
+        filename,
+        matches(RegExp(r'^2026-03-19_\d{2}-\d{2}_Run_Morning-Tempo\.gpx$')),
+      );
+    });
   });
 }

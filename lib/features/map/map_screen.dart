@@ -245,10 +245,46 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
     );
   }
 
+  Future<bool> _ensureTrackingPermissionBeforeStart() async {
+    if (_controller.hasLocationPermission) return true;
+    if (_permissionDialogVisible) return _controller.hasLocationPermission;
+    _permissionDialogVisible = true;
+    try {
+      final startSetup = await _showPlatformPermissionDialog();
+      if (!mounted) return false;
+      if (startSetup != true) {
+        return false;
+      }
+      await _controller.runPermissionOnboardingSetup();
+      if (!mounted) return false;
+      await _controller.checkLocationPermission();
+      if (!mounted) return false;
+      return _controller.hasLocationPermission;
+    } finally {
+      _permissionDialogVisible = false;
+    }
+  }
+
   void _handleStartTracking(ActivityType activityType, int activityTypeId) {
+    unawaited(
+      _handleStartTrackingAsync(
+        activityType: activityType,
+        activityTypeId: activityTypeId,
+      ),
+    );
+  }
+
+  Future<void> _handleStartTrackingAsync({
+    required ActivityType activityType,
+    required int activityTypeId,
+  }) async {
     if (!_controller.hasLocationPermission) {
-      _showTrackingPermissionError();
-      return;
+      final granted = await _ensureTrackingPermissionBeforeStart();
+      if (!mounted) return;
+      if (!granted) {
+        _showTrackingPermissionError();
+        return;
+      }
     }
     if (!_controller.hasStableStartFix && !_controller.hasWarmStartLocation) {
       final l10n = AppLocalizations.of(context)!;
@@ -257,7 +293,7 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
       )?.showSnackBar(SnackBar(content: Text(l10n.trackingGpsNeedStableFix)));
       return;
     }
-    HapticFeedback.selectionClick();
+    await HapticFeedback.selectionClick();
     _controller.startTracking(activityType, activityTypeId: activityTypeId);
   }
 
@@ -298,6 +334,10 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
       if (!result.success) {
         await HapticFeedback.heavyImpact();
         if (!mounted) return;
+        if (result.failureType == ActivityUploadFailureType.invalidActivity) {
+          messenger.showSnackBar(SnackBar(content: Text(message)));
+          return;
+        }
         if (result.failureType == ActivityUploadFailureType.authentication &&
             widget.onAuthRequired != null) {
           await ErrorUtils.showRetryDialog(
@@ -351,6 +391,11 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
     final message = ActivityUploadFeedbackMapper.toDisplayMessage(result, l10n);
 
     if (messenger == null) return;
+    if (!result.success &&
+        result.failureType == ActivityUploadFailureType.invalidActivity) {
+      messenger.showSnackBar(SnackBar(content: Text(message)));
+      return;
+    }
     if (!result.success &&
         result.failureType == ActivityUploadFailureType.authentication &&
         widget.onAuthRequired != null) {

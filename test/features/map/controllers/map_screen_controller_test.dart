@@ -326,61 +326,58 @@ void main() {
       },
     );
 
-    test(
-      'nutzt keinen Kurs-Fallback bei schlechter GPS-Genauigkeit',
-      () async {
-        final controller = MapScreenController(
-          locationService: mockLocation,
-          storage: mockStorage,
-          trackingSessionEngine: mockEngine,
-          audioFeedbackService: mockAudio,
-          powerManagementService: _FakePowerManagementService(),
-        );
-        addTearDown(controller.dispose);
-        controller.isLocationLocked = false;
+    test('nutzt keinen Kurs-Fallback bei schlechter GPS-Genauigkeit', () async {
+      final controller = MapScreenController(
+        locationService: mockLocation,
+        storage: mockStorage,
+        trackingSessionEngine: mockEngine,
+        audioFeedbackService: mockAudio,
+        powerManagementService: _FakePowerManagementService(),
+      );
+      addTearDown(controller.dispose);
+      controller.isLocationLocked = false;
 
-        await Future<void>.delayed(const Duration(milliseconds: 60));
-        final baseTime = DateTime.now().toUtc();
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+      final baseTime = DateTime.now().toUtc();
 
-        streamController.add(
-          TrackingSessionSnapshot(
-            state: TrackingSessionState.idle,
-            duration: Duration.zero,
-            distanceMeters: 0,
-            elevationGainMeters: 0,
-            trackPoints: const [],
-            lastPositionAt: baseTime,
-            latestPosition: PositionSample(
-              latitude: 51.00000,
-              longitude: 13.70000,
-              timestamp: baseTime,
-              horizontalAccuracyMeters: 40,
-              speed: 2.5,
-            ),
+      streamController.add(
+        TrackingSessionSnapshot(
+          state: TrackingSessionState.idle,
+          duration: Duration.zero,
+          distanceMeters: 0,
+          elevationGainMeters: 0,
+          trackPoints: const [],
+          lastPositionAt: baseTime,
+          latestPosition: PositionSample(
+            latitude: 51.00000,
+            longitude: 13.70000,
+            timestamp: baseTime,
+            horizontalAccuracyMeters: 40,
+            speed: 2.5,
           ),
-        );
-        streamController.add(
-          TrackingSessionSnapshot(
-            state: TrackingSessionState.idle,
-            duration: Duration.zero,
-            distanceMeters: 0,
-            elevationGainMeters: 0,
-            trackPoints: const [],
-            lastPositionAt: baseTime.add(const Duration(seconds: 1)),
-            latestPosition: PositionSample(
-              latitude: 51.00000,
-              longitude: 13.70020,
-              timestamp: baseTime.add(const Duration(seconds: 1)),
-              horizontalAccuracyMeters: 40,
-              speed: 2.5,
-            ),
+        ),
+      );
+      streamController.add(
+        TrackingSessionSnapshot(
+          state: TrackingSessionState.idle,
+          duration: Duration.zero,
+          distanceMeters: 0,
+          elevationGainMeters: 0,
+          trackPoints: const [],
+          lastPositionAt: baseTime.add(const Duration(seconds: 1)),
+          latestPosition: PositionSample(
+            latitude: 51.00000,
+            longitude: 13.70020,
+            timestamp: baseTime.add(const Duration(seconds: 1)),
+            horizontalAccuracyMeters: 40,
+            speed: 2.5,
           ),
-        );
-        await Future<void>.delayed(const Duration(milliseconds: 30));
+        ),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 30));
 
-        expect(controller.heading, closeTo(0, 0.001));
-      },
-    );
+      expect(controller.heading, closeTo(0, 0.001));
+    });
 
     test('heilt Permission-Flag bei eingehender Live-Position', () async {
       when(
@@ -542,8 +539,9 @@ void main() {
       },
     );
 
-    test('zeigt Permission-Onboarding nur beim ersten Login', () async {
+    test('zeigt Permission-Onboarding beim Erststart unabhängig vom Login', () async {
       mockStorage.permissionsOnboardingCompleted = false;
+      mockStorage.authenticated = false;
       final controller = MapScreenController(
         locationService: mockLocation,
         storage: mockStorage,
@@ -555,6 +553,21 @@ void main() {
 
       await Future<void>.delayed(const Duration(milliseconds: 80));
       expect(controller.shouldShowPermissionOnboarding, isTrue);
+    });
+
+    test('blendet Permission-Onboarding aus wenn bereits abgeschlossen', () async {
+      mockStorage.permissionsOnboardingCompleted = true;
+      final controller = MapScreenController(
+        locationService: mockLocation,
+        storage: mockStorage,
+        trackingSessionEngine: mockEngine,
+        audioFeedbackService: mockAudio,
+        powerManagementService: _FakePowerManagementService(),
+      );
+      addTearDown(controller.dispose);
+
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+      expect(controller.shouldShowPermissionOnboarding, isFalse);
     });
 
     test(
@@ -582,9 +595,14 @@ void main() {
     test(
       'runPermissionOnboardingSetup führt Freigaben sequentiell aus',
       () async {
-        when(
-          mockLocation.checkPermission(),
-        ).thenAnswer((_) async => LocationPermission.denied);
+        var permissionChecks = 0;
+        when(mockLocation.checkPermission()).thenAnswer((_) async {
+          permissionChecks++;
+          if (permissionChecks <= 2) {
+            return LocationPermission.denied;
+          }
+          return LocationPermission.whileInUse;
+        });
         when(
           mockLocation.requestPermission(),
         ).thenAnswer((_) async => LocationPermission.whileInUse);
@@ -605,6 +623,35 @@ void main() {
         expect(controller.shouldShowPermissionOnboarding, isFalse);
         verify(mockLocation.requestPermission()).called(1);
         expect(mockStorage.permissionsOnboardingWrites, equals(1));
+      },
+    );
+
+    test(
+      'runPermissionOnboardingSetup bleibt offen wenn Standort nicht freigegeben',
+      () async {
+        when(
+          mockLocation.checkPermission(),
+        ).thenAnswer((_) async => LocationPermission.denied);
+        when(
+          mockLocation.requestPermission(),
+        ).thenAnswer((_) async => LocationPermission.denied);
+        final power = _FakePowerManagementService();
+        final controller = MapScreenController(
+          locationService: mockLocation,
+          storage: mockStorage,
+          trackingSessionEngine: mockEngine,
+          audioFeedbackService: mockAudio,
+          powerManagementService: power,
+        );
+        addTearDown(controller.dispose);
+
+        await Future<void>.delayed(const Duration(milliseconds: 80));
+        await controller.runPermissionOnboardingSetup();
+
+        expect(controller.hasLocationPermission, isFalse);
+        expect(controller.shouldShowPermissionOnboarding, isTrue);
+        verify(mockLocation.requestPermission()).called(1);
+        expect(mockStorage.permissionsOnboardingCompleted, isFalse);
       },
     );
   });

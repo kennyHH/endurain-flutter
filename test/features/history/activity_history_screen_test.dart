@@ -127,6 +127,11 @@ Activity _activity(
     distanceMeters: 4200,
     trackPoints: [
       TrackPoint(latitude: 38.72, longitude: -9.13, timestamp: start),
+      TrackPoint(
+        latitude: 38.721,
+        longitude: -9.129,
+        timestamp: start.add(const Duration(minutes: 1)),
+      ),
     ],
   );
 }
@@ -249,6 +254,175 @@ void main() {
       expect(find.textContaining('16 m'), findsAtLeastNWidgets(1));
     });
 
+    testWidgets('zeigt Pace aus hydratisierter Vollaktivitaet', (tester) async {
+      final start = DateTime.parse('2026-03-19T11:42:08Z');
+      final summary = Activity(
+        id: 'a-pace-hydrated',
+        activityType: ActivityType.run,
+        startedAt: start,
+        endedAt: start.add(const Duration(seconds: 60)),
+        distanceMeters: 120,
+        trackPoints: const <TrackPoint>[],
+      );
+      final full = summary.copyWith(distanceMeters: 80);
+      final repo = _FakeActivityRepository(activities: <Activity>[summary]);
+      repo.byId[summary.id] = full;
+      addTearDown(repo.dispose);
+
+      await tester.pumpWidget(
+        _wrap(Scaffold(body: ActivityHistoryScreen(repository: repo))),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('12:30 min/km'), findsAtLeastNWidgets(1));
+      expect(find.text('08:20 min/km'), findsNothing);
+    });
+
+    testWidgets(
+      'hydriert auch bei vorhandenen Trackpunkten wenn Summary-Metriken unplausibel sind',
+      (tester) async {
+        final start = DateTime.parse('2026-03-19T13:26:00Z');
+        final summary = Activity(
+          id: 'a-unplausible-summary',
+          activityType: ActivityType.run,
+          startedAt: start,
+          endedAt: start,
+          distanceMeters: 0,
+          trackPoints: [
+            TrackPoint(latitude: 51.0, longitude: 12.0, timestamp: start),
+            TrackPoint(
+              latitude: 51.0002,
+              longitude: 12.0001,
+              timestamp: start.add(const Duration(seconds: 8)),
+            ),
+          ],
+        );
+        final full = summary.copyWith(
+          endedAt: start.add(const Duration(seconds: 61)),
+          distanceMeters: 70,
+        );
+        final repo = _FakeActivityRepository(activities: <Activity>[summary]);
+        repo.byId[summary.id] = full;
+        addTearDown(repo.dispose);
+
+        await tester.pumpWidget(
+          _wrap(Scaffold(body: ActivityHistoryScreen(repository: repo))),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('1m 01s'), findsAtLeastNWidgets(1));
+        expect(find.text('0.07 km'), findsAtLeastNWidgets(1));
+        expect(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is Text &&
+                widget.data != null &&
+                RegExp(r'^\d{2}:\d{2} min/km$').hasMatch(widget.data!),
+          ),
+          findsAtLeastNWidgets(1),
+        );
+      },
+    );
+
+    testWidgets(
+      'erneuert stale Snapshot wenn Summary später plausible Werte liefert',
+      (tester) async {
+        final start = DateTime.parse('2026-03-19T13:46:00Z');
+        final summaryInvalid = Activity(
+          id: 'a-stale-snapshot',
+          activityType: ActivityType.run,
+          startedAt: start,
+          endedAt: start,
+          distanceMeters: 0,
+          trackPoints: [
+            TrackPoint(latitude: 51.0, longitude: 12.0, timestamp: start),
+            TrackPoint(
+              latitude: 51.0002,
+              longitude: 12.0001,
+              timestamp: start.add(const Duration(seconds: 8)),
+            ),
+          ],
+        );
+        final fullInvalid = summaryInvalid;
+        final summaryValid = summaryInvalid.copyWith(
+          endedAt: start.add(const Duration(seconds: 61)),
+          distanceMeters: 70,
+        );
+        final fullValid = summaryValid.copyWith(
+          trackPoints: [
+            TrackPoint(latitude: 51.0, longitude: 12.0, timestamp: start),
+            TrackPoint(
+              latitude: 51.0006,
+              longitude: 12.0004,
+              timestamp: start.add(const Duration(seconds: 61)),
+            ),
+          ],
+        );
+        final repo = _FakeActivityRepository(
+          activities: <Activity>[summaryInvalid],
+        );
+        repo.byId[summaryInvalid.id] = fullInvalid;
+        addTearDown(repo.dispose);
+
+        await tester.pumpWidget(
+          _wrap(Scaffold(body: ActivityHistoryScreen(repository: repo))),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('0m 00s'), findsAtLeastNWidgets(1));
+
+        repo.byId[summaryInvalid.id] = fullValid;
+        repo.emit(<Activity>[summaryValid]);
+        await tester.pumpAndSettle();
+
+        expect(find.text('1m 01s'), findsAtLeastNWidgets(1));
+        expect(find.text('0.07 km'), findsAtLeastNWidgets(1));
+      },
+    );
+
+    testWidgets(
+      'erneuert stale Snapshot auch wenn Summary implausibel bleibt',
+      (tester) async {
+        final start = DateTime.parse('2026-03-19T13:46:00Z');
+        final summary = Activity(
+          id: 'a-stale-snapshot-implausible-summary',
+          activityType: ActivityType.run,
+          startedAt: start,
+          endedAt: start,
+          distanceMeters: 0,
+          trackPoints: const <TrackPoint>[],
+        );
+        final fullInvalid = summary;
+        final fullValid = summary.copyWith(
+          endedAt: start.add(const Duration(seconds: 61)),
+          distanceMeters: 70,
+          trackPoints: [
+            TrackPoint(latitude: 51.0, longitude: 12.0, timestamp: start),
+            TrackPoint(
+              latitude: 51.0006,
+              longitude: 12.0004,
+              timestamp: start.add(const Duration(seconds: 61)),
+            ),
+          ],
+        );
+        final repo = _FakeActivityRepository(activities: <Activity>[summary]);
+        repo.byId[summary.id] = fullInvalid;
+        addTearDown(repo.dispose);
+
+        await tester.pumpWidget(
+          _wrap(Scaffold(body: ActivityHistoryScreen(repository: repo))),
+        );
+        await tester.pump(const Duration(milliseconds: 200));
+        expect(find.text('0m 00s'), findsAtLeastNWidgets(1));
+
+        repo.byId[summary.id] = fullValid;
+        await tester.pump(const Duration(seconds: 3));
+        await tester.pumpAndSettle();
+
+        expect(find.text('1m 01s'), findsAtLeastNWidgets(1));
+        expect(find.text('0.07 km'), findsAtLeastNWidgets(1));
+      },
+    );
+
     testWidgets(
       'nach Loeschen aus Detailansicht landet Nutzer wieder in History',
       (tester) async {
@@ -367,6 +541,10 @@ void main() {
             activity: activity,
             onRetryUpload: () async {
               retryCalls++;
+              return ActivityUploadResult.failure(
+                attempts: 1,
+                failureType: ActivityUploadFailureType.server,
+              );
             },
           ),
         ),
@@ -382,6 +560,101 @@ void main() {
 
       expect(retryCalls, equals(1));
     });
+
+    testWidgets('retry upload button verschwindet sofort nach Erfolg', (
+      tester,
+    ) async {
+      var retryCalls = 0;
+      final activity = _activity('a-retry-ok', ActivityType.run);
+
+      await tester.pumpWidget(
+        _wrap(
+          ActivityDetailScreen(
+            activity: activity,
+            onRetryUpload: () async {
+              retryCalls++;
+              return ActivityUploadResult.success(attempts: 1, statusCode: 201);
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final retryButton = find.byKey(const Key('history-retry-upload-button'));
+      expect(retryButton, findsOneWidget);
+
+      await tester.tap(retryButton);
+      await tester.pumpAndSettle();
+
+      expect(retryCalls, equals(1));
+      expect(
+        find.byKey(const Key('history-retry-upload-button')),
+        findsNothing,
+      );
+    });
+
+    testWidgets('zeigt Upload-Block-Hinweis bei ungueltiger Aktivitaet', (
+      tester,
+    ) async {
+      final start = DateTime.parse('2026-03-19T11:22:00Z');
+      final activity = Activity(
+        id: 'a-invalid',
+        activityType: ActivityType.run,
+        startedAt: start,
+        endedAt: start.add(const Duration(seconds: 9)),
+        distanceMeters: 0,
+        trackPoints: const <TrackPoint>[],
+      );
+
+      await tester.pumpWidget(
+        _wrap(
+          ActivityDetailScreen(
+            activity: activity,
+            onRetryUpload: () async => ActivityUploadResult.failure(
+              attempts: 1,
+              failureType: ActivityUploadFailureType.invalidActivity,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('history-retry-upload-button')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const Key('history-upload-blocked-banner')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+      'zeigt Durchschnittsgeschwindigkeit auch fuer Run in Activity Details',
+      (tester) async {
+        final base = _activity('a-run-speed', ActivityType.run);
+        final activity = base.copyWith(
+          distanceMeters: 1200,
+          endedAt: base.startedAt.add(const Duration(minutes: 6)),
+        );
+
+        await tester.pumpWidget(
+          _wrap(
+            ActivityDetailScreen(
+              activity: activity,
+              onRetryUpload: () async => ActivityUploadResult.failure(
+                attempts: 1,
+                failureType: ActivityUploadFailureType.server,
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Avg speed'), findsOneWidget);
+        expect(find.textContaining('km/h'), findsAtLeastNWidgets(1));
+      },
+    );
 
     testWidgets('zeigt Gruppenheader und kompakten Statistik-Text', (
       tester,

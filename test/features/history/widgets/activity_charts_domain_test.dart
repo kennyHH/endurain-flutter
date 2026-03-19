@@ -43,6 +43,42 @@ List<TrackPoint> _buildLongTrackPoints() {
   });
 }
 
+List<TrackPoint> _buildVeryShortTrackPoints() {
+  final start = DateTime.utc(2026, 3, 19, 8, 53, 51);
+  return <TrackPoint>[
+    TrackPoint(
+      latitude: 51.2836584,
+      longitude: 12.7632926,
+      timestamp: start,
+      altitudeMeters: 172,
+    ),
+    TrackPoint(
+      latitude: 51.2836666684,
+      longitude: 12.7632255969,
+      timestamp: start.add(const Duration(seconds: 10)),
+      altitudeMeters: 172,
+    ),
+    TrackPoint(
+      latitude: 51.2836886398,
+      longitude: 12.7631631306,
+      timestamp: start.add(const Duration(seconds: 13)),
+      altitudeMeters: 172,
+    ),
+    TrackPoint(
+      latitude: 51.2836734819,
+      longitude: 12.7631024846,
+      timestamp: start.add(const Duration(seconds: 17)),
+      altitudeMeters: 172,
+    ),
+    TrackPoint(
+      latitude: 51.2836734819,
+      longitude: 12.7631024846,
+      timestamp: start.add(const Duration(seconds: 20)),
+      altitudeMeters: 172,
+    ),
+  ];
+}
+
 void main() {
   testWidgets(
     'pace and elevation charts use full activity distance as x-domain',
@@ -163,6 +199,31 @@ void main() {
       final paceChart = charts[1];
       final firstPaceX = paceChart.data.lineBarsData.first.spots.first.x;
       expect(firstPaceX, closeTo(0.05, 0.01));
+    },
+  );
+
+  testWidgets(
+    'pace zeigt bei sehr kurzen Aktivitäten früher als 10 Meter',
+    (tester) async {
+      final points = _buildVeryShortTrackPoints();
+      final activity = Activity(
+        id: 'a5',
+        activityType: ActivityType.run,
+        startedAt: points.first.timestamp,
+        endedAt: points.last.timestamp,
+        distanceMeters: 14.3,
+        trackPoints: points,
+      );
+
+      await tester.pumpWidget(
+        _wrapWithL10n(ActivityCharts(activity: activity)),
+      );
+      await tester.pumpAndSettle();
+
+      final charts = tester.widgetList<LineChart>(find.byType(LineChart)).toList();
+      final paceChart = charts[1];
+      final firstPaceX = paceChart.data.lineBarsData.first.spots.first.x;
+      expect(firstPaceX, lessThan(0.01));
     },
   );
 }

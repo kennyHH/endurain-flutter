@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:endurain/core/theme/app_theme.dart';
+import 'package:endurain/core/services/auth_service.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
+import 'package:endurain/core/services/resume_token_refresh_coordinator.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/core/database/app_database.dart';
 import 'package:endurain/core/services/storage_migration_service.dart';
@@ -16,15 +20,26 @@ class App extends StatefulWidget {
   State<App> createState() => _AppState();
 }
 
-class _AppState extends State<App> {
+class _AppState extends State<App> with WidgetsBindingObserver {
   late final AppDatabase _database;
   final _settingsController = serviceLocator<SettingsController>();
+  late final ResumeTokenRefreshCoordinator _tokenRefreshCoordinator;
+  Timer? _tokenRefreshTimer;
 
   @override
   void initState() {
     super.initState();
     _database = serviceLocator<AppDatabase>();
+    _tokenRefreshCoordinator = ResumeTokenRefreshCoordinator(
+      authService: serviceLocator<AuthService>(),
+      storage: serviceLocator<SecureStorageService>(),
+    );
     _initialize();
+    WidgetsBinding.instance.addObserver(this);
+    _tokenRefreshTimer = Timer.periodic(const Duration(minutes: 3), (_) {
+      _tokenRefreshCoordinator.triggerBestEffortRefresh();
+    });
+    _tokenRefreshCoordinator.triggerBestEffortRefresh();
   }
 
   Future<void> _initialize() async {
@@ -38,6 +53,20 @@ class _AppState extends State<App> {
       debugPrint('Migration failed: $e');
     }
     await _settingsController.init();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _tokenRefreshCoordinator.triggerBestEffortRefresh();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _tokenRefreshTimer?.cancel();
+    super.dispose();
   }
 
   @override

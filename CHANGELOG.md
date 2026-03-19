@@ -4,6 +4,48 @@ All notable changes to Endurain mobile app are documented in this file.
 
 ## [Unreleased]
 
+## [0.0.34] - 2026-03-19
+
+### Fixed
+- Triggered first-run tracking permissions onboarding independently from server login/auth state after app unlock.
+- Added a tracking start first-run permission gate so users are guided into location/battery setup before recording.
+- Updated permission onboarding completion handling to remain pending until location access is actually granted.
+- Improved server-side activity deletion by prioritizing persisted numeric server IDs (`server_activity_id`) over local client IDs.
+- Improved delete error reporting by preserving the first non-405 server failure detail instead of surfacing a later fallback 405 message.
+- Persisted `server_activity_id` from successful upload responses to support robust follow-up delete operations.
+- Prevented delete calls with out-of-range local IDs (timestamp-style IDs) to avoid backend `500 Internal Server Error` from integer overflow.
+- Added explicit user-facing error when no backend-compatible server ID is available for server-side deletion.
+- Fixed Activity Details upload retry CTA to disappear immediately after successful retry upload without requiring navigation away.
+- Updated Activity Details GPX export to share a real file using naming-convention filenames.
+- Improved pace chart rendering for very short runs so pace appears before the ~10m mark.
+- Added average speed metric to Activity Details for run/walk in addition to pace.
+- Tuned run/walk start-window min-distance filtering to accept high-confidence ~4m early segments during the first seconds.
+- Aligned run/walk pace display with server-compatible track-geometry pacing for closer parity after imports.
+- Added app-wide proactive session refresh on resume and periodic lifecycle intervals to reduce unexpected re-logins.
+- Added token-expiry-aware refresh gating so silent refresh runs near expiry instead of on every wake cycle.
+- Added single-flight refresh deduplication to prevent parallel refresh races from concurrent API requests.
+- Added upload eligibility policy matrix to block empty/meaningless activities before server upload attempts.
+- Updated Activity Details to replace retry CTA with a clear non-uploadable hint when activity quality is below upload thresholds.
+- Hydrated History card metrics from full activities when summaries omit track data, improving pace/elevation consistency with details.
+- Persisted server-returned distance, duration, and elevation metrics locally after successful upload for closer app/server parity.
+- Fixed History hydration gate to reload full activity data when summary metrics are implausible (e.g., 0s/0.00km despite route preview points).
+- Fixed stale History metric snapshots by allowing timed re-hydration retries while summary rows remain implausible, preventing persistent 0s/0.00km cards for pending uploads.
+
+### Testing
+- Added controller regression coverage ensuring first-run onboarding is shown even when not authenticated.
+- Added controller regression coverage for permission onboarding completion behavior when location permission stays denied.
+- Added upload/delete regression tests for `server_activity_id` persistence, server-ID-first delete routing, and delete failure prioritization (non-405 over 405).
+- Added regression coverage for out-of-range local IDs to ensure delete requests are not sent with overflow-prone IDs.
+- Added UI regression coverage for immediate hiding of `Retry Upload` button in Activity Details after success.
+- Added regression coverage for GPX naming convention output and very short-distance pace chart start behavior.
+- Added tracking engine regression coverage for high-confidence early run warmup segments around 4m.
+- Added metric formatter regression coverage for server-compatible pace calculation and distance fallback behavior.
+- Added auth/session regression coverage for refresh deduplication and token-fresh skip behavior in resume coordinator.
+- Added upload policy regression coverage for blocked short/empty activities and valid activity pass-through.
+- Added regression coverage for hydration-based History pace consistency and server-metric persistence after upload.
+- Added regression coverage ensuring History hydrates full metrics even when summary rows contain trackpoints but zero duration/distance.
+- Added regression coverage for stale-snapshot refresh behavior when summary rows stay implausible across repository emissions.
+
 ## [0.0.33] - 2026-03-18
 
 ### Changed

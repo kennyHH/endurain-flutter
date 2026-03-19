@@ -1,4 +1,5 @@
 import 'package:endurain/core/models/activity.dart';
+import 'package:geolocator/geolocator.dart' show Geolocator;
 
 class MetricFormatter {
   const MetricFormatter._();
@@ -63,5 +64,34 @@ class MetricFormatter {
     }
     final paceSecondsPerKm = durationSeconds / (distanceMeters / 1000);
     return formatPace(paceSecondsPerKm, paceUnit);
+  }
+
+  static double? serverCompatiblePaceSecondsPerKm(Activity activity) {
+    if (activity.durationSeconds <= 0) return null;
+    final distanceMeters = _serverCompatibleDistanceMeters(activity);
+    if (distanceMeters <= 0) return null;
+    return activity.durationSeconds / (distanceMeters / 1000);
+  }
+
+  static double _serverCompatibleDistanceMeters(Activity activity) {
+    final trackPoints = activity.trackPoints;
+    if (trackPoints.length < 2) {
+      return activity.distanceMeters;
+    }
+    var totalMeters = 0.0;
+    for (var i = 1; i < trackPoints.length; i++) {
+      final prev = trackPoints[i - 1];
+      final curr = trackPoints[i];
+      totalMeters += Geolocator.distanceBetween(
+        prev.latitude,
+        prev.longitude,
+        curr.latitude,
+        curr.longitude,
+      );
+    }
+    if (totalMeters <= 0) {
+      return activity.distanceMeters;
+    }
+    return totalMeters;
   }
 }

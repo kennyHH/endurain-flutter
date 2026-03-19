@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:endurain/core/constants/api_constants.dart';
@@ -112,7 +113,10 @@ void main() {
         }
         return http.Response('not found', 404);
       });
-      final service = AuthService(storage: storage, requestExecutor: ApiRequestExecutor(client));
+      final service = AuthService(
+        storage: storage,
+        requestExecutor: ApiRequestExecutor(client),
+      );
 
       final result = await service.login('alice', 'secret', serverUrl: baseUrl);
 
@@ -147,7 +151,10 @@ void main() {
         }
         return http.Response('not found', 404);
       });
-      final service = AuthService(storage: storage, requestExecutor: ApiRequestExecutor(client));
+      final service = AuthService(
+        storage: storage,
+        requestExecutor: ApiRequestExecutor(client),
+      );
 
       await service.login('alice', 'secret', serverUrl: baseUrl);
       final result = await service.verifyMfa('alice', '123456');
@@ -175,7 +182,10 @@ void main() {
         }
         return http.Response('not found', 404);
       });
-      final service = AuthService(storage: storage, requestExecutor: ApiRequestExecutor(client));
+      final service = AuthService(
+        storage: storage,
+        requestExecutor: ApiRequestExecutor(client),
+      );
       await service.login('alice', 'secret', serverUrl: baseUrl);
 
       expect(
@@ -206,7 +216,10 @@ void main() {
         }
         return http.Response('not found', 404);
       });
-      final service = AuthService(storage: storage, requestExecutor: ApiRequestExecutor(client));
+      final service = AuthService(
+        storage: storage,
+        requestExecutor: ApiRequestExecutor(client),
+      );
 
       final refreshed = await service.refreshToken();
 
@@ -226,7 +239,10 @@ void main() {
         }
         return http.Response('not found', 404);
       });
-      final service = AuthService(storage: storage, requestExecutor: ApiRequestExecutor(client));
+      final service = AuthService(
+        storage: storage,
+        requestExecutor: ApiRequestExecutor(client),
+      );
 
       final refreshed = await service.refreshToken();
 
@@ -234,6 +250,46 @@ void main() {
       expect(storage.clearAuthTokensCalls, equals(1));
       expect(storage.accessToken, isNull);
       expect(storage.refreshToken, isNull);
+    });
+
+    test('refreshToken dedupliziert parallele Aufrufe', () async {
+      final storage = FakeSecureStorageService()
+        ..serverUrl = baseUrl
+        ..refreshToken = 'refresh-old';
+      final responseCompleter = Completer<http.Response>();
+      var refreshRequestCount = 0;
+      final client = MockClient((request) async {
+        if (request.url.path == ApiConstants.refreshEndpoint) {
+          refreshRequestCount += 1;
+          return responseCompleter.future;
+        }
+        return http.Response('not found', 404);
+      });
+      final service = AuthService(
+        storage: storage,
+        requestExecutor: ApiRequestExecutor(client),
+      );
+
+      final first = service.refreshToken();
+      final second = service.refreshToken();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(refreshRequestCount, equals(1));
+
+      responseCompleter.complete(
+        http.Response(
+          json.encode({
+            'access_token': 'access-new',
+            'refresh_token': 'refresh-new',
+          }),
+          200,
+        ),
+      );
+
+      final results = await Future.wait(<Future<bool>>[first, second]);
+      expect(results, everyElement(isTrue));
+      expect(storage.accessToken, equals('access-new'));
+      expect(storage.refreshToken, equals('refresh-new'));
     });
 
     test('logout success + lokales Token-Clearing', () async {
@@ -248,7 +304,10 @@ void main() {
         }
         return http.Response('not found', 404);
       });
-      final service = AuthService(storage: storage, requestExecutor: ApiRequestExecutor(client));
+      final service = AuthService(
+        storage: storage,
+        requestExecutor: ApiRequestExecutor(client),
+      );
 
       final result = await service.logout();
 
@@ -271,7 +330,10 @@ void main() {
         }
         return http.Response('not found', 404);
       });
-      final service = AuthService(storage: storage, requestExecutor: ApiRequestExecutor(client));
+      final service = AuthService(
+        storage: storage,
+        requestExecutor: ApiRequestExecutor(client),
+      );
 
       final result = await service.logout();
 

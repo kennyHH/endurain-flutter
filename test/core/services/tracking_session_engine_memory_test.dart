@@ -298,6 +298,62 @@ void main() {
   );
 
   test(
+    'Run-Warmup akzeptiert in den ersten Sekunden auch Segmente um 4m bei guter Qualität',
+    () async {
+      final engine = TrackingSessionEngine(
+        locationService: mockLocationService,
+        activityRepository: mockRepository,
+        audioService: mockAudio,
+        bluetoothService: mockBluetooth,
+      );
+      addTearDown(engine.dispose);
+
+      await engine.start(ActivityType.run);
+
+      final t0 = DateTime.now();
+      positionStream.add(
+        Position(
+          latitude: 52.520000,
+          longitude: 13.405000,
+          timestamp: t0,
+          accuracy: 8.0,
+          altitude: 40.0,
+          heading: 0.0,
+          speed: 2.1,
+          speedAccuracy: 0.0,
+          headingAccuracy: 0.0,
+          altitudeAccuracy: 0.0,
+          isMocked: false,
+          floor: 0,
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(engine.snapshot.trackPoints.length, 1);
+
+      positionStream.add(
+        Position(
+          latitude: 52.520040,
+          longitude: 13.405000,
+          timestamp: t0.add(const Duration(seconds: 6)),
+          accuracy: 8.0,
+          altitude: 40.0,
+          heading: 0.0,
+          speed: 2.2,
+          speedAccuracy: 0.0,
+          headingAccuracy: 0.0,
+          altitudeAccuracy: 0.0,
+          isMocked: false,
+          floor: 0,
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(engine.snapshot.trackPoints.length, 2);
+      expect(engine.snapshot.qualityMetrics.rejectedByMinDistance, equals(0));
+    },
+  );
+
+  test(
     'Kurzstrecken-Guardrail reduziert Distanzverlust nach MinDistance-Reject',
     () async {
       final engine = TrackingSessionEngine(

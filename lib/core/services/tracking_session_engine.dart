@@ -1686,6 +1686,10 @@ class TrackingSessionEngine {
 
     if (isRunWalkWarmup) {
       var warmupThreshold = 3.5;
+      final isEarlyWarmup = _isEarlyRunWalkWarmup(rawPosition.timestamp);
+      if (isEarlyWarmup && speed >= 1.8 && accuracy <= 15) {
+        warmupThreshold -= 1.0;
+      }
       if (speed < 1.2) {
         warmupThreshold += 0.8;
       }
@@ -1709,6 +1713,15 @@ class TrackingSessionEngine {
       threshold -= 1.5;
     }
     return threshold.clamp(3.0, 10.0);
+  }
+
+  bool _isEarlyRunWalkWarmup(DateTime timestamp) {
+    if (!_isRunWalkWarmup(timestamp)) return false;
+    final startTime = _snapshot.startTime;
+    if (startTime == null) return false;
+    final elapsed = timestamp.difference(startTime);
+    if (elapsed.isNegative) return false;
+    return elapsed <= const Duration(seconds: 8);
   }
 
   bool _isRunWalkWarmup(DateTime timestamp) {

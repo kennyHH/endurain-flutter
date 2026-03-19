@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:endurain/core/services/gpx_exporter.dart';
 import 'dart:convert';
-import 'dart:typed_data';
+import 'dart:io';
 import 'package:endurain/core/models/activity.dart';
+import 'package:endurain/core/services/activity_upload_service.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/core/utils/metric_formatter.dart';
 import 'package:endurain/features/history/widgets/activity_route_map.dart';
 import 'package:endurain/features/history/widgets/history_metric_widgets.dart';
 import 'package:endurain/features/history/widgets/activity_charts.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:endurain/core/utils/activity_upload_policy.dart';
 
-class ActivityDetailScreen extends StatelessWidget {
+class ActivityDetailScreen extends StatefulWidget {
   const ActivityDetailScreen({
     super.key,
     required this.activity,
@@ -22,30 +25,34 @@ class ActivityDetailScreen extends StatelessWidget {
 
   final Activity activity;
   final bool useMatchedTrack;
-  final Future<void> Function()? onRetryUpload;
+  final Future<ActivityUploadResult?> Function()? onRetryUpload;
   final Future<void> Function(String name)? onRename;
   final Future<void> Function()? onDelete;
 
-  Future<void> _shareActivity(BuildContext context) async {
+  @override
+  State<ActivityDetailScreen> createState() => _ActivityDetailScreenState();
+}
+
+class _ActivityDetailScreenState extends State<ActivityDetailScreen> {
+  late Activity _activity;
+  bool _isRetryingUpload = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _activity = widget.activity;
+  }
+
+  Future<void> _shareGpx(BuildContext context) async {
     try {
       final exporter = GpxExporter();
-      final gpxString = exporter.export(activity);
-      final filename = exporter.buildExportFilename(activity);
-      final typeStr = activity.activityType.name;
-
-      final xFile = XFile.fromData(
-        Uint8List.fromList(utf8.encode(gpxString)),
-        mimeType: 'application/gpx+xml',
-        name: filename,
-        lastModified: DateTime.now(),
-      );
-
-      // ignore: deprecated_member_use
-      await Share.shareXFiles(
-        [xFile],
-        subject: 'Endurain Activity: ${activity.name ?? typeStr}',
-        text: 'Check out my activity on Endurain!',
-      );
+      final gpxString = exporter.export(_activity);
+      final filename = exporter.buildExportFilename(_activity);
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/$filename');
+      await file.writeAsString(gpxString, encoding: utf8, flush: true);
+      final xFile = XFile(file.path, mimeType: 'application/gpx+xml');
+      await SharePlus.instance.share(ShareParams(files: <XFile>[xFile]));
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(
@@ -66,8 +73,44 @@ class ActivityDetailScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _handleRetryUpload() async {
+    final policy = ActivityUploadPolicy.evaluate(_activity);
+    if (!policy.isUploadable) {
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      if (messenger != null) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(policy.message ?? 'Activity is not uploadable.'),
+          ),
+        );
+      }
+      return;
+    }
+    final callback = widget.onRetryUpload;
+    if (callback == null || _isRetryingUpload) return;
+    setState(() {
+      _isRetryingUpload = true;
+    });
+    try {
+      final result = await callback();
+      if (!mounted) return;
+      if (result?.success == true) {
+        setState(() {
+          _activity = _activity.copyWith(uploaded: true);
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRetryingUpload = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final activity = _activity;
     final l10n = AppLocalizations.of(context)!;
     final type = switch (activity.activityType) {
       ActivityType.run => l10n.activityTypeRun,
@@ -77,6 +120,8 @@ class ActivityDetailScreen extends StatelessWidget {
     final distance =
         '${(activity.distanceMeters / 1000).toStringAsFixed(2)} ${l10n.trackingDistanceUnitKm}';
     final movementMetric = _formatMovementMetric(activity, l10n);
+    final averageSpeed = _formatAverageSpeed(activity, l10n);
+    final uploadPolicy = ActivityUploadPolicy.evaluate(activity);
     final elevationGain =
         '${activity.elevationGainMeters.toStringAsFixed(0)} ${l10n.trackingElevationUnitM}';
     final elevationLoss =
@@ -113,10 +158,10 @@ class ActivityDetailScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.ios_share),
             tooltip: 'Export GPX',
-            onPressed: () => _shareActivity(context),
+            onPressed: () => _shareGpx(context),
           ),
 
-          if (onRename != null)
+          if (widget.onRename != null)
             IconButton(
               icon: const Icon(Icons.edit),
               onPressed: () async {
@@ -151,13 +196,13 @@ class ActivityDetailScreen extends StatelessWidget {
                   },
                 );
                 if (nextName == null) return;
-                await onRename!(nextName);
+                await widget.onRename!(nextName);
               },
             ),
-          if (onDelete != null)
+          if (widget.onDelete != null)
             IconButton(
               icon: const Icon(Icons.delete_outline),
-              onPressed: onDelete,
+              onPressed: widget.onDelete,
             ),
         ],
       ),
@@ -171,7 +216,7 @@ class ActivityDetailScreen extends StatelessWidget {
                   points: activity.trackPoints,
                   interactive: true,
                   height: compact ? 274 : 330,
-                  useMatchedTrack: useMatchedTrack,
+                  useMatchedTrack: widget.useMatchedTrack,
                   activityType: activity.activityType,
                 ),
                 const SizedBox(height: 12),
@@ -216,6 +261,13 @@ class ActivityDetailScreen extends StatelessWidget {
                               value: movementMetric.value,
                               compact: compact,
                             ),
+                            if (activity.activityType != ActivityType.ride)
+                              MetricTile(
+                                icon: Icons.av_timer_outlined,
+                                label: l10n.trackingAverageSpeed,
+                                value: averageSpeed,
+                                compact: compact,
+                              ),
                             MetricTile(
                               icon: Icons.north_east_rounded,
                               label: l10n.trackingElevationGain,
@@ -256,16 +308,39 @@ class ActivityDetailScreen extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: (onRetryUpload != null && !activity.uploaded)
+      bottomNavigationBar: (widget.onRetryUpload != null && !activity.uploaded)
           ? SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: FilledButton.icon(
-                  key: const Key('history-retry-upload-button'),
-                  onPressed: onRetryUpload,
-                  icon: const Icon(Icons.cloud_upload),
-                  label: Text('${l10n.retry} Upload'),
-                ),
+                child: uploadPolicy.isUploadable
+                    ? FilledButton.icon(
+                        key: const Key('history-retry-upload-button'),
+                        onPressed: _isRetryingUpload
+                            ? null
+                            : _handleRetryUpload,
+                        icon: const Icon(Icons.cloud_upload),
+                        label: Text('${l10n.retry} Upload'),
+                      )
+                    : Container(
+                        key: const Key('history-upload-blocked-banner'),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainer,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.info_outline),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                uploadPolicy.message ??
+                                    'Activity is too short or incomplete for upload.',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
               ),
             )
           : null,
@@ -292,7 +367,10 @@ _MovementMetric _formatMovementMetric(
     );
     return _MovementMetric(label: l10n.trackingAverageSpeed, value: value);
   }
-  final pace = _formatPace(activity.averagePaceSecondsPerKm, l10n);
+  final pace = _formatPace(
+    MetricFormatter.serverCompatiblePaceSecondsPerKm(activity),
+    l10n,
+  );
   return _MovementMetric(label: l10n.trackingPace, value: pace);
 }
 
@@ -305,4 +383,16 @@ String _formatPace(double? paceSecondsPerKm, AppLocalizations l10n) {
 
 String _formatDurationLabeled(int seconds) {
   return MetricFormatter.formatDurationLabeled(seconds);
+}
+
+String _formatAverageSpeed(Activity activity, AppLocalizations l10n) {
+  final speed = activity.averageSpeedKmh ?? _computeAverageSpeedKmh(activity);
+  return MetricFormatter.formatSpeedKmh(speed, l10n.trackingSpeedUnitKmh);
+}
+
+double? _computeAverageSpeedKmh(Activity activity) {
+  if (activity.durationSeconds <= 0 || activity.distanceMeters <= 0) {
+    return null;
+  }
+  return (activity.distanceMeters / 1000) / (activity.durationSeconds / 3600);
 }

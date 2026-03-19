@@ -19,6 +19,7 @@ class AuthService {
 
   // Store PKCE temporarily during auth flow
   Map<String, String>? _pkce;
+  Future<bool>? _inflightRefresh;
 
   /// Login with username and password using PKCE flow
   /// Returns AuthResult with MFA status or session ID for token exchange
@@ -218,6 +219,18 @@ class AuthService {
 
   /// Refresh access token using refresh token
   Future<bool> refreshToken() async {
+    final running = _inflightRefresh;
+    if (running != null) return running;
+    final refresh = _refreshTokenInternal();
+    _inflightRefresh = refresh;
+    try {
+      return await refresh;
+    } finally {
+      _inflightRefresh = null;
+    }
+  }
+
+  Future<bool> _refreshTokenInternal() async {
     final serverUrl = await _storage.getServerUrl();
     final refreshToken = await _storage.getRefreshToken();
 
