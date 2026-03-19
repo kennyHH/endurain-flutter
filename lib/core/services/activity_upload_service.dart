@@ -11,11 +11,13 @@ import 'package:endurain/core/error_handling/app_error.dart';
 import 'package:endurain/core/constants/upload_constants.dart';
 import 'package:endurain/core/services/upload_queue/upload_queue_service.dart';
 import 'package:endurain/core/di/service_locator.dart';
+import 'package:endurain/core/utils/activity_upload_policy.dart';
 import 'package:injectable/injectable.dart';
 
 enum ActivityUploadFailureType {
   configuration,
   authentication,
+  invalidActivity,
   server,
   network,
   unknown,
@@ -28,6 +30,11 @@ class ActivityUploadResult {
     this.statusCode,
     this.failureType,
     this.serverDetail,
+    this.serverActivityId,
+    this.serverDistanceMeters,
+    this.serverDurationSeconds,
+    this.serverElevationGainMeters,
+    this.serverElevationLossMeters,
   });
 
   final bool success;
@@ -35,17 +42,32 @@ class ActivityUploadResult {
   final int? statusCode;
   final ActivityUploadFailureType? failureType;
   final String? serverDetail;
+  final int? serverActivityId;
+  final double? serverDistanceMeters;
+  final int? serverDurationSeconds;
+  final double? serverElevationGainMeters;
+  final double? serverElevationLossMeters;
 
   factory ActivityUploadResult.success({
     required int attempts,
     int? statusCode,
     String? serverDetail,
+    int? serverActivityId,
+    double? serverDistanceMeters,
+    int? serverDurationSeconds,
+    double? serverElevationGainMeters,
+    double? serverElevationLossMeters,
   }) {
     return ActivityUploadResult._(
       success: true,
       attempts: attempts,
       statusCode: statusCode,
       serverDetail: serverDetail,
+      serverActivityId: serverActivityId,
+      serverDistanceMeters: serverDistanceMeters,
+      serverDurationSeconds: serverDurationSeconds,
+      serverElevationGainMeters: serverElevationGainMeters,
+      serverElevationLossMeters: serverElevationLossMeters,
     );
   }
 
@@ -67,6 +89,8 @@ class ActivityUploadResult {
 
 @singleton
 class ActivityUploadService {
+  static const int _backendMaxActivityId = 2147483647;
+
   ActivityUploadService({
     required ApiClient apiClient,
     required SecureStorageService storage,
@@ -111,16 +135,32 @@ class ActivityUploadService {
       );
     }
 
-    final encodedId = Uri.encodeComponent(activity.id);
-    final endpoints = <String>[
-      '/api/v1/activities/$encodedId/delete',
-      '/api/v1/activities/$encodedId',
-      '/api/v1/activities/delete/$encodedId',
-      '/activities/$encodedId/delete',
-      '/activities/$encodedId',
-    ];
+    final candidateServerIds = <int>{};
+    final storedServerId = _extractStoredServerActivityId(activity);
+    if (_isBackendCompatibleActivityId(storedServerId)) {
+      candidateServerIds.add(storedServerId!);
+    }
+    final numericLocalId = int.tryParse(activity.id.trim());
+    if (_isBackendCompatibleActivityId(numericLocalId)) {
+      candidateServerIds.add(numericLocalId!);
+    }
+    if (candidateServerIds.isEmpty) {
+      return ActivityUploadResult.failure(
+        attempts: 1,
+        failureType: ActivityUploadFailureType.server,
+        serverDetail:
+            'Activity has no compatible server id for deletion. Upload again before deleting on server.',
+      );
+    }
+    final endpointSet = <String>{};
+    for (final id in candidateServerIds) {
+      endpointSet.add('/api/v1/activities/$id/delete');
+      endpointSet.add('/activities/$id/delete');
+    }
+    final endpoints = endpointSet.toList();
 
     ActivityUploadResult? lastFailure;
+    ActivityUploadResult? firstNon405Failure;
     for (final endpoint in endpoints) {
       try {
         final response = await _apiClient.delete(endpoint);
@@ -139,6 +179,9 @@ class ActivityUploadService {
               : ActivityUploadFailureType.server,
           serverDetail: _extractServerDetail(response),
         );
+        if (response.statusCode != 405 && firstNon405Failure == null) {
+          firstNon405Failure = lastFailure;
+        }
       } on AuthenticationError catch (error) {
         final isAuthenticated = await _authService.isAuthenticated();
         return ActivityUploadResult.failure(
@@ -159,7 +202,8 @@ class ActivityUploadService {
       }
     }
 
-    return lastFailure ??
+    return firstNon405Failure ??
+        lastFailure ??
         ActivityUploadResult.failure(
           attempts: 1,
           failureType: ActivityUploadFailureType.server,
@@ -189,6 +233,15 @@ class ActivityUploadService {
       );
     }
 
+    final policy = ActivityUploadPolicy.evaluate(activity);
+    if (!policy.isUploadable) {
+      return ActivityUploadResult.failure(
+        attempts: 0,
+        failureType: ActivityUploadFailureType.invalidActivity,
+        serverDetail: policy.message,
+      );
+    }
+
     final result = await _performUpload(activity);
 
     if (!result.success) {
@@ -200,7 +253,14 @@ class ActivityUploadService {
       return result;
     }
 
-    await _persistUploaded(activity.id);
+    await _persistUploaded(
+      activity.id,
+      serverActivityId: result.serverActivityId,
+      serverDistanceMeters: result.serverDistanceMeters,
+      serverDurationSeconds: result.serverDurationSeconds,
+      serverElevationGainMeters: result.serverElevationGainMeters,
+      serverElevationLossMeters: result.serverElevationLossMeters,
+    );
     await _queueService.removeFromQueue(activity.id);
     return result;
   }
@@ -212,12 +272,42 @@ class ActivityUploadService {
     return stored?.uploaded ?? false;
   }
 
-  Future<void> _persistUploaded(String activityId) async {
+  Future<void> _persistUploaded(
+    String activityId, {
+    int? serverActivityId,
+    double? serverDistanceMeters,
+    int? serverDurationSeconds,
+    double? serverElevationGainMeters,
+    double? serverElevationLossMeters,
+  }) async {
     final repository = _activityRepository;
     if (repository == null) return;
     final stored = await repository.getById(activityId);
     if (stored == null || stored.uploaded) return;
-    await repository.update(stored.copyWith(uploaded: true));
+    final nextQualityMetrics = <String, dynamic>{...?stored.qualityMetrics};
+    if (serverActivityId != null) {
+      nextQualityMetrics['server_activity_id'] = serverActivityId;
+    }
+    if (serverElevationGainMeters != null) {
+      nextQualityMetrics['filtered_elevation_gain_meters'] =
+          serverElevationGainMeters;
+    }
+    if (serverElevationLossMeters != null) {
+      nextQualityMetrics['filtered_elevation_loss_meters'] =
+          serverElevationLossMeters;
+    }
+    final nextDistanceMeters = serverDistanceMeters ?? stored.distanceMeters;
+    final nextEndedAt = serverDurationSeconds == null
+        ? stored.endedAt
+        : stored.startedAt.add(Duration(seconds: serverDurationSeconds));
+    await repository.update(
+      stored.copyWith(
+        uploaded: true,
+        distanceMeters: nextDistanceMeters,
+        endedAt: nextEndedAt,
+        qualityMetrics: nextQualityMetrics,
+      ),
+    );
   }
 
   /// Process the offline queue
@@ -308,10 +398,18 @@ class ActivityUploadService {
                 );
 
                 if (response.statusCode >= 200 && response.statusCode < 300) {
+                  final serverMetrics = _extractServerMetrics(response);
                   return ActivityUploadResult.success(
                     attempts: attempt,
                     statusCode: response.statusCode,
                     serverDetail: _extractServerDetail(response),
+                    serverActivityId: _extractServerActivityId(response),
+                    serverDistanceMeters: serverMetrics.distanceMeters,
+                    serverDurationSeconds: serverMetrics.durationSeconds,
+                    serverElevationGainMeters:
+                        serverMetrics.elevationGainMeters,
+                    serverElevationLossMeters:
+                        serverMetrics.elevationLossMeters,
                   );
                 }
 
@@ -467,6 +565,108 @@ class ActivityUploadService {
     return '${body.substring(0, 180)}...';
   }
 
+  int? _extractServerActivityId(http.Response response) {
+    final body = response.body.trim();
+    if (body.isEmpty) return null;
+    try {
+      final decoded = json.decode(body);
+      if (decoded is Map<String, dynamic>) {
+        final directId = _coerceToInt(decoded['id'] ?? decoded['activity_id']);
+        if (_isBackendCompatibleActivityId(directId)) {
+          return directId;
+        }
+        final detail =
+            decoded['detail'] ?? decoded['message'] ?? decoded['error'];
+        final idFromDetail = _extractIdFromMessage(detail?.toString());
+        if (_isBackendCompatibleActivityId(idFromDetail)) {
+          return idFromDetail;
+        }
+      }
+      if (decoded is List && decoded.isNotEmpty) {
+        final first = decoded.first;
+        if (first is Map<String, dynamic>) {
+          final directId = _coerceToInt(first['id'] ?? first['activity_id']);
+          if (_isBackendCompatibleActivityId(directId)) {
+            return directId;
+          }
+          final detail = first['detail'] ?? first['message'] ?? first['error'];
+          final idFromDetail = _extractIdFromMessage(detail?.toString());
+          if (_isBackendCompatibleActivityId(idFromDetail)) {
+            return idFromDetail;
+          }
+        }
+      }
+    } catch (_) {
+      return null;
+    }
+    return null;
+  }
+
+  _ServerActivityMetrics _extractServerMetrics(http.Response response) {
+    final body = response.body.trim();
+    if (body.isEmpty) return const _ServerActivityMetrics();
+    try {
+      final decoded = json.decode(body);
+      final map = _firstMap(decoded);
+      if (map == null) return const _ServerActivityMetrics();
+      final distanceMeters = _coerceToDouble(map['distance']);
+      final durationSeconds = _coerceToInt(
+        map['total_timer_time'] ?? map['total_elapsed_time'],
+      );
+      final elevationGainMeters = _coerceToDouble(map['elevation_gain']);
+      final elevationLossMeters = _coerceToDouble(map['elevation_loss']);
+      return _ServerActivityMetrics(
+        distanceMeters: distanceMeters,
+        durationSeconds: durationSeconds,
+        elevationGainMeters: elevationGainMeters,
+        elevationLossMeters: elevationLossMeters,
+      );
+    } catch (_) {
+      return const _ServerActivityMetrics();
+    }
+  }
+
+  Map<String, dynamic>? _firstMap(Object? decoded) {
+    if (decoded is Map<String, dynamic>) return decoded;
+    if (decoded is List && decoded.isNotEmpty) {
+      final first = decoded.first;
+      if (first is Map<String, dynamic>) return first;
+    }
+    return null;
+  }
+
+  int? _extractStoredServerActivityId(Activity activity) {
+    final metrics = activity.qualityMetrics;
+    if (metrics == null) return null;
+    return _coerceToInt(metrics['server_activity_id']);
+  }
+
+  int? _coerceToInt(Object? value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value.trim());
+    return null;
+  }
+
+  double? _coerceToDouble(Object? value) {
+    if (value is double) return value;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value.trim());
+    return null;
+  }
+
+  int? _extractIdFromMessage(String? message) {
+    if (message == null || message.trim().isEmpty) return null;
+    final match = RegExp(r'\b\d+\b').firstMatch(message);
+    if (match == null) return null;
+    return int.tryParse(match.group(0)!);
+  }
+
+  bool _isBackendCompatibleActivityId(int? value) {
+    if (value == null) return false;
+    return value >= 0 && value <= _backendMaxActivityId;
+  }
+
   String? _normalizeValidationDetailItem(Object? item) {
     if (item is String) return item;
     if (item is Map<String, dynamic>) {
@@ -484,4 +684,18 @@ class ActivityUploadService {
     }
     return null;
   }
+}
+
+class _ServerActivityMetrics {
+  const _ServerActivityMetrics({
+    this.distanceMeters,
+    this.durationSeconds,
+    this.elevationGainMeters,
+    this.elevationLossMeters,
+  });
+
+  final double? distanceMeters;
+  final int? durationSeconds;
+  final double? elevationGainMeters;
+  final double? elevationLossMeters;
 }

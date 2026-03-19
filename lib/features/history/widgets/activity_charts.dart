@@ -324,8 +324,12 @@ class _PaceChart extends StatelessWidget {
       pointsLength: points.length,
     );
 
-    for (var i = windowSize; i < points.length; i++) {
-      final p1 = points[i - windowSize];
+    final startIndex = effectiveDomainMaxX <= 0.2 ? 1 : windowSize;
+    for (var i = startIndex; i < points.length; i++) {
+      final lookback = effectiveDomainMaxX <= 0.2
+          ? (i < windowSize ? i : windowSize)
+          : windowSize;
+      final p1 = points[i - lookback];
       final p2 = points[i];
 
       final dist = _calculateDistance(p1, p2);

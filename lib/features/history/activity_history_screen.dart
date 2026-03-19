@@ -9,6 +9,7 @@ import 'package:endurain/core/services/activity_upload_service.dart';
 import 'package:endurain/core/utils/metric_formatter.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/core/utils/activity_upload_feedback_mapper.dart';
+import 'package:endurain/core/utils/activity_upload_policy.dart';
 import 'package:endurain/core/utils/history_route_thumbnail_key_builder.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:flutter/cupertino.dart';
@@ -80,6 +81,8 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
   final Map<String, _HistoryMetricSnapshot> _metricSnapshotByActivityId =
       <String, _HistoryMetricSnapshot>{};
   final Set<String> _metricLoadingIds = <String>{};
+  final Map<String, DateTime> _metricRetryAfterByActivityId =
+      <String, DateTime>{};
   StreamSubscription<List<Activity>>? _activitySubscription;
   int? _filterCategoryId;
   _HistoryDateRange _filterDateRange = _HistoryDateRange.all;
@@ -123,6 +126,28 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
         _metricSnapshotByActivityId.removeWhere(
           (id, _) => !itemIds.contains(id),
         );
+        _metricRetryAfterByActivityId.removeWhere(
+          (id, _) => !itemIds.contains(id),
+        );
+        final itemsById = <String, Activity>{
+          for (final activity in items) activity.id: activity,
+        };
+        _metricSnapshotByActivityId.removeWhere((id, snapshot) {
+          final summary = itemsById[id];
+          if (summary == null) return true;
+          if (!_hasImplausibleSummaryMetrics(summary)) {
+            if (_hasImplausibleSummaryMetrics(snapshot.activity)) {
+              return true;
+            }
+            if (snapshot.activity.durationSeconds != summary.durationSeconds) {
+              return true;
+            }
+            if (snapshot.activity.distanceMeters != summary.distanceMeters) {
+              return true;
+            }
+          }
+          return false;
+        });
         _metricLoadingIds.removeWhere((id) => !itemIds.contains(id));
         setState(() {
           _activities = items.reversed.toList();
@@ -147,16 +172,32 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
     _subscribeActivities();
   }
 
-  Future<void> _retryUpload(Activity activity) async {
+  Future<ActivityUploadResult?> _retryUpload(Activity activity) async {
     final callback = widget.onRetryUpload;
-    if (callback == null) return;
+    if (callback == null) return null;
     final fullActivity = await _resolveFullActivity(activity);
+    final policy = ActivityUploadPolicy.evaluate(fullActivity);
+    if (!policy.isUploadable) {
+      if (!mounted) return null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(policy.message ?? 'Activity is not uploadable.'),
+        ),
+      );
+      return null;
+    }
     final result = await callback(fullActivity);
-    if (!mounted) return;
+    if (!mounted) return result;
     final l10n = AppLocalizations.of(context)!;
     final message = ActivityUploadFeedbackMapper.toDisplayMessage(result, l10n);
 
     if (!result.success) {
+      if (result.failureType == ActivityUploadFailureType.invalidActivity) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
+        return result;
+      }
       if (result.failureType == ActivityUploadFailureType.authentication &&
           widget.onAuthRequired != null) {
         await ErrorUtils.showRetryDialog(
@@ -167,21 +208,33 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
           retryLabel: l10n.login,
           cancelLabel: l10n.cancel,
         );
-        return;
+        return result;
       }
       await ErrorUtils.showRetryDialog(
         context: context,
         title: l10n.error,
         message: message,
-        onRetry: () => _retryUpload(fullActivity),
+        onRetry: () async {
+          await _retryUpload(fullActivity);
+        },
         retryLabel: '${l10n.retry} Upload',
         cancelLabel: l10n.cancel,
       );
     } else {
+      setState(() {
+        _activities = _activities
+            .map(
+              (item) => item.id == fullActivity.id
+                  ? item.copyWith(uploaded: true)
+                  : item,
+            )
+            .toList();
+      });
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
     }
+    return result;
   }
 
   Future<void> _openDetail(Activity activity) async {
@@ -481,32 +534,51 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
   }
 
   bool _needsSummaryMetricHydration(Activity activity) {
-    if (activity.trackPoints.isNotEmpty) return false;
-    final metrics = activity.qualityMetrics ?? const <String, dynamic>{};
-    final hasElevation =
-        metrics.containsKey('filtered_elevation_gain_meters') ||
-        metrics.containsKey('raw_elevation_gain_meters');
-    final hasAvgHeartRate = metrics.containsKey('avg_heart_rate_bpm');
-    final hasAvgCadence = metrics.containsKey('avg_cadence_rpm');
-    return !(hasElevation && hasAvgHeartRate && hasAvgCadence);
+    if (activity.trackPoints.isEmpty) return true;
+    return _hasImplausibleSummaryMetrics(activity);
+  }
+
+  bool _hasImplausibleSummaryMetrics(Activity activity) {
+    if (activity.durationSeconds <= 0) return true;
+    if (activity.distanceMeters <= 0) return true;
+    return false;
   }
 
   Future<void> _ensureSummaryMetricsLoaded(Activity activity) async {
     if (!_needsSummaryMetricHydration(activity)) return;
-    if (_metricSnapshotByActivityId.containsKey(activity.id) ||
-        _metricLoadingIds.contains(activity.id)) {
-      return;
+    final existingSnapshot = _metricSnapshotByActivityId[activity.id];
+    if (existingSnapshot != null) {
+      final snapshotImplausible = _hasImplausibleSummaryMetrics(
+        existingSnapshot.activity,
+      );
+      if (!snapshotImplausible) return;
+      if (!_hasImplausibleSummaryMetrics(activity)) {
+        _metricSnapshotByActivityId.remove(activity.id);
+        _metricRetryAfterByActivityId.remove(activity.id);
+        return;
+      }
+      final now = DateTime.now();
+      final retryAfter = _metricRetryAfterByActivityId[activity.id];
+      if (retryAfter != null && now.isBefore(retryAfter)) return;
+      _metricRetryAfterByActivityId[activity.id] = now.add(
+        const Duration(seconds: 2),
+      );
     }
+    if (_metricLoadingIds.contains(activity.id)) return;
     _metricLoadingIds.add(activity.id);
     try {
       final full = await widget.repository.getById(activity.id);
       if (!mounted || full == null) return;
       setState(() {
         _metricSnapshotByActivityId[activity.id] = _HistoryMetricSnapshot(
+          activity: full,
           elevationGainMeters: full.elevationGainMeters,
           avgHeartRateBpm: full.averageHeartRateBpm,
           avgCadenceRpm: full.averageCadenceRpm,
         );
+        if (!_hasImplausibleSummaryMetrics(full)) {
+          _metricRetryAfterByActivityId.remove(activity.id);
+        }
       });
     } finally {
       _metricLoadingIds.remove(activity.id);
@@ -640,12 +712,15 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
           unawaited(_ensureSummaryMetricsLoaded(activity));
         }
         final metricSnapshot = _metricSnapshotByActivityId[activity.id];
+        final displayActivity = metricSnapshot?.activity ?? activity;
         final avgHeartRate =
-            metricSnapshot?.avgHeartRateBpm ?? activity.averageHeartRateBpm;
+            metricSnapshot?.avgHeartRateBpm ??
+            displayActivity.averageHeartRateBpm;
         final avgCadence =
-            metricSnapshot?.avgCadenceRpm ?? activity.averageCadenceRpm;
+            metricSnapshot?.avgCadenceRpm ?? displayActivity.averageCadenceRpm;
         final elevationGainMeters =
-            metricSnapshot?.elevationGainMeters ?? activity.elevationGainMeters;
+            metricSnapshot?.elevationGainMeters ??
+            displayActivity.elevationGainMeters;
         final avgHeartRateText = avgHeartRate == null
             ? null
             : '${avgHeartRate.round()} bpm';
@@ -772,7 +847,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                           child: CompactMetric(
                             label: l10n.trackingDuration,
                             value: _formatDurationLabeled(
-                              activity.durationSeconds,
+                              displayActivity.durationSeconds,
                             ),
                             compact: true,
                           ),
@@ -781,15 +856,23 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                         Expanded(
                           child: CompactMetric(
                             label: l10n.trackingDistance,
-                            value: _formatDistance(activity.distanceMeters),
+                            value: _formatDistance(
+                              displayActivity.distanceMeters,
+                            ),
                             compact: true,
                           ),
                         ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: CompactMetric(
-                            label: _formatMovementMetric(activity, l10n).label,
-                            value: _formatMovementMetric(activity, l10n).value,
+                            label: _formatMovementMetric(
+                              displayActivity,
+                              l10n,
+                            ).label,
+                            value: _formatMovementMetric(
+                              displayActivity,
+                              l10n,
+                            ).value,
                             compact: true,
                           ),
                         ),
@@ -995,11 +1078,13 @@ class _MovementMetric {
 
 class _HistoryMetricSnapshot {
   const _HistoryMetricSnapshot({
+    required this.activity,
     required this.elevationGainMeters,
     required this.avgHeartRateBpm,
     required this.avgCadenceRpm,
   });
 
+  final Activity activity;
   final double elevationGainMeters;
   final double? avgHeartRateBpm;
   final double? avgCadenceRpm;
@@ -1017,7 +1102,10 @@ _MovementMetric _formatMovementMetric(
     );
     return _MovementMetric(label: l10n.trackingAverageSpeed, value: value);
   }
-  final pace = _formatPace(activity.averagePaceSecondsPerKm, l10n);
+  final pace = _formatPace(
+    MetricFormatter.serverCompatiblePaceSecondsPerKm(activity),
+    l10n,
+  );
   return _MovementMetric(label: l10n.trackingPace, value: pace);
 }
 

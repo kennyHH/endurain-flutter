@@ -214,11 +214,11 @@ class Activity {
   }
 
   double get elevationGainMeters {
-    if (trackPoints.length < 2) {
-      return _metricAsDouble('filtered_elevation_gain_meters') ??
-          _metricAsDouble('elevation_gain_meters') ??
-          0;
-    }
+    final metricGain =
+        _metricAsDouble('filtered_elevation_gain_meters') ??
+        _metricAsDouble('elevation_gain_meters');
+    if (metricGain != null) return metricGain;
+    if (trackPoints.length < 2) return 0;
     var gain = 0.0;
     for (var i = 1; i < trackPoints.length; i++) {
       final previous = trackPoints[i - 1].altitudeMeters;
@@ -233,11 +233,11 @@ class Activity {
   }
 
   double get elevationLossMeters {
-    if (trackPoints.length < 2) {
-      return _metricAsDouble('filtered_elevation_loss_meters') ??
-          _metricAsDouble('elevation_loss_meters') ??
-          0;
-    }
+    final metricLoss =
+        _metricAsDouble('filtered_elevation_loss_meters') ??
+        _metricAsDouble('elevation_loss_meters');
+    if (metricLoss != null) return metricLoss;
+    if (trackPoints.length < 2) return 0;
     var loss = 0.0;
     for (var i = 1; i < trackPoints.length; i++) {
       final previous = trackPoints[i - 1].altitudeMeters;

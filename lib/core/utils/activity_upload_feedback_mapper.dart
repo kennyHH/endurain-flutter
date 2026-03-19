@@ -20,6 +20,10 @@ class ActivityUploadFeedbackMapper {
         return l10n.errorAuthentication;
       case ActivityUploadFailureType.configuration:
         return l10n.errorConfiguration;
+      case ActivityUploadFailureType.invalidActivity:
+        return result.serverDetail?.trim().isNotEmpty == true
+            ? result.serverDetail!
+            : 'Activity is not uploadable.';
       case ActivityUploadFailureType.network:
         return l10n.errorNetwork;
       case ActivityUploadFailureType.server:

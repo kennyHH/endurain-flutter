@@ -250,9 +250,8 @@ class MapScreenController extends ChangeNotifier {
   }
 
   Future<void> _evaluatePermissionOnboarding() async {
-    final isAuthenticated = await storage.isAuthenticated();
     final completed = await storage.getPermissionsOnboardingCompleted();
-    shouldShowPermissionOnboarding = isAuthenticated && !completed;
+    shouldShowPermissionOnboarding = !completed;
     notifyListeners();
   }
 
@@ -269,8 +268,9 @@ class MapScreenController extends ChangeNotifier {
     try {
       await _requestLocationPermissionForOnboarding();
       await _requestBatteryOptimizationForOnboarding();
-      await storage.setPermissionsOnboardingCompleted(true);
-      shouldShowPermissionOnboarding = false;
+      final completed = hasLocationPermission;
+      await storage.setPermissionsOnboardingCompleted(completed);
+      shouldShowPermissionOnboarding = !completed;
     } finally {
       isRunningPermissionOnboarding = false;
       notifyListeners();

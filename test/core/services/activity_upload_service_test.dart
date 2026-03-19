@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:endurain/core/models/activity.dart';
 import 'package:endurain/core/services/activity_upload_service.dart';
 import 'package:endurain/core/services/api_client.dart';
@@ -171,6 +173,53 @@ void main() {
     });
 
     test(
+      'blockiert Upload bei ungueltiger Activity und queued nichts',
+      () async {
+        final storage = _FakeStorageService(
+          serverUrl: 'https://example.com',
+          accessToken: 'token-a',
+        );
+        final auth = _FakeAuthService(() async => false, storage: storage);
+        var calls = 0;
+        final client = MockClient((request) async {
+          calls++;
+          return http.Response('', 201);
+        });
+        final queue = _FakeUploadQueueService();
+        final service = ActivityUploadService(
+          apiClient: ApiClient(
+            storage: storage,
+            authService: auth,
+            requestExecutor: ApiRequestExecutor(client),
+          ),
+          storage: storage,
+          authService: auth,
+          gpxExporter: GpxExporter(),
+          queueService: queue,
+        );
+        final invalid = Activity(
+          id: 'invalid-1',
+          activityType: ActivityType.run,
+          startedAt: DateTime.parse('2026-03-19T11:22:00Z'),
+          endedAt: DateTime.parse('2026-03-19T11:22:09Z'),
+          distanceMeters: 0,
+          trackPoints: const <TrackPoint>[],
+        );
+
+        final result = await service.uploadActivity(invalid);
+        final queued = await queue.getQueue();
+
+        expect(result.success, isFalse);
+        expect(
+          result.failureType,
+          equals(ActivityUploadFailureType.invalidActivity),
+        );
+        expect(calls, equals(0));
+        expect(queued, isEmpty);
+      },
+    );
+
+    test(
       'bereits als uploaded markierte Aktivität wird nicht erneut hochgeladen',
       () async {
         final storage = _FakeStorageService(
@@ -204,6 +253,55 @@ void main() {
         expect(result.success, isTrue);
         expect(result.attempts, equals(0));
         expect(calls, equals(0));
+      },
+    );
+
+    test(
+      'persistiert Server-Metriken lokal nach erfolgreichem Upload',
+      () async {
+        final storage = _FakeStorageService(
+          serverUrl: 'https://example.com',
+          accessToken: 'token-a',
+        );
+        final auth = _FakeAuthService(() async => false, storage: storage);
+        final repository = _FakeActivityRepository();
+        final activity = _activityFixture();
+        await repository.create(activity);
+        final client = MockClient((request) async {
+          return http.Response(
+            json.encode({
+              'id': 1234,
+              'distance': 76,
+              'total_timer_time': 59,
+              'elevation_gain': 2,
+              'elevation_loss': 2,
+            }),
+            201,
+          );
+        });
+        final service = ActivityUploadService(
+          apiClient: ApiClient(
+            storage: storage,
+            authService: auth,
+            requestExecutor: ApiRequestExecutor(client),
+          ),
+          storage: storage,
+          authService: auth,
+          gpxExporter: GpxExporter(),
+          queueService: _FakeUploadQueueService(),
+          activityRepository: repository,
+        );
+
+        final result = await service.uploadActivity(activity);
+        final stored = await repository.getById(activity.id);
+
+        expect(result.success, isTrue);
+        expect(stored, isNotNull);
+        expect(stored!.uploaded, isTrue);
+        expect(stored.distanceMeters, equals(76));
+        expect(stored.durationSeconds, equals(59));
+        expect(stored.elevationGainMeters, equals(2));
+        expect(stored.elevationLossMeters, equals(2));
       },
     );
 
@@ -638,10 +736,11 @@ void main() {
         accessToken: 'token-a',
       );
       final auth = _FakeAuthService(() async => false, storage: storage);
+      final activity = _activityFixture().copyWith(id: '321');
       final seenPaths = <String>[];
       final client = MockClient((request) async {
         seenPaths.add(request.url.path);
-        if (request.url.path == '/api/v1/activities/upload-1/delete') {
+        if (request.url.path == '/api/v1/activities/321/delete') {
           return http.Response('', 204);
         }
         return http.Response('', 404);
@@ -659,12 +758,157 @@ void main() {
         queueService: _FakeUploadQueueService(),
       );
 
-      final result = await service.deleteActivity(_activityFixture());
+      final result = await service.deleteActivity(activity);
 
       expect(result.success, isTrue);
       expect(result.statusCode, equals(204));
-      expect(seenPaths, contains('/api/v1/activities/upload-1/delete'));
+      expect(seenPaths, contains('/api/v1/activities/321/delete'));
     });
+
+    test(
+      'upload persistiert server_activity_id aus erfolgreicher Serverantwort',
+      () async {
+        final storage = _FakeStorageService(
+          serverUrl: 'https://example.com',
+          accessToken: 'token-a',
+        );
+        final auth = _FakeAuthService(() async => false, storage: storage);
+        final repository = _FakeActivityRepository();
+        final activity = _activityFixture();
+        await repository.create(activity);
+        final client = MockClient(
+          (request) async => http.Response('[{"id": 321}]', 201),
+        );
+        final service = ActivityUploadService(
+          apiClient: ApiClient(
+            storage: storage,
+            authService: auth,
+            requestExecutor: ApiRequestExecutor(client),
+          ),
+          storage: storage,
+          authService: auth,
+          gpxExporter: GpxExporter(),
+          queueService: _FakeUploadQueueService(),
+          activityRepository: repository,
+        );
+
+        final result = await service.uploadActivity(activity);
+        final stored = await repository.getById(activity.id);
+
+        expect(result.success, isTrue);
+        expect(result.serverActivityId, equals(321));
+        expect(stored?.uploaded, isTrue);
+        expect(stored?.qualityMetrics?['server_activity_id'], equals(321));
+      },
+    );
+
+    test('delete nutzt zuerst gespeicherte server_activity_id', () async {
+      final storage = _FakeStorageService(
+        serverUrl: 'https://example.com',
+        accessToken: 'token-a',
+      );
+      final auth = _FakeAuthService(() async => false, storage: storage);
+      final seenPaths = <String>[];
+      final client = MockClient((request) async {
+        seenPaths.add(request.url.path);
+        if (request.url.path == '/api/v1/activities/321/delete') {
+          return http.Response('', 204);
+        }
+        return http.Response('', 404);
+      });
+      final service = ActivityUploadService(
+        apiClient: ApiClient(
+          storage: storage,
+          authService: auth,
+          requestExecutor: ApiRequestExecutor(client),
+        ),
+        storage: storage,
+        authService: auth,
+        gpxExporter: GpxExporter(),
+        queueService: _FakeUploadQueueService(),
+      );
+      final uploadedActivity = _activityFixture().copyWith(
+        uploaded: true,
+        qualityMetrics: <String, dynamic>{'server_activity_id': 321},
+      );
+
+      final result = await service.deleteActivity(uploadedActivity);
+
+      expect(result.success, isTrue);
+      expect(seenPaths.first, equals('/api/v1/activities/321/delete'));
+    });
+
+    test(
+      'delete priorisiert nicht-405 Fehlerdetail gegenüber späterem 405',
+      () async {
+        final storage = _FakeStorageService(
+          serverUrl: 'https://example.com',
+          accessToken: 'token-a',
+        );
+        final auth = _FakeAuthService(() async => false, storage: storage);
+        final activity = _activityFixture().copyWith(id: '123');
+        final client = MockClient((request) async {
+          if (request.url.path == '/api/v1/activities/123/delete') {
+            return http.Response('{"detail":"Activity ID invalid"}', 404);
+          }
+          return http.Response('Method Not Allowed', 405);
+        });
+        final service = ActivityUploadService(
+          apiClient: ApiClient(
+            storage: storage,
+            authService: auth,
+            requestExecutor: ApiRequestExecutor(client),
+          ),
+          storage: storage,
+          authService: auth,
+          gpxExporter: GpxExporter(),
+          queueService: _FakeUploadQueueService(),
+        );
+
+        final result = await service.deleteActivity(activity);
+
+        expect(result.success, isFalse);
+        expect(result.statusCode, equals(404));
+        expect(result.serverDetail, contains('Activity ID invalid'));
+      },
+    );
+
+    test(
+      'delete überspringt inkompatible lokale IDs und liefert klare Fehlermeldung',
+      () async {
+        final storage = _FakeStorageService(
+          serverUrl: 'https://example.com',
+          accessToken: 'token-a',
+        );
+        final auth = _FakeAuthService(() async => false, storage: storage);
+        var calls = 0;
+        final client = MockClient((request) async {
+          calls++;
+          return http.Response('', 500);
+        });
+        final service = ActivityUploadService(
+          apiClient: ApiClient(
+            storage: storage,
+            authService: auth,
+            requestExecutor: ApiRequestExecutor(client),
+          ),
+          storage: storage,
+          authService: auth,
+          gpxExporter: GpxExporter(),
+          queueService: _FakeUploadQueueService(),
+        );
+        final activity = _activityFixture().copyWith(
+          id: '1742338800000000',
+          uploaded: true,
+        );
+
+        final result = await service.deleteActivity(activity);
+
+        expect(result.success, isFalse);
+        expect(calls, equals(0));
+        expect(result.serverDetail, contains('no compatible server id'));
+      },
+    );
 
     test('delete 401 ohne refresh liefert authentication failure', () async {
       final storage = _FakeStorageService(
@@ -686,7 +930,9 @@ void main() {
         queueService: _FakeUploadQueueService(),
       );
 
-      final result = await service.deleteActivity(_activityFixture());
+      final result = await service.deleteActivity(
+        _activityFixture().copyWith(id: '123'),
+      );
 
       expect(result.success, isFalse);
       expect(result.failureType, ActivityUploadFailureType.authentication);
