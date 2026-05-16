@@ -76,6 +76,10 @@ class SsoService {
       throw Exception('Server URL not configured');
     }
 
+    if (serverUrl != null && serverUrl.isNotEmpty) {
+      await _storage.setServerUrl(serverUrl);
+    }
+
     // Generate PKCE parameters
     _ssoPicke = PkceUtils.generatePkce();
 
@@ -90,7 +94,29 @@ class SsoService {
           },
         );
 
-    return oauthUrl.toString();
+    final client = http.Client();
+    try {
+      final request = http.Request('GET', oauthUrl)
+        ..followRedirects = false
+        ..headers[ApiConstants.clientTypeHeader] = ApiConstants.clientTypeValue;
+
+      final response = await client.send(request);
+      final redirectLocation = response.headers['location'];
+
+      if (response.statusCode >= 300 &&
+          response.statusCode < 400 &&
+          redirectLocation != null &&
+          redirectLocation.isNotEmpty) {
+        return Uri.parse(url).resolve(redirectLocation).toString();
+      }
+
+      throw Exception('OAuth initiation did not return a redirect');
+    } catch (e) {
+      _ssoPicke = null;
+      throw Exception('Failed to initiate SSO: $e');
+    } finally {
+      client.close();
+    }
   }
 
   /// Exchange session ID for tokens using PKCE code verifier
@@ -129,12 +155,18 @@ class SsoService {
         final accessToken = data['access_token'] as String?;
         final refreshToken = data['refresh_token'] as String?;
         final returnedSessionId = data['session_id'] as String?;
+        final expiresIn = data['expires_in'] as int?;
 
         if (accessToken != null) {
           await _storage.setAccessToken(accessToken);
         }
         if (refreshToken != null) {
           await _storage.setRefreshToken(refreshToken);
+        }
+        if (expiresIn != null) {
+          await _storage.setAccessTokenExpiresAt(
+            DateTime.now().toUtc().add(Duration(seconds: expiresIn)),
+          );
         }
         if (returnedSessionId != null) {
           await _storage.setSessionId(returnedSessionId);

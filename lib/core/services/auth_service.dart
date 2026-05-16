@@ -171,12 +171,18 @@ class AuthService {
         final accessToken = data['access_token'] as String?;
         final refreshToken = data['refresh_token'] as String?;
         final returnedSessionId = data['session_id'] as String?;
+        final expiresIn = data['expires_in'] as int?;
 
         if (accessToken != null) {
           await _storage.setAccessToken(accessToken);
         }
         if (refreshToken != null) {
           await _storage.setRefreshToken(refreshToken);
+        }
+        if (expiresIn != null) {
+          await _storage.setAccessTokenExpiresAt(
+            DateTime.now().toUtc().add(Duration(seconds: expiresIn)),
+          );
         }
         await _storage.setUsername(username);
         if (returnedSessionId != null) {
@@ -214,22 +220,31 @@ class AuthService {
       final response = await http.post(
         url,
         headers: {
-          ApiConstants.contentTypeHeader: ApiConstants.contentTypeJson,
+          ApiConstants.authorizationHeader: 'Bearer $refreshToken',
           ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue,
         },
-        body: json.encode({'refresh_token': refreshToken}),
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final newAccessToken = data['access_token'] as String?;
         final newRefreshToken = data['refresh_token'] as String?;
+        final returnedSessionId = data['session_id'] as String?;
+        final expiresIn = data['expires_in'] as int?;
 
         if (newAccessToken != null) {
           await _storage.setAccessToken(newAccessToken);
         }
         if (newRefreshToken != null) {
           await _storage.setRefreshToken(newRefreshToken);
+        }
+        if (returnedSessionId != null) {
+          await _storage.setSessionId(returnedSessionId);
+        }
+        if (expiresIn != null) {
+          await _storage.setAccessTokenExpiresAt(
+            DateTime.now().toUtc().add(Duration(seconds: expiresIn)),
+          );
         }
         return true;
       }

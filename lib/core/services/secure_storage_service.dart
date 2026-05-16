@@ -13,6 +13,7 @@ class SecureStorageService {
   static const _accessTokenKey = 'access_token';
   static const _refreshTokenKey = 'refresh_token';
   static const _sessionIdKey = 'session_id';
+  static const _accessTokenExpiresAtKey = 'access_token_expires_at';
 
   // Read a value
   Future<String?> read({required String key}) async {
@@ -100,6 +101,32 @@ class SecureStorageService {
       write(key: _sessionIdKey, value: sessionId);
   Future<void> deleteSessionId() => delete(key: _sessionIdKey);
 
+  Future<DateTime?> getAccessTokenExpiresAt() async {
+    final value = await read(key: _accessTokenExpiresAtKey);
+    if (value == null || value.isEmpty) {
+      return null;
+    }
+    return DateTime.tryParse(value);
+  }
+
+  Future<void> setAccessTokenExpiresAt(DateTime expiresAt) => write(
+    key: _accessTokenExpiresAtKey,
+    value: expiresAt.toUtc().toIso8601String(),
+  );
+
+  Future<void> deleteAccessTokenExpiresAt() =>
+      delete(key: _accessTokenExpiresAtKey);
+
+  Future<bool> isAccessTokenExpiringSoon({
+    Duration threshold = const Duration(minutes: 2),
+  }) async {
+    final expiresAt = await getAccessTokenExpiresAt();
+    if (expiresAt == null) {
+      return false;
+    }
+    return DateTime.now().toUtc().add(threshold).isAfter(expiresAt);
+  }
+
   // Check if user is authenticated
   Future<bool> isAuthenticated() async {
     final accessToken = await getAccessToken();
@@ -111,5 +138,6 @@ class SecureStorageService {
     await deleteAccessToken();
     await deleteRefreshToken();
     await deleteSessionId();
+    await deleteAccessTokenExpiresAt();
   }
 }

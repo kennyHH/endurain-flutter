@@ -39,7 +39,7 @@ class ApiClient {
       throw Exception('Server URL not configured');
     }
 
-    final accessToken = await _storage.getAccessToken();
+    final accessToken = await _getValidAccessToken();
     if (accessToken == null || accessToken.isEmpty) {
       throw Exception('Not authenticated');
     }
@@ -96,7 +96,7 @@ class ApiClient {
       throw Exception('Server URL not configured');
     }
 
-    final accessToken = await _storage.getAccessToken();
+    final accessToken = await _getValidAccessToken();
     if (accessToken == null || accessToken.isEmpty) {
       throw Exception('Not authenticated');
     }
@@ -129,5 +129,19 @@ class ApiClient {
     }
 
     return response;
+  }
+
+  Future<String?> _getValidAccessToken() async {
+    final accessToken = await _storage.getAccessToken();
+    if (accessToken == null || accessToken.isEmpty) {
+      return accessToken;
+    }
+
+    if (await _storage.isAccessTokenExpiringSoon()) {
+      await _authService.refreshToken();
+      return _storage.getAccessToken();
+    }
+
+    return accessToken;
   }
 }
