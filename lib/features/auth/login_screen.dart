@@ -102,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // Slight delay to show the step 2 briefly before redirecting
           await Future<void>.delayed(const Duration(milliseconds: 100));
           if (mounted) {
-            _handleSsoLogin(idps.first);
+            await _handleSsoLogin(idps.first);
           }
         }
       }

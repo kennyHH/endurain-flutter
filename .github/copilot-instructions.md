@@ -12,6 +12,14 @@
 
 ## Code Conventions
 
+### Commits logic
+
+Committing should use clear messages following [Conventional Commits](https://www.conventionalcommits.org/) format, e.g.:
+- `feat: add GPX max speed parsing`
+- `fix: handle multi-segment GPX distance correctly`
+- `docs: update development instructions`
+- `test: add regression test for GPX segment handling`
+
 ### File Naming
 - Use **snake_case** for all Dart files: `map_screen.dart`, `location_service.dart`
 - Feature folders: `lib/features/map/`, `lib/features/settings/`

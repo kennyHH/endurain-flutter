@@ -118,6 +118,10 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
               ),
             );
           }
+
+          if (!mounted) {
+            return;
+          }
         }
         // Pop back to settings screen and trigger logout
         Navigator.pop(context);

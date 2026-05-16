@@ -80,11 +80,11 @@ class SsoService {
     _ssoPicke = PkceUtils.generatePkce();
 
     // Build OAuth URL with PKCE challenge
-    final pkce = _ssoPicke!; // Null check here for better readability
+    final pkce = _ssoPicke!;
     final oauthUrl = Uri.parse('$url${ApiConstants.idpLoginEndpoint}/$idpSlug')
         .replace(
           queryParameters: {
-            'code_challenge': pkce['challenge']!,
+            'code_challenge': pkce['challenge'],
             'code_challenge_method': 'S256',
             'redirect': '/dashboard', // Frontend path after successful login
           },
