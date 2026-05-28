@@ -49,13 +49,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not logout from server, but logged out locally';
 
   @override
-  String get retry => 'Retry';
+  String get ssoBrowserLaunchFailed =>
+      'Could not open SSO sign-in in the system browser';
 
   @override
-  String get ssoWebViewTitle => 'Sign In';
-
-  @override
-  String get ssoCancel => 'Cancel';
+  String get ssoMissingSessionId => 'SSO callback did not include a session ID';
 
   @override
   String ssoSignInWith(String provider) {

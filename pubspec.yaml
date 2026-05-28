@@ -60,8 +60,9 @@ dependencies:
   # Crypto utilities for PKCE
   crypto: ^3.0.6
   
-  # WebView for SSO/OAuth flows (F-Droid compatible)
-  webview_flutter: ^4.10.0
+  # System browser OAuth/SSO flow with deep-link callback
+  app_links: ^7.0.0
+  url_launcher: ^6.3.1
   
   # SVG support for SSO provider icons
   flutter_svg: ^2.0.16

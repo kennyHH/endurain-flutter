@@ -55,17 +55,13 @@
   "@logoutServerFailedWarning": {
     "description": "Warning shown when server logout fails but local logout succeeds - Used in: server_settings_screen.dart"
   },
-  "retry": "Retry",
-  "@retry": {
-    "description": "Retry button label - Used in: sso_webview_screen.dart"
+  "ssoBrowserLaunchFailed": "Could not open SSO sign-in in the system browser",
+  "@ssoBrowserLaunchFailed": {
+    "description": "Error shown when SSO system browser launch fails - Used in: login_screen.dart"
   },
-  "ssoWebViewTitle": "Sign In",
-  "@ssoWebViewTitle": {
-    "description": "SSO WebView screen title - Used in: sso_webview_screen.dart"
-  },
-  "ssoCancel": "Cancel",
-  "@ssoCancel": {
-    "description": "SSO cancel button label - Used in: sso_webview_screen.dart"
+  "ssoMissingSessionId": "SSO callback did not include a session ID",
+  "@ssoMissingSessionId": {
+    "description": "Error shown when the SSO callback URL lacks a session_id - Used in: login_screen.dart"
   },
   "ssoSignInWith": "Sign in with {provider}",
   "@ssoSignInWith": {

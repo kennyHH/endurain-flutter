@@ -8,10 +8,12 @@ import 'package:endurain/core/services/auth_service.dart';
 
 /// Service for SSO/OAuth authentication
 class SsoService {
+  static const callbackUrl = 'endurain://auth/sso/callback';
+
   final SecureStorageService _storage = SecureStorageService();
 
   // Store PKCE temporarily during SSO flow
-  Map<String, String>? _ssoPicke;
+  Map<String, String>? _ssoPkce;
 
   /// Get list of enabled identity providers from server
   Future<List<IdentityProvider>> getEnabledProviders({
@@ -64,7 +66,7 @@ class SsoService {
   }
 
   /// Initiate OAuth flow with PKCE
-  /// Returns the WebView URL to load
+  /// Returns the system browser URL to open
   Future<String> initiateOAuth(String idpSlug, {String? serverUrl}) async {
     // Use provided serverUrl or get from storage
     String? url = serverUrl;
@@ -81,53 +83,30 @@ class SsoService {
     }
 
     // Generate PKCE parameters
-    _ssoPicke = PkceUtils.generatePkce();
+    _ssoPkce = PkceUtils.generatePkce();
 
     // Build OAuth URL with PKCE challenge
-    final pkce = _ssoPicke!;
+    final pkce = _ssoPkce!;
     final oauthUrl = Uri.parse('$url${ApiConstants.idpLoginEndpoint}/$idpSlug')
         .replace(
           queryParameters: {
             'code_challenge': pkce['challenge'],
             'code_challenge_method': 'S256',
-            'redirect': '/dashboard', // Frontend path after successful login
+            'redirect': callbackUrl,
           },
         );
-
-    final client = http.Client();
-    try {
-      final request = http.Request('GET', oauthUrl)
-        ..followRedirects = false
-        ..headers[ApiConstants.clientTypeHeader] = ApiConstants.clientTypeValue;
-
-      final response = await client.send(request);
-      final redirectLocation = response.headers['location'];
-
-      if (response.statusCode >= 300 &&
-          response.statusCode < 400 &&
-          redirectLocation != null &&
-          redirectLocation.isNotEmpty) {
-        return Uri.parse(url).resolve(redirectLocation).toString();
-      }
-
-      throw Exception('OAuth initiation did not return a redirect');
-    } catch (e) {
-      _ssoPicke = null;
-      throw Exception('Failed to initiate SSO: $e');
-    } finally {
-      client.close();
-    }
+    return oauthUrl.toString();
   }
 
   /// Exchange session ID for tokens using PKCE code verifier
-  /// Called after WebView detects successful OAuth callback with session_id
+  /// Called after the deep-link callback provides a session_id
   Future<AuthResult> exchangeSessionForTokens(String sessionId) async {
     final serverUrl = await _storage.getServerUrl();
     if (serverUrl == null || serverUrl.isEmpty) {
       throw Exception('Server URL not configured');
     }
 
-    if (_ssoPicke == null || _ssoPicke!['verifier'] == null) {
+    if (_ssoPkce == null || _ssoPkce!['verifier'] == null) {
       throw Exception('PKCE verifier not found. Please restart SSO login.');
     }
 
@@ -142,11 +121,11 @@ class SsoService {
           ApiConstants.contentTypeHeader: ApiConstants.contentTypeJson,
           ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue,
         },
-        body: json.encode({'code_verifier': _ssoPicke!['verifier']}),
+        body: json.encode({'code_verifier': _ssoPkce!['verifier']}),
       );
 
       // Clear verifier after use (one-time exchange)
-      _ssoPicke = null;
+      _ssoPkce = null;
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -184,13 +163,13 @@ class SsoService {
         throw Exception(error['detail'] ?? 'Token exchange failed');
       }
     } catch (e) {
-      _ssoPicke = null; // Clear verifier on error
+      _ssoPkce = null; // Clear verifier on error
       throw Exception('SSO token exchange error: $e');
     }
   }
 
   /// Clear PKCE verifier (e.g., when user cancels SSO)
   void clearPkce() {
-    _ssoPicke = null;
+    _ssoPkce = null;
   }
 }

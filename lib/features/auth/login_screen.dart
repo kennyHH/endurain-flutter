@@ -1,6 +1,10 @@
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/core/services/auth_service.dart';
 import 'package:endurain/core/services/sso_service.dart';
@@ -11,7 +15,6 @@ import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/core/utils/validators.dart';
 import 'package:endurain/core/utils/dialog_utils.dart';
 import 'package:endurain/core/constants/ui_constants.dart';
-import 'package:endurain/features/auth/sso_webview_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, this.onLoginSuccess});
@@ -31,6 +34,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _authService = AuthService();
   final _ssoService = SsoService();
   final _serverSettingsService = ServerSettingsService();
+  late final AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
 
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -41,6 +46,12 @@ class _LoginScreenState extends State<LoginScreen> {
   List<IdentityProvider> _availableIdPs = [];
   ServerSettings? _serverSettings;
 
+  @override
+  void initState() {
+    super.initState();
+    _initializeSsoCallbackListener();
+  }
+
   /// Whether local login (username/password) is enabled
   bool get _localLoginEnabled => _serverSettings?.localLoginEnabled ?? true;
 
@@ -50,7 +61,74 @@ class _LoginScreenState extends State<LoginScreen> {
     _usernameController.dispose();
     _passwordController.dispose();
     _mfaCodeController.dispose();
+    _linkSubscription?.cancel();
     super.dispose();
+  }
+
+  void _initializeSsoCallbackListener() {
+    _appLinks = AppLinks();
+    _linkSubscription = _appLinks.uriLinkStream.listen(
+      _handleSsoCallbackUri,
+      onError: (Object error) {
+        if (mounted) {
+          _showError(error.toString());
+        }
+      },
+    );
+  }
+
+  Future<void> _handleSsoCallbackUri(Uri uri) async {
+    if (uri.scheme != 'endurain' ||
+        uri.host != 'auth' ||
+        uri.path != '/sso/callback') {
+      return;
+    }
+
+    final sessionId = uri.queryParameters['session_id'];
+    final error = uri.queryParameters['message'] ?? uri.queryParameters['error'];
+
+    if (error != null && error.isNotEmpty) {
+      _ssoService.clearPkce();
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        _showError(error);
+      }
+      return;
+    }
+
+    if (sessionId == null || sessionId.isEmpty) {
+      _ssoService.clearPkce();
+      if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        setState(() {
+          _isLoading = false;
+        });
+        _showError(l10n.ssoMissingSessionId);
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
+
+    try {
+      await _ssoService.exchangeSessionForTokens(sessionId);
+      if (mounted) {
+        widget.onLoginSuccess?.call();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        _showError(e.toString());
+      }
+    }
   }
 
   /// Step 1: Validate server URL, fetch server settings and available IdPs
@@ -130,37 +208,21 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
+
         setState(() {
           _isLoading = false;
         });
 
-        // Open WebView
-        await Navigator.push<void>(
-          context,
-          MaterialPageRoute<void>(
-            builder: (context) => SsoWebViewScreen(
-              oauthUrl: oauthUrl,
-              onSessionIdReceived: (sessionId) async {
-                // Exchange session for tokens
-                try {
-                  await _ssoService.exchangeSessionForTokens(sessionId);
-                  if (mounted) {
-                    widget.onLoginSuccess?.call();
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    _showError(e.toString());
-                  }
-                }
-              },
-              onError: (error) {
-                if (mounted) {
-                  _showError(error);
-                }
-              },
-            ),
-          ),
+        final launched = await launchUrl(
+          Uri.parse(oauthUrl),
+          mode: LaunchMode.externalApplication,
         );
+
+        if (!launched && mounted) {
+          _ssoService.clearPkce();
+          _showError(l10n.ssoBrowserLaunchFailed);
+        }
       }
     } catch (e) {
       if (mounted) {

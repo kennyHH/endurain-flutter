@@ -49,13 +49,12 @@ class AppLocalizationsPt extends AppLocalizations {
       'Não foi possível sair do servidor, mas saiu localmente';
 
   @override
-  String get retry => 'Tentar Novamente';
+  String get ssoBrowserLaunchFailed =>
+      'Não foi possível abrir o login SSO no navegador do sistema';
 
   @override
-  String get ssoWebViewTitle => 'Entrar';
-
-  @override
-  String get ssoCancel => 'Cancelar';
+  String get ssoMissingSessionId =>
+      'O retorno do SSO não incluiu um ID de sessão';
 
   @override
   String ssoSignInWith(String provider) {

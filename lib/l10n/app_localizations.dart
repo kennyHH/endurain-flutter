@@ -176,23 +176,17 @@ abstract class AppLocalizations {
   /// **'Could not logout from server, but logged out locally'**
   String get logoutServerFailedWarning;
 
-  /// Retry button label - Used in: sso_webview_screen.dart
+  /// Error shown when SSO system browser launch fails - Used in: login_screen.dart
   ///
   /// In en, this message translates to:
-  /// **'Retry'**
-  String get retry;
+  /// **'Could not open SSO sign-in in the system browser'**
+  String get ssoBrowserLaunchFailed;
 
-  /// SSO WebView screen title - Used in: sso_webview_screen.dart
+  /// Error shown when the SSO callback URL lacks a session_id - Used in: login_screen.dart
   ///
   /// In en, this message translates to:
-  /// **'Sign In'**
-  String get ssoWebViewTitle;
-
-  /// SSO cancel button label - Used in: sso_webview_screen.dart
-  ///
-  /// In en, this message translates to:
-  /// **'Cancel'**
-  String get ssoCancel;
+  /// **'SSO callback did not include a session ID'**
+  String get ssoMissingSessionId;
 
   /// SSO provider button label - Used in: login_screen.dart
   ///
