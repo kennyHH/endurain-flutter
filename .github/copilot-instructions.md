@@ -14,7 +14,7 @@
 
 ### Commits logic
 
-Committing should use clear messages following [Conventional Commits](https://www.conventionalcommits.org/) format, e.g.:
+Committing should use clear messages following [Conventional Commits](https://www.conventionalcommits.org/) format with less than 72 characters on the first line, e.g.:
 - `feat: add GPX max speed parsing`
 - `fix: handle multi-segment GPX distance correctly`
 - `docs: update development instructions`

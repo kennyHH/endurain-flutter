@@ -1,0 +1,60 @@
+name: Lint, Format, and Test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: 3.38.10
+  FLUTTER_ARCHIVE: flutter_linux_3.38.10-stable.tar.xz
+  FLUTTER_SHA256: 385e2629a0a585a835f351ca1605d2c7996377ce2fa16e68296e8fc9a78ccf7a
+  FLUTTER_STORAGE_URL: https://storage.googleapis.com/flutter_infra_release/releases/stable/linux
+
+concurrency:
+  group: ${{ forgejo.workflow }}-${{ forgejo.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  flutter:
+    name: Flutter
+    runs-on: codeberg-small
+    steps:
+      - name: Checkout code
+        uses: https://data.forgejo.org/actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Install Flutter
+        run: |
+          set -euo pipefail
+          install_dir="$PWD/.ci/flutter-sdk"
+          archive_path="$PWD/.ci/$FLUTTER_ARCHIVE"
+
+          mkdir -p "$install_dir"
+          curl --fail --location --show-error \
+            --output "$archive_path" \
+            "$FLUTTER_STORAGE_URL/$FLUTTER_ARCHIVE"
+          echo "$FLUTTER_SHA256  $archive_path" | sha256sum --check -
+          tar -xf "$archive_path" -C "$install_dir" --strip-components=1
+          echo "$install_dir/bin" >> "$FORGEJO_PATH"
+
+      - name: Check Flutter version
+        run: flutter --version | grep "Flutter $FLUTTER_VERSION"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze Dart code
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
