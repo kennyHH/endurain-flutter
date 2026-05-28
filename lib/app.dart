@@ -4,7 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:endurain/core/theme/app_theme.dart';
 import 'package:endurain/shared/widgets/app_bottom_nav.dart';
 import 'package:endurain/features/auth/login_screen.dart';
-import 'package:endurain/core/services/secure_storage_service.dart';
+import 'package:endurain/core/services/auth_service.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
 
@@ -16,7 +16,7 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  final _storage = SecureStorageService();
+  final _authService = AuthService();
   bool _isLoading = true;
   bool _isAuthenticated = false;
 
@@ -27,7 +27,7 @@ class _AppState extends State<App> {
   }
 
   Future<void> _checkAuthentication() async {
-    final isAuth = await _storage.isAuthenticated();
+    final isAuth = await _authService.isAuthenticated();
     if (mounted) {
       setState(() {
         _isAuthenticated = isAuth;

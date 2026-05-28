@@ -288,8 +288,28 @@ class AuthService {
   }
 
   /// Check if user is authenticated
-  Future<bool> isAuthenticated() {
-    return _storage.isAuthenticated();
+  Future<bool> isAuthenticated() async {
+    final accessToken = await _storage.getAccessToken();
+    final storedRefreshToken = await _storage.getRefreshToken();
+
+    if (accessToken != null &&
+        accessToken.isNotEmpty &&
+        !await _storage.isAccessTokenExpiringSoon()) {
+      return true;
+    }
+
+    if (storedRefreshToken == null || storedRefreshToken.isEmpty) {
+      await _storage.clearAuthTokens();
+      return false;
+    }
+
+    final refreshed = await refreshToken();
+    if (refreshed) {
+      return true;
+    }
+
+    await _storage.clearAuthTokens();
+    return false;
   }
 }
 
