@@ -11,7 +11,12 @@ import 'package:endurain/core/services/auth_service.dart';
 class SsoService {
   static const callbackUrl = 'endurain://auth/sso/callback';
 
-  final SecureStorageService _storage = SecureStorageService();
+  SsoService({SecureStorageService? storage, http.Client? httpClient})
+    : _storage = storage ?? SecureStorageService(),
+      _httpClient = httpClient ?? http.Client();
+
+  final SecureStorageService _storage;
+  final http.Client _httpClient;
 
   // Store PKCE temporarily during SSO flow
   Map<String, String>? _ssoPkce;
@@ -33,7 +38,7 @@ class SsoService {
     final apiUrl = Uri.parse('$url${ApiConstants.idpListEndpoint}');
 
     try {
-      final response = await http.get(
+      final response = await _httpClient.get(
         apiUrl,
         headers: {ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue},
       );
@@ -121,7 +126,7 @@ class SsoService {
     );
 
     try {
-      final response = await http.post(
+      final response = await _httpClient.post(
         url,
         headers: {
           ApiConstants.contentTypeHeader: ApiConstants.contentTypeJson,

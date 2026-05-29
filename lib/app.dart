@@ -1,24 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:endurain/core/services/app_services.dart';
 import 'package:endurain/core/services/auth_service.dart';
 import 'package:endurain/features/auth/login_screen.dart';
 import 'package:endurain/shared/adaptive/adaptive.dart';
 import 'package:endurain/shared/widgets/app_bottom_nav.dart';
 
 class App extends StatefulWidget {
-  const App({super.key});
+  const App({super.key, this.authService});
+
+  final AuthService? authService;
 
   @override
   State<App> createState() => _AppState();
 }
 
 class _AppState extends State<App> {
-  final _authService = AuthService();
+  late final AuthService _authService;
   bool _isLoading = true;
   bool _isAuthenticated = false;
 
   @override
   void initState() {
     super.initState();
+    _authService = widget.authService ?? AppServices.instance.auth;
     _checkAuthentication();
   }
 

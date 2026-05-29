@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:endurain/l10n/app_localizations.dart';
+import 'package:endurain/core/services/app_services.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/services/auth_service.dart';
 import 'package:endurain/core/utils/validators.dart';
@@ -10,9 +11,16 @@ import 'package:endurain/core/constants/map_constants.dart';
 import 'package:endurain/shared/adaptive/adaptive.dart';
 
 class ServerSettingsScreen extends StatefulWidget {
-  const ServerSettingsScreen({super.key, this.onLogout});
+  const ServerSettingsScreen({
+    super.key,
+    this.onLogout,
+    this.storage,
+    this.authService,
+  });
 
   final VoidCallback? onLogout;
+  final SecureStorageService? storage;
+  final AuthService? authService;
 
   @override
   State<ServerSettingsScreen> createState() => _ServerSettingsScreenState();
@@ -21,8 +29,8 @@ class ServerSettingsScreen extends StatefulWidget {
 class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
   final _formKey = GlobalKey<FormState>();
   final _tileServerUrlController = TextEditingController();
-  final _storage = SecureStorageService();
-  final _authService = AuthService();
+  late final SecureStorageService _storage;
+  late final AuthService _authService;
   bool _isLoading = true;
   String _serverUrl = '';
   String _username = '';
@@ -30,6 +38,8 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
   @override
   void initState() {
     super.initState();
+    _storage = widget.storage ?? AppServices.instance.secureStorage;
+    _authService = widget.authService ?? AppServices.instance.auth;
     _loadSettings();
   }
 

@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:endurain/l10n/app_localizations.dart';
+import 'package:endurain/core/services/app_services.dart';
 import 'package:endurain/core/services/auth_service.dart';
 import 'package:endurain/core/services/sso_service.dart';
 import 'package:endurain/core/services/server_settings_service.dart';
@@ -17,9 +18,18 @@ import 'package:endurain/core/constants/ui_constants.dart';
 import 'package:endurain/shared/adaptive/adaptive.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key, this.onLoginSuccess});
+  const LoginScreen({
+    super.key,
+    this.onLoginSuccess,
+    this.authService,
+    this.ssoService,
+    this.serverSettingsService,
+  });
 
   final VoidCallback? onLoginSuccess;
+  final AuthService? authService;
+  final SsoService? ssoService;
+  final ServerSettingsService? serverSettingsService;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -31,9 +41,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _mfaCodeController = TextEditingController();
-  final _authService = AuthService();
-  final _ssoService = SsoService();
-  final _serverSettingsService = ServerSettingsService();
+  late final AuthService _authService;
+  late final SsoService _ssoService;
+  late final ServerSettingsService _serverSettingsService;
   late final AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
 
@@ -49,6 +59,10 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    _authService = widget.authService ?? AppServices.instance.auth;
+    _ssoService = widget.ssoService ?? AppServices.instance.sso;
+    _serverSettingsService =
+        widget.serverSettingsService ?? AppServices.instance.serverSettings;
     _initializeSsoCallbackListener();
   }
 

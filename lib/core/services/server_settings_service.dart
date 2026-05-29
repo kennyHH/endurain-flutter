@@ -7,7 +7,14 @@ import 'package:endurain/core/constants/api_constants.dart';
 
 /// Service for fetching and managing server settings
 class ServerSettingsService {
-  final SecureStorageService _storage = SecureStorageService();
+  ServerSettingsService({
+    SecureStorageService? storage,
+    http.Client? httpClient,
+  }) : _storage = storage ?? SecureStorageService(),
+       _httpClient = httpClient ?? http.Client();
+
+  final SecureStorageService _storage;
+  final http.Client _httpClient;
 
   /// Fetch server settings from the server
   Future<ServerSettings> getServerSettings({String? serverUrl}) async {
@@ -24,7 +31,7 @@ class ServerSettingsService {
     final apiUrl = Uri.parse('$url${ApiConstants.serverSettingsEndpoint}');
 
     try {
-      final response = await http.get(
+      final response = await _httpClient.get(
         apiUrl,
         headers: {ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue},
       );

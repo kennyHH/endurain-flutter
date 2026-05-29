@@ -7,6 +7,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:endurain/core/services/app_services.dart';
 import 'package:endurain/core/services/location_service.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
@@ -15,7 +16,10 @@ import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/shared/adaptive/adaptive.dart';
 
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  const MapScreen({super.key, this.locationService, this.storage});
+
+  final LocationService? locationService;
+  final SecureStorageService? storage;
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -23,8 +27,8 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
-  final LocationService _locationService = LocationService();
-  final SecureStorageService _storage = SecureStorageService();
+  late final LocationService _locationService;
+  late final SecureStorageService _storage;
   LatLng _currentLocation = const LatLng(
     MapConstants.defaultLatitude,
     MapConstants.defaultLongitude,
@@ -40,6 +44,8 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
+    _locationService = widget.locationService ?? AppServices.instance.location;
+    _storage = widget.storage ?? AppServices.instance.secureStorage;
     _loadSettings();
     _loadUserLocation();
     _startCompassUpdates();

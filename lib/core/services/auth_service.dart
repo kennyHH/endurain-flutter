@@ -6,7 +6,12 @@ import 'package:endurain/core/models/app_exception.dart';
 import 'package:endurain/core/utils/pkce_utils.dart';
 
 class AuthService {
-  final SecureStorageService _storage = SecureStorageService();
+  AuthService({SecureStorageService? storage, http.Client? httpClient})
+    : _storage = storage ?? SecureStorageService(),
+      _httpClient = httpClient ?? http.Client();
+
+  final SecureStorageService _storage;
+  final http.Client _httpClient;
 
   // Store PKCE temporarily during auth flow
   Map<String, String>? _pkce;
@@ -41,7 +46,7 @@ class AuthService {
     );
 
     try {
-      final response = await http.post(
+      final response = await _httpClient.post(
         apiUrl,
         headers: {
           ApiConstants.contentTypeHeader:
@@ -109,7 +114,7 @@ class AuthService {
     );
 
     try {
-      final response = await http.post(
+      final response = await _httpClient.post(
         url,
         headers: {
           ApiConstants.contentTypeHeader: ApiConstants.contentTypeJson,
@@ -165,7 +170,7 @@ class AuthService {
     );
 
     try {
-      final response = await http.post(
+      final response = await _httpClient.post(
         url,
         headers: {
           ApiConstants.contentTypeHeader: ApiConstants.contentTypeJson,
@@ -235,7 +240,7 @@ class AuthService {
     final url = Uri.parse('$serverUrl${ApiConstants.refreshEndpoint}');
 
     try {
-      final response = await http.post(
+      final response = await _httpClient.post(
         url,
         headers: {
           ApiConstants.authorizationHeader: 'Bearer $refreshToken',
@@ -290,7 +295,7 @@ class AuthService {
           ApiConstants.authorizationHeader: 'Bearer $refreshToken',
           ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue,
         };
-        final response = await http.post(url, headers: headers);
+        final response = await _httpClient.post(url, headers: headers);
 
         serverLogoutSuccess = response.statusCode == 200;
       } catch (e) {

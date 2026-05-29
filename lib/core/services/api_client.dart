@@ -6,8 +6,19 @@ import 'package:endurain/core/constants/api_constants.dart';
 import 'package:endurain/core/models/app_exception.dart';
 
 class ApiClient {
-  final SecureStorageService _storage = SecureStorageService();
-  final AuthService _authService = AuthService();
+  ApiClient({
+    SecureStorageService? storage,
+    AuthService? authService,
+    http.Client? httpClient,
+  }) : _storage = storage ?? SecureStorageService(),
+       _httpClient = httpClient ?? http.Client(),
+       _authService =
+           authService ??
+           AuthService(storage: storage ?? SecureStorageService());
+
+  final SecureStorageService _storage;
+  final AuthService _authService;
+  final http.Client _httpClient;
 
   /// Make an authenticated GET request
   Future<http.Response> get(String endpoint) {
@@ -66,21 +77,21 @@ class ApiClient {
   }) async {
     switch (method) {
       case 'GET':
-        return http.get(url, headers: headers);
+        return _httpClient.get(url, headers: headers);
       case 'POST':
-        return http.post(
+        return _httpClient.post(
           url,
           headers: headers,
           body: body != null ? json.encode(body) : null,
         );
       case 'PUT':
-        return http.put(
+        return _httpClient.put(
           url,
           headers: headers,
           body: body != null ? json.encode(body) : null,
         );
       case 'DELETE':
-        return http.delete(url, headers: headers);
+        return _httpClient.delete(url, headers: headers);
       default:
         throw AppException(AppErrorCode.unsupportedHttpMethod, details: method);
     }
