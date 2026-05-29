@@ -41,9 +41,10 @@ Validation run after the implementation:
 
 - `flutter analyze` passed with no Dart issues.
 - Full test suite passed: 13 tests.
-- Flutter still reports existing Swift Package Manager/CocoaPods migration
-  warnings for `flutter_compass` and the macOS project. These are platform build
-  integration warnings, not analyzer failures from this refactor.
+- At the time of that refactor, Flutter reported Swift Package
+  Manager/CocoaPods migration warnings for `flutter_compass` and the macOS
+  project. `flutter_compass` was later removed in favor of `geolocator` movement
+  heading.
 
 ## Highest Priority
 

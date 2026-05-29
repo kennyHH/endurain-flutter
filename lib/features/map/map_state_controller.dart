@@ -1,28 +1,22 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:endurain/core/constants/map_constants.dart';
 import 'package:endurain/core/services/location_service.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
-import 'package:endurain/core/utils/platform_utils.dart';
 
 class MapStateController extends ChangeNotifier {
   MapStateController({
     required LocationService locationService,
     required SecureStorageService storage,
-    Stream<CompassEvent>? compassEvents,
   }) : _locationService = locationService,
-       _storage = storage,
-       _compassEvents = compassEvents;
+       _storage = storage;
 
   final LocationService _locationService;
   final SecureStorageService _storage;
-  final Stream<CompassEvent>? _compassEvents;
 
-  StreamSubscription<CompassEvent>? _compassSubscription;
   StreamSubscription<Position>? _positionSubscription;
   bool _initialized = false;
   bool _isDisposed = false;
@@ -44,10 +38,6 @@ class MapStateController extends ChangeNotifier {
     _initialized = true;
 
     await Future.wait([_loadSettings(), _loadUserLocation()]);
-    if (_isDisposed) {
-      return;
-    }
-    _startCompassUpdates();
   }
 
   Future<void> _loadSettings() async {
@@ -70,6 +60,7 @@ class MapStateController extends ChangeNotifier {
 
     if (position != null) {
       currentLocation = LatLng(position.latitude, position.longitude);
+      _updateHeading(position);
       hasLocationPermission = true;
       isLoadingLocation = false;
       _notifyListeners();
@@ -82,30 +73,22 @@ class MapStateController extends ChangeNotifier {
     _notifyListeners();
   }
 
-  void _startCompassUpdates() {
-    if (!PlatformUtils.isMobile) {
-      return;
-    }
-
-    final events = _compassEvents ?? FlutterCompass.events;
-    _compassSubscription = events?.listen((event) {
-      final nextHeading = event.heading;
-      if (nextHeading == null) {
-        return;
-      }
-      heading = nextHeading;
-      _notifyListeners();
-    });
-  }
-
   void _startPositionUpdates() {
     _positionSubscription?.cancel();
     _positionSubscription = _locationService.getPositionStream().listen((
       position,
     ) {
       currentLocation = LatLng(position.latitude, position.longitude);
+      _updateHeading(position);
       _notifyListeners();
     });
+  }
+
+  void _updateHeading(Position position) {
+    if (position.heading.isNaN || position.heading < 0) {
+      return;
+    }
+    heading = position.heading;
   }
 
   void toggleLocationLock() {
@@ -130,7 +113,6 @@ class MapStateController extends ChangeNotifier {
   @override
   void dispose() {
     _isDisposed = true;
-    _compassSubscription?.cancel();
     _positionSubscription?.cancel();
     super.dispose();
   }

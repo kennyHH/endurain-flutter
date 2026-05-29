@@ -80,9 +80,8 @@ See the [Activity Tracking MVP Plan](devdocs/activity_tracking_mvp_plan.md) for 
 - **Platforms:** iOS, Android, macOS
 - **State Management:** setState (may evolve to Provider/Riverpod)
 - **Map Provider:** OpenStreetMap (flutter_map + latlong2)
-- **Location Services:** geolocator
+- **Location Services:** geolocator, including movement heading
 - **Secure Storage:** flutter_secure_storage
-- **Compass:** flutter_compass (mobile only)
 - **HTTP Client:** http package for API communication
 - **SSO/OAuth:** app_links for deep-link callbacks, url_launcher for system browser OAuth flow, flutter_svg for provider icons
 - **Security:** crypto package for PKCE challenge generation

@@ -47,10 +47,7 @@ dependencies:
   
   # Location services
   geolocator: ^14.0.2
-  
-  # Compass for device orientation
-  flutter_compass: ^0.8.0
-  
+
   # Package info for app version
   package_info_plus: ^9.0.0
   
