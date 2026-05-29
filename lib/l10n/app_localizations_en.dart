@@ -30,6 +30,120 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalidUrl => 'Please enter a valid URL';
 
   @override
+  String get errorFetchIdentityProvidersFailed =>
+      'Could not load identity providers';
+
+  @override
+  String errorFetchIdentityProvidersFailedWithDetails(String details) {
+    return 'Could not load identity providers: $details';
+  }
+
+  @override
+  String get errorFetchProvidersFailed => 'Could not load sign-in providers';
+
+  @override
+  String errorFetchProvidersFailedWithDetails(String details) {
+    return 'Could not load sign-in providers: $details';
+  }
+
+  @override
+  String get errorFetchServerSettingsFailed => 'Could not load server settings';
+
+  @override
+  String errorFetchServerSettingsFailedWithDetails(String details) {
+    return 'Could not load server settings: $details';
+  }
+
+  @override
+  String get errorLoginError => 'Could not sign in';
+
+  @override
+  String errorLoginErrorWithDetails(String details) {
+    return 'Could not sign in: $details';
+  }
+
+  @override
+  String get errorLoginFailed => 'Sign-in failed';
+
+  @override
+  String errorLoginFailedWithDetails(String details) {
+    return 'Sign-in failed: $details';
+  }
+
+  @override
+  String get errorMfaVerificationError => 'Could not verify MFA code';
+
+  @override
+  String errorMfaVerificationErrorWithDetails(String details) {
+    return 'Could not verify MFA code: $details';
+  }
+
+  @override
+  String get errorMfaVerificationFailed => 'MFA verification failed';
+
+  @override
+  String errorMfaVerificationFailedWithDetails(String details) {
+    return 'MFA verification failed: $details';
+  }
+
+  @override
+  String get errorNoSessionIdReceived =>
+      'No session ID was received from the server';
+
+  @override
+  String get errorNotAuthenticated => 'You are not signed in';
+
+  @override
+  String get errorPkceVerifierMissing => 'The sign-in verifier was not found';
+
+  @override
+  String get errorPkceVerifierMissingRestartLogin =>
+      'The sign-in verifier was not found. Please start sign-in again.';
+
+  @override
+  String get errorServerUrlNotConfigured => 'Server URL is not configured';
+
+  @override
+  String get errorSessionExpired =>
+      'Your session expired. Please sign in again.';
+
+  @override
+  String get errorSsoTokenExchangeError => 'Could not complete SSO sign-in';
+
+  @override
+  String errorSsoTokenExchangeErrorWithDetails(String details) {
+    return 'Could not complete SSO sign-in: $details';
+  }
+
+  @override
+  String get errorTokenExchangeError => 'Could not complete sign-in';
+
+  @override
+  String errorTokenExchangeErrorWithDetails(String details) {
+    return 'Could not complete sign-in: $details';
+  }
+
+  @override
+  String get errorTokenExchangeFailed => 'Token exchange failed';
+
+  @override
+  String errorTokenExchangeFailedWithDetails(String details) {
+    return 'Token exchange failed: $details';
+  }
+
+  @override
+  String get errorUnexpectedResponseFormat =>
+      'The server returned an unexpected response';
+
+  @override
+  String get errorUnsupportedHttpMethod => 'Unsupported HTTP method';
+
+  @override
+  String errorUnsupportedHttpMethodWithDetails(String details) {
+    return 'Unsupported HTTP method: $details';
+  }
+
+  @override
   String get loginTitle => 'Login';
 
   @override

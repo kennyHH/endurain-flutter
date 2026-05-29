@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:endurain/core/theme/app_theme.dart';
 import 'package:endurain/shared/widgets/app_bottom_nav.dart';
 import 'package:endurain/features/auth/login_screen.dart';
@@ -77,13 +76,8 @@ class _AppState extends State<App> {
             child: child!,
           );
         },
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [Locale('en'), Locale('pt')],
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: _isAuthenticated
             ? AppBottomNav(onLogout: _onLogout)
             : LoginScreen(onLoginSuccess: _onLoginSuccess),
@@ -94,13 +88,8 @@ class _AppState extends State<App> {
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.system,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [Locale('en'), Locale('pt')],
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: _isAuthenticated
             ? AppBottomNav(onLogout: _onLogout)
             : LoginScreen(onLoginSuccess: _onLoginSuccess),

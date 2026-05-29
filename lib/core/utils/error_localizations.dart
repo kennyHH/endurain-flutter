@@ -1,0 +1,75 @@
+import 'package:endurain/core/models/app_exception.dart';
+import 'package:endurain/l10n/app_localizations.dart';
+
+String localizedErrorMessage(Object error, AppLocalizations l10n) {
+  if (error is AppException) {
+    return _localizedAppException(error, l10n);
+  }
+
+  final message = error.toString();
+  const exceptionPrefix = 'Exception: ';
+  if (message.startsWith(exceptionPrefix)) {
+    return message.substring(exceptionPrefix.length);
+  }
+
+  return message;
+}
+
+String _localizedAppException(AppException error, AppLocalizations l10n) {
+  final details = error.details;
+
+  return switch (error.code) {
+    AppErrorCode.fetchIdentityProvidersFailed =>
+      details == null
+          ? l10n.errorFetchIdentityProvidersFailed
+          : l10n.errorFetchIdentityProvidersFailedWithDetails(details),
+    AppErrorCode.fetchProvidersFailed =>
+      details == null
+          ? l10n.errorFetchProvidersFailed
+          : l10n.errorFetchProvidersFailedWithDetails(details),
+    AppErrorCode.fetchServerSettingsFailed =>
+      details == null
+          ? l10n.errorFetchServerSettingsFailed
+          : l10n.errorFetchServerSettingsFailedWithDetails(details),
+    AppErrorCode.loginError =>
+      details == null
+          ? l10n.errorLoginError
+          : l10n.errorLoginErrorWithDetails(details),
+    AppErrorCode.loginFailed =>
+      details == null
+          ? l10n.errorLoginFailed
+          : l10n.errorLoginFailedWithDetails(details),
+    AppErrorCode.mfaVerificationError =>
+      details == null
+          ? l10n.errorMfaVerificationError
+          : l10n.errorMfaVerificationErrorWithDetails(details),
+    AppErrorCode.mfaVerificationFailed =>
+      details == null
+          ? l10n.errorMfaVerificationFailed
+          : l10n.errorMfaVerificationFailedWithDetails(details),
+    AppErrorCode.noSessionIdReceived => l10n.errorNoSessionIdReceived,
+    AppErrorCode.notAuthenticated => l10n.errorNotAuthenticated,
+    AppErrorCode.pkceVerifierMissing => l10n.errorPkceVerifierMissing,
+    AppErrorCode.pkceVerifierMissingRestartLogin =>
+      l10n.errorPkceVerifierMissingRestartLogin,
+    AppErrorCode.serverUrlNotConfigured => l10n.errorServerUrlNotConfigured,
+    AppErrorCode.sessionExpired => l10n.errorSessionExpired,
+    AppErrorCode.ssoTokenExchangeError =>
+      details == null
+          ? l10n.errorSsoTokenExchangeError
+          : l10n.errorSsoTokenExchangeErrorWithDetails(details),
+    AppErrorCode.tokenExchangeError =>
+      details == null
+          ? l10n.errorTokenExchangeError
+          : l10n.errorTokenExchangeErrorWithDetails(details),
+    AppErrorCode.tokenExchangeFailed =>
+      details == null
+          ? l10n.errorTokenExchangeFailed
+          : l10n.errorTokenExchangeFailedWithDetails(details),
+    AppErrorCode.unexpectedResponseFormat => l10n.errorUnexpectedResponseFormat,
+    AppErrorCode.unsupportedHttpMethod =>
+      details == null
+          ? l10n.errorUnsupportedHttpMethod
+          : l10n.errorUnsupportedHttpMethodWithDetails(details),
+  };
+}

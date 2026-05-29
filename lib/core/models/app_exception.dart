@@ -1,0 +1,38 @@
+enum AppErrorCode {
+  fetchIdentityProvidersFailed,
+  fetchProvidersFailed,
+  fetchServerSettingsFailed,
+  loginError,
+  loginFailed,
+  mfaVerificationError,
+  mfaVerificationFailed,
+  noSessionIdReceived,
+  notAuthenticated,
+  pkceVerifierMissing,
+  pkceVerifierMissingRestartLogin,
+  serverUrlNotConfigured,
+  sessionExpired,
+  ssoTokenExchangeError,
+  tokenExchangeError,
+  tokenExchangeFailed,
+  unexpectedResponseFormat,
+  unsupportedHttpMethod,
+}
+
+class AppException implements Exception {
+  const AppException(this.code, {this.details, this.cause});
+
+  final AppErrorCode code;
+  final String? details;
+  final Object? cause;
+
+  @override
+  String toString() {
+    final parts = [
+      code.name,
+      if (details != null) details,
+      if (cause != null) cause,
+    ];
+    return parts.join(': ');
+  }
+}

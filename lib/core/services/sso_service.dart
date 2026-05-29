@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:endurain/core/models/identity_provider.dart';
+import 'package:endurain/core/models/app_exception.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/api_constants.dart';
 import 'package:endurain/core/utils/pkce_utils.dart';
@@ -26,7 +27,7 @@ class SsoService {
     }
 
     if (url == null || url.isEmpty) {
-      throw Exception('Server URL not configured');
+      throw const AppException(AppErrorCode.serverUrlNotConfigured);
     }
 
     final apiUrl = Uri.parse('$url${ApiConstants.idpListEndpoint}');
@@ -47,7 +48,7 @@ class SsoService {
         } else if (data is Map && data.containsKey('providers')) {
           providers = data['providers'] as List<dynamic>;
         } else {
-          throw Exception('Unexpected response format');
+          throw const AppException(AppErrorCode.unexpectedResponseFormat);
         }
 
         return providers
@@ -58,10 +59,15 @@ class SsoService {
             .toList();
       } else {
         final error = json.decode(response.body);
-        throw Exception(error['detail'] ?? 'Failed to fetch providers');
+        throw AppException(
+          AppErrorCode.fetchProvidersFailed,
+          details: error['detail']?.toString(),
+        );
       }
+    } on AppException {
+      rethrow;
     } catch (e) {
-      throw Exception('Failed to fetch identity providers: $e');
+      throw AppException(AppErrorCode.fetchIdentityProvidersFailed, cause: e);
     }
   }
 
@@ -75,7 +81,7 @@ class SsoService {
     }
 
     if (url == null || url.isEmpty) {
-      throw Exception('Server URL not configured');
+      throw const AppException(AppErrorCode.serverUrlNotConfigured);
     }
 
     if (serverUrl != null && serverUrl.isNotEmpty) {
@@ -103,11 +109,11 @@ class SsoService {
   Future<AuthResult> exchangeSessionForTokens(String sessionId) async {
     final serverUrl = await _storage.getServerUrl();
     if (serverUrl == null || serverUrl.isEmpty) {
-      throw Exception('Server URL not configured');
+      throw const AppException(AppErrorCode.serverUrlNotConfigured);
     }
 
     if (_ssoPkce == null || _ssoPkce!['verifier'] == null) {
-      throw Exception('PKCE verifier not found. Please restart SSO login.');
+      throw const AppException(AppErrorCode.pkceVerifierMissingRestartLogin);
     }
 
     final url = Uri.parse(
@@ -160,11 +166,17 @@ class SsoService {
         );
       } else {
         final error = json.decode(response.body);
-        throw Exception(error['detail'] ?? 'Token exchange failed');
+        throw AppException(
+          AppErrorCode.tokenExchangeFailed,
+          details: error['detail']?.toString(),
+        );
       }
+    } on AppException {
+      _ssoPkce = null;
+      rethrow;
     } catch (e) {
       _ssoPkce = null; // Clear verifier on error
-      throw Exception('SSO token exchange error: $e');
+      throw AppException(AppErrorCode.ssoTokenExchangeError, cause: e);
     }
   }
 

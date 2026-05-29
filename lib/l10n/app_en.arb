@@ -30,6 +30,189 @@
   "@invalidUrl": {
     "description": "Validation message for invalid URL - Used in: validators.dart"
   },
+  "@sectionErrors": "=== ERRORS (core/models/app_exception.dart, core/utils/error_localizations.dart) ===",
+  "errorFetchIdentityProvidersFailed": "Could not load identity providers",
+  "@errorFetchIdentityProvidersFailed": {
+    "description": "Generic identity provider loading error - Used in: error_localizations.dart"
+  },
+  "errorFetchIdentityProvidersFailedWithDetails": "Could not load identity providers: {details}",
+  "@errorFetchIdentityProvidersFailedWithDetails": {
+    "description": "Identity provider loading error with server or technical details - Used in: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "Connection refused"
+      }
+    }
+  },
+  "errorFetchProvidersFailed": "Could not load sign-in providers",
+  "@errorFetchProvidersFailed": {
+    "description": "Generic sign-in provider loading error - Used in: error_localizations.dart"
+  },
+  "errorFetchProvidersFailedWithDetails": "Could not load sign-in providers: {details}",
+  "@errorFetchProvidersFailedWithDetails": {
+    "description": "Sign-in provider loading error with server details - Used in: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "SSO is unavailable"
+      }
+    }
+  },
+  "errorFetchServerSettingsFailed": "Could not load server settings",
+  "@errorFetchServerSettingsFailed": {
+    "description": "Generic server settings loading error - Used in: error_localizations.dart"
+  },
+  "errorFetchServerSettingsFailedWithDetails": "Could not load server settings: {details}",
+  "@errorFetchServerSettingsFailedWithDetails": {
+    "description": "Server settings loading error with server details - Used in: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "Server unavailable"
+      }
+    }
+  },
+  "errorLoginError": "Could not sign in",
+  "@errorLoginError": {
+    "description": "Generic login error - Used in: error_localizations.dart"
+  },
+  "errorLoginErrorWithDetails": "Could not sign in: {details}",
+  "@errorLoginErrorWithDetails": {
+    "description": "Login error with technical details - Used in: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "Network timeout"
+      }
+    }
+  },
+  "errorLoginFailed": "Sign-in failed",
+  "@errorLoginFailed": {
+    "description": "Generic login failure - Used in: error_localizations.dart"
+  },
+  "errorLoginFailedWithDetails": "Sign-in failed: {details}",
+  "@errorLoginFailedWithDetails": {
+    "description": "Login failure with server details - Used in: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "Invalid credentials"
+      }
+    }
+  },
+  "errorMfaVerificationError": "Could not verify MFA code",
+  "@errorMfaVerificationError": {
+    "description": "Generic MFA verification error - Used in: error_localizations.dart"
+  },
+  "errorMfaVerificationErrorWithDetails": "Could not verify MFA code: {details}",
+  "@errorMfaVerificationErrorWithDetails": {
+    "description": "MFA verification error with technical details - Used in: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "Network timeout"
+      }
+    }
+  },
+  "errorMfaVerificationFailed": "MFA verification failed",
+  "@errorMfaVerificationFailed": {
+    "description": "Generic MFA verification failure - Used in: error_localizations.dart"
+  },
+  "errorMfaVerificationFailedWithDetails": "MFA verification failed: {details}",
+  "@errorMfaVerificationFailedWithDetails": {
+    "description": "MFA verification failure with server details - Used in: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "Invalid MFA code"
+      }
+    }
+  },
+  "errorNoSessionIdReceived": "No session ID was received from the server",
+  "@errorNoSessionIdReceived": {
+    "description": "Error when auth succeeds without session ID - Used in: error_localizations.dart"
+  },
+  "errorNotAuthenticated": "You are not signed in",
+  "@errorNotAuthenticated": {
+    "description": "Error when an authenticated request has no token - Used in: error_localizations.dart"
+  },
+  "errorPkceVerifierMissing": "The sign-in verifier was not found",
+  "@errorPkceVerifierMissing": {
+    "description": "Error when PKCE verifier is missing - Used in: error_localizations.dart"
+  },
+  "errorPkceVerifierMissingRestartLogin": "The sign-in verifier was not found. Please start sign-in again.",
+  "@errorPkceVerifierMissingRestartLogin": {
+    "description": "Recoverable PKCE error asking user to restart login - Used in: error_localizations.dart"
+  },
+  "errorServerUrlNotConfigured": "Server URL is not configured",
+  "@errorServerUrlNotConfigured": {
+    "description": "Error when no server URL is configured - Used in: error_localizations.dart"
+  },
+  "errorSessionExpired": "Your session expired. Please sign in again.",
+  "@errorSessionExpired": {
+    "description": "Error when token refresh fails - Used in: error_localizations.dart"
+  },
+  "errorSsoTokenExchangeError": "Could not complete SSO sign-in",
+  "@errorSsoTokenExchangeError": {
+    "description": "Generic SSO token exchange error - Used in: error_localizations.dart"
+  },
+  "errorSsoTokenExchangeErrorWithDetails": "Could not complete SSO sign-in: {details}",
+  "@errorSsoTokenExchangeErrorWithDetails": {
+    "description": "SSO token exchange error with technical details - Used in: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "Network timeout"
+      }
+    }
+  },
+  "errorTokenExchangeError": "Could not complete sign-in",
+  "@errorTokenExchangeError": {
+    "description": "Generic token exchange error - Used in: error_localizations.dart"
+  },
+  "errorTokenExchangeErrorWithDetails": "Could not complete sign-in: {details}",
+  "@errorTokenExchangeErrorWithDetails": {
+    "description": "Token exchange error with technical details - Used in: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "Network timeout"
+      }
+    }
+  },
+  "errorTokenExchangeFailed": "Token exchange failed",
+  "@errorTokenExchangeFailed": {
+    "description": "Generic token exchange failure - Used in: error_localizations.dart"
+  },
+  "errorTokenExchangeFailedWithDetails": "Token exchange failed: {details}",
+  "@errorTokenExchangeFailedWithDetails": {
+    "description": "Token exchange failure with server details - Used in: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "Invalid session"
+      }
+    }
+  },
+  "errorUnexpectedResponseFormat": "The server returned an unexpected response",
+  "@errorUnexpectedResponseFormat": {
+    "description": "Error for unsupported API response shape - Used in: error_localizations.dart"
+  },
+  "errorUnsupportedHttpMethod": "Unsupported HTTP method",
+  "@errorUnsupportedHttpMethod": {
+    "description": "Error for unsupported HTTP method - Used in: error_localizations.dart"
+  },
+  "errorUnsupportedHttpMethodWithDetails": "Unsupported HTTP method: {details}",
+  "@errorUnsupportedHttpMethodWithDetails": {
+    "description": "Unsupported HTTP method error with method name - Used in: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "PATCH"
+      }
+    }
+  },
   "@sectionAuth": "=== AUTH (features/auth/login_screen.dart) ===",
   "loginTitle": "Login",
   "@loginTitle": {

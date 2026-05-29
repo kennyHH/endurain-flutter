@@ -30,6 +30,189 @@
   "@invalidUrl": {
     "description": "Mensagem de validação para URL inválido - Usado em: validators.dart"
   },
+  "@sectionErrors": "=== ERROS (core/models/app_exception.dart, core/utils/error_localizations.dart) ===",
+  "errorFetchIdentityProvidersFailed": "Não foi possível carregar os provedores de identidade",
+  "@errorFetchIdentityProvidersFailed": {
+    "description": "Erro genérico ao carregar provedores de identidade - Usado em: error_localizations.dart"
+  },
+  "errorFetchIdentityProvidersFailedWithDetails": "Não foi possível carregar os provedores de identidade: {details}",
+  "@errorFetchIdentityProvidersFailedWithDetails": {
+    "description": "Erro ao carregar provedores de identidade com detalhes técnicos ou do servidor - Usado em: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "Ligação recusada"
+      }
+    }
+  },
+  "errorFetchProvidersFailed": "Não foi possível carregar os provedores de login",
+  "@errorFetchProvidersFailed": {
+    "description": "Erro genérico ao carregar provedores de login - Usado em: error_localizations.dart"
+  },
+  "errorFetchProvidersFailedWithDetails": "Não foi possível carregar os provedores de login: {details}",
+  "@errorFetchProvidersFailedWithDetails": {
+    "description": "Erro ao carregar provedores de login com detalhes do servidor - Usado em: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "SSO indisponível"
+      }
+    }
+  },
+  "errorFetchServerSettingsFailed": "Não foi possível carregar as definições do servidor",
+  "@errorFetchServerSettingsFailed": {
+    "description": "Erro genérico ao carregar definições do servidor - Usado em: error_localizations.dart"
+  },
+  "errorFetchServerSettingsFailedWithDetails": "Não foi possível carregar as definições do servidor: {details}",
+  "@errorFetchServerSettingsFailedWithDetails": {
+    "description": "Erro ao carregar definições do servidor com detalhes do servidor - Usado em: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "Servidor indisponível"
+      }
+    }
+  },
+  "errorLoginError": "Não foi possível iniciar sessão",
+  "@errorLoginError": {
+    "description": "Erro genérico de login - Usado em: error_localizations.dart"
+  },
+  "errorLoginErrorWithDetails": "Não foi possível iniciar sessão: {details}",
+  "@errorLoginErrorWithDetails": {
+    "description": "Erro de login com detalhes técnicos - Usado em: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "Tempo de ligação esgotado"
+      }
+    }
+  },
+  "errorLoginFailed": "Falha ao iniciar sessão",
+  "@errorLoginFailed": {
+    "description": "Falha genérica de login - Usado em: error_localizations.dart"
+  },
+  "errorLoginFailedWithDetails": "Falha ao iniciar sessão: {details}",
+  "@errorLoginFailedWithDetails": {
+    "description": "Falha de login com detalhes do servidor - Usado em: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "Credenciais inválidas"
+      }
+    }
+  },
+  "errorMfaVerificationError": "Não foi possível verificar o código MFA",
+  "@errorMfaVerificationError": {
+    "description": "Erro genérico de verificação MFA - Usado em: error_localizations.dart"
+  },
+  "errorMfaVerificationErrorWithDetails": "Não foi possível verificar o código MFA: {details}",
+  "@errorMfaVerificationErrorWithDetails": {
+    "description": "Erro de verificação MFA com detalhes técnicos - Usado em: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "Tempo de ligação esgotado"
+      }
+    }
+  },
+  "errorMfaVerificationFailed": "Falha na verificação MFA",
+  "@errorMfaVerificationFailed": {
+    "description": "Falha genérica de verificação MFA - Usado em: error_localizations.dart"
+  },
+  "errorMfaVerificationFailedWithDetails": "Falha na verificação MFA: {details}",
+  "@errorMfaVerificationFailedWithDetails": {
+    "description": "Falha de verificação MFA com detalhes do servidor - Usado em: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "Código MFA inválido"
+      }
+    }
+  },
+  "errorNoSessionIdReceived": "O servidor não devolveu um ID de sessão",
+  "@errorNoSessionIdReceived": {
+    "description": "Erro quando a autenticação é concluída sem ID de sessão - Usado em: error_localizations.dart"
+  },
+  "errorNotAuthenticated": "Não tem sessão iniciada",
+  "@errorNotAuthenticated": {
+    "description": "Erro quando um pedido autenticado não tem token - Usado em: error_localizations.dart"
+  },
+  "errorPkceVerifierMissing": "O verificador de login não foi encontrado",
+  "@errorPkceVerifierMissing": {
+    "description": "Erro quando o verificador PKCE não existe - Usado em: error_localizations.dart"
+  },
+  "errorPkceVerifierMissingRestartLogin": "O verificador de login não foi encontrado. Inicie sessão novamente.",
+  "@errorPkceVerifierMissingRestartLogin": {
+    "description": "Erro PKCE recuperável pedindo ao utilizador para reiniciar o login - Usado em: error_localizations.dart"
+  },
+  "errorServerUrlNotConfigured": "O URL do servidor não está configurado",
+  "@errorServerUrlNotConfigured": {
+    "description": "Erro quando não existe URL do servidor configurado - Usado em: error_localizations.dart"
+  },
+  "errorSessionExpired": "A sua sessão expirou. Inicie sessão novamente.",
+  "@errorSessionExpired": {
+    "description": "Erro quando a renovação do token falha - Usado em: error_localizations.dart"
+  },
+  "errorSsoTokenExchangeError": "Não foi possível concluir o login SSO",
+  "@errorSsoTokenExchangeError": {
+    "description": "Erro genérico de troca de token SSO - Usado em: error_localizations.dart"
+  },
+  "errorSsoTokenExchangeErrorWithDetails": "Não foi possível concluir o login SSO: {details}",
+  "@errorSsoTokenExchangeErrorWithDetails": {
+    "description": "Erro de troca de token SSO com detalhes técnicos - Usado em: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "Tempo de ligação esgotado"
+      }
+    }
+  },
+  "errorTokenExchangeError": "Não foi possível concluir o login",
+  "@errorTokenExchangeError": {
+    "description": "Erro genérico de troca de token - Usado em: error_localizations.dart"
+  },
+  "errorTokenExchangeErrorWithDetails": "Não foi possível concluir o login: {details}",
+  "@errorTokenExchangeErrorWithDetails": {
+    "description": "Erro de troca de token com detalhes técnicos - Usado em: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "Tempo de ligação esgotado"
+      }
+    }
+  },
+  "errorTokenExchangeFailed": "Falha na troca de token",
+  "@errorTokenExchangeFailed": {
+    "description": "Falha genérica de troca de token - Usado em: error_localizations.dart"
+  },
+  "errorTokenExchangeFailedWithDetails": "Falha na troca de token: {details}",
+  "@errorTokenExchangeFailedWithDetails": {
+    "description": "Falha de troca de token com detalhes do servidor - Usado em: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "Sessão inválida"
+      }
+    }
+  },
+  "errorUnexpectedResponseFormat": "O servidor devolveu uma resposta inesperada",
+  "@errorUnexpectedResponseFormat": {
+    "description": "Erro para formato de resposta de API não suportado - Usado em: error_localizations.dart"
+  },
+  "errorUnsupportedHttpMethod": "Método HTTP não suportado",
+  "@errorUnsupportedHttpMethod": {
+    "description": "Erro para método HTTP não suportado - Usado em: error_localizations.dart"
+  },
+  "errorUnsupportedHttpMethodWithDetails": "Método HTTP não suportado: {details}",
+  "@errorUnsupportedHttpMethodWithDetails": {
+    "description": "Erro de método HTTP não suportado com nome do método - Usado em: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "PATCH"
+      }
+    }
+  },
   "@sectionAuth": "=== AUTENTICAÇÃO (features/auth/login_screen.dart) ===",
   "loginTitle": "Login",
   "@loginTitle": {

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/api_constants.dart';
+import 'package:endurain/core/models/app_exception.dart';
 import 'package:endurain/core/utils/pkce_utils.dart';
 
 class AuthService {
@@ -24,7 +25,7 @@ class AuthService {
     }
 
     if (url == null || url.isEmpty) {
-      throw Exception('Server URL not configured');
+      throw const AppException(AppErrorCode.serverUrlNotConfigured);
     }
 
     // Save server URL if provided
@@ -74,14 +75,20 @@ class AuthService {
           return await _exchangeSessionForTokens(url, sessionId, username);
         }
 
-        throw Exception('No session ID received from server');
+        throw const AppException(AppErrorCode.noSessionIdReceived);
       } else {
         final error = json.decode(response.body);
-        throw Exception(error['detail'] ?? 'Login failed');
+        throw AppException(
+          AppErrorCode.loginFailed,
+          details: error['detail']?.toString(),
+        );
       }
+    } on AppException {
+      _pkce = null;
+      rethrow;
     } catch (e) {
       _pkce = null; // Clear verifier on error
-      throw Exception('Login error: $e');
+      throw AppException(AppErrorCode.loginError, cause: e);
     }
   }
 
@@ -89,11 +96,11 @@ class AuthService {
   Future<AuthResult> verifyMfa(String username, String mfaCode) async {
     final serverUrl = await _storage.getServerUrl();
     if (serverUrl == null || serverUrl.isEmpty) {
-      throw Exception('Server URL not configured');
+      throw const AppException(AppErrorCode.serverUrlNotConfigured);
     }
 
     if (_pkce == null || _pkce!['verifier'] == null) {
-      throw Exception('PKCE verifier not found. Please login again.');
+      throw const AppException(AppErrorCode.pkceVerifierMissingRestartLogin);
     }
 
     // MFA verification with PKCE uses query parameters
@@ -126,14 +133,20 @@ class AuthService {
           );
         }
 
-        throw Exception('No session ID received from server');
+        throw const AppException(AppErrorCode.noSessionIdReceived);
       } else {
         final error = json.decode(response.body);
-        throw Exception(error['detail'] ?? 'MFA verification failed');
+        throw AppException(
+          AppErrorCode.mfaVerificationFailed,
+          details: error['detail']?.toString(),
+        );
       }
+    } on AppException {
+      _pkce = null;
+      rethrow;
     } catch (e) {
       _pkce = null; // Clear verifier on error
-      throw Exception('MFA verification error: $e');
+      throw AppException(AppErrorCode.mfaVerificationError, cause: e);
     }
   }
 
@@ -144,7 +157,7 @@ class AuthService {
     String username,
   ) async {
     if (_pkce == null || _pkce!['verifier'] == null) {
-      throw Exception('PKCE verifier not found');
+      throw const AppException(AppErrorCode.pkceVerifierMissing);
     }
 
     final url = Uri.parse(
@@ -198,10 +211,15 @@ class AuthService {
         );
       } else {
         final error = json.decode(response.body);
-        throw Exception(error['detail'] ?? 'Token exchange failed');
+        throw AppException(
+          AppErrorCode.tokenExchangeFailed,
+          details: error['detail']?.toString(),
+        );
       }
+    } on AppException {
+      rethrow;
     } catch (e) {
-      throw Exception('Token exchange error: $e');
+      throw AppException(AppErrorCode.tokenExchangeError, cause: e);
     }
   }
 

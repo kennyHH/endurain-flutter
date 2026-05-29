@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:endurain/core/models/server_settings.dart';
+import 'package:endurain/core/models/app_exception.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/api_constants.dart';
 
@@ -17,7 +18,7 @@ class ServerSettingsService {
     }
 
     if (url == null || url.isEmpty) {
-      throw Exception('Server URL not configured');
+      throw const AppException(AppErrorCode.serverUrlNotConfigured);
     }
 
     final apiUrl = Uri.parse('$url${ApiConstants.serverSettingsEndpoint}');
@@ -51,10 +52,15 @@ class ServerSettingsService {
         return settings;
       } else {
         final error = json.decode(response.body);
-        throw Exception(error['detail'] ?? 'Failed to fetch server settings');
+        throw AppException(
+          AppErrorCode.fetchServerSettingsFailed,
+          details: error['detail']?.toString(),
+        );
       }
+    } on AppException {
+      rethrow;
     } catch (e) {
-      throw Exception('Failed to fetch server settings: $e');
+      throw AppException(AppErrorCode.fetchServerSettingsFailed, cause: e);
     }
   }
 }

@@ -2,24 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
+import 'package:endurain/core/utils/error_localizations.dart';
 
 /// Utility class for showing platform-adaptive dialogs
 class DialogUtils {
   /// Show an error dialog with platform-adaptive UI
   static Future<void> showErrorDialog(
     BuildContext context,
-    String message, {
+    Object message, {
     String? title,
   }) async {
     final l10n = AppLocalizations.of(context)!;
     final errorTitle = title ?? l10n.error;
+    final errorMessage = localizedErrorMessage(message, l10n);
 
     if (PlatformUtils.isApplePlatform) {
       await showCupertinoDialog<void>(
         context: context,
         builder: (context) => CupertinoAlertDialog(
           title: Text(errorTitle),
-          content: SelectableText(message),
+          content: SelectableText(errorMessage),
           actions: [
             CupertinoDialogAction(
               onPressed: () => Navigator.pop(context),
@@ -33,7 +35,7 @@ class DialogUtils {
         context: context,
         builder: (context) => AlertDialog(
           title: Text(errorTitle),
-          content: SelectableText(message),
+          content: SelectableText(errorMessage),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),

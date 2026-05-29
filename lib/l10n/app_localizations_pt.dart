@@ -30,6 +30,126 @@ class AppLocalizationsPt extends AppLocalizations {
   String get invalidUrl => 'Por favor, insira um URL válido';
 
   @override
+  String get errorFetchIdentityProvidersFailed =>
+      'Não foi possível carregar os provedores de identidade';
+
+  @override
+  String errorFetchIdentityProvidersFailedWithDetails(String details) {
+    return 'Não foi possível carregar os provedores de identidade: $details';
+  }
+
+  @override
+  String get errorFetchProvidersFailed =>
+      'Não foi possível carregar os provedores de login';
+
+  @override
+  String errorFetchProvidersFailedWithDetails(String details) {
+    return 'Não foi possível carregar os provedores de login: $details';
+  }
+
+  @override
+  String get errorFetchServerSettingsFailed =>
+      'Não foi possível carregar as definições do servidor';
+
+  @override
+  String errorFetchServerSettingsFailedWithDetails(String details) {
+    return 'Não foi possível carregar as definições do servidor: $details';
+  }
+
+  @override
+  String get errorLoginError => 'Não foi possível iniciar sessão';
+
+  @override
+  String errorLoginErrorWithDetails(String details) {
+    return 'Não foi possível iniciar sessão: $details';
+  }
+
+  @override
+  String get errorLoginFailed => 'Falha ao iniciar sessão';
+
+  @override
+  String errorLoginFailedWithDetails(String details) {
+    return 'Falha ao iniciar sessão: $details';
+  }
+
+  @override
+  String get errorMfaVerificationError =>
+      'Não foi possível verificar o código MFA';
+
+  @override
+  String errorMfaVerificationErrorWithDetails(String details) {
+    return 'Não foi possível verificar o código MFA: $details';
+  }
+
+  @override
+  String get errorMfaVerificationFailed => 'Falha na verificação MFA';
+
+  @override
+  String errorMfaVerificationFailedWithDetails(String details) {
+    return 'Falha na verificação MFA: $details';
+  }
+
+  @override
+  String get errorNoSessionIdReceived =>
+      'O servidor não devolveu um ID de sessão';
+
+  @override
+  String get errorNotAuthenticated => 'Não tem sessão iniciada';
+
+  @override
+  String get errorPkceVerifierMissing =>
+      'O verificador de login não foi encontrado';
+
+  @override
+  String get errorPkceVerifierMissingRestartLogin =>
+      'O verificador de login não foi encontrado. Inicie sessão novamente.';
+
+  @override
+  String get errorServerUrlNotConfigured =>
+      'O URL do servidor não está configurado';
+
+  @override
+  String get errorSessionExpired =>
+      'A sua sessão expirou. Inicie sessão novamente.';
+
+  @override
+  String get errorSsoTokenExchangeError =>
+      'Não foi possível concluir o login SSO';
+
+  @override
+  String errorSsoTokenExchangeErrorWithDetails(String details) {
+    return 'Não foi possível concluir o login SSO: $details';
+  }
+
+  @override
+  String get errorTokenExchangeError => 'Não foi possível concluir o login';
+
+  @override
+  String errorTokenExchangeErrorWithDetails(String details) {
+    return 'Não foi possível concluir o login: $details';
+  }
+
+  @override
+  String get errorTokenExchangeFailed => 'Falha na troca de token';
+
+  @override
+  String errorTokenExchangeFailedWithDetails(String details) {
+    return 'Falha na troca de token: $details';
+  }
+
+  @override
+  String get errorUnexpectedResponseFormat =>
+      'O servidor devolveu uma resposta inesperada';
+
+  @override
+  String get errorUnsupportedHttpMethod => 'Método HTTP não suportado';
+
+  @override
+  String errorUnsupportedHttpMethodWithDetails(String details) {
+    return 'Método HTTP não suportado: $details';
+  }
+
+  @override
   String get loginTitle => 'Login';
 
   @override

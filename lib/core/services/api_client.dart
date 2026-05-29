@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/services/auth_service.dart';
 import 'package:endurain/core/constants/api_constants.dart';
+import 'package:endurain/core/models/app_exception.dart';
 
 class ApiClient {
   final SecureStorageService _storage = SecureStorageService();
@@ -36,12 +37,12 @@ class ApiClient {
   ) async {
     final serverUrl = await _storage.getServerUrl();
     if (serverUrl == null || serverUrl.isEmpty) {
-      throw Exception('Server URL not configured');
+      throw const AppException(AppErrorCode.serverUrlNotConfigured);
     }
 
     final accessToken = await _getValidAccessToken();
     if (accessToken == null || accessToken.isEmpty) {
-      throw Exception('Not authenticated');
+      throw const AppException(AppErrorCode.notAuthenticated);
     }
 
     final url = Uri.parse('$serverUrl$endpoint');
@@ -81,7 +82,7 @@ class ApiClient {
       case 'DELETE':
         return http.delete(url, headers: headers);
       default:
-        throw Exception('Unsupported HTTP method: $method');
+        throw AppException(AppErrorCode.unsupportedHttpMethod, details: method);
     }
   }
 
@@ -93,12 +94,12 @@ class ApiClient {
   }) async {
     final serverUrl = await _storage.getServerUrl();
     if (serverUrl == null || serverUrl.isEmpty) {
-      throw Exception('Server URL not configured');
+      throw const AppException(AppErrorCode.serverUrlNotConfigured);
     }
 
     final accessToken = await _getValidAccessToken();
     if (accessToken == null || accessToken.isEmpty) {
-      throw Exception('Not authenticated');
+      throw const AppException(AppErrorCode.notAuthenticated);
     }
 
     final url = Uri.parse('$serverUrl$endpoint');
@@ -124,7 +125,7 @@ class ApiClient {
         headers[ApiConstants.authorizationHeader] = 'Bearer $newAccessToken';
         response = await _executeRequest(method, url, headers, body: body);
       } else {
-        throw Exception('Session expired. Please login again.');
+        throw const AppException(AppErrorCode.sessionExpired);
       }
     }
 

@@ -140,6 +140,180 @@ abstract class AppLocalizations {
   /// **'Please enter a valid URL'**
   String get invalidUrl;
 
+  /// Generic identity provider loading error - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load identity providers'**
+  String get errorFetchIdentityProvidersFailed;
+
+  /// Identity provider loading error with server or technical details - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load identity providers: {details}'**
+  String errorFetchIdentityProvidersFailedWithDetails(String details);
+
+  /// Generic sign-in provider loading error - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load sign-in providers'**
+  String get errorFetchProvidersFailed;
+
+  /// Sign-in provider loading error with server details - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load sign-in providers: {details}'**
+  String errorFetchProvidersFailedWithDetails(String details);
+
+  /// Generic server settings loading error - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load server settings'**
+  String get errorFetchServerSettingsFailed;
+
+  /// Server settings loading error with server details - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load server settings: {details}'**
+  String errorFetchServerSettingsFailedWithDetails(String details);
+
+  /// Generic login error - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not sign in'**
+  String get errorLoginError;
+
+  /// Login error with technical details - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not sign in: {details}'**
+  String errorLoginErrorWithDetails(String details);
+
+  /// Generic login failure - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in failed'**
+  String get errorLoginFailed;
+
+  /// Login failure with server details - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in failed: {details}'**
+  String errorLoginFailedWithDetails(String details);
+
+  /// Generic MFA verification error - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not verify MFA code'**
+  String get errorMfaVerificationError;
+
+  /// MFA verification error with technical details - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not verify MFA code: {details}'**
+  String errorMfaVerificationErrorWithDetails(String details);
+
+  /// Generic MFA verification failure - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'MFA verification failed'**
+  String get errorMfaVerificationFailed;
+
+  /// MFA verification failure with server details - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'MFA verification failed: {details}'**
+  String errorMfaVerificationFailedWithDetails(String details);
+
+  /// Error when auth succeeds without session ID - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'No session ID was received from the server'**
+  String get errorNoSessionIdReceived;
+
+  /// Error when an authenticated request has no token - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'You are not signed in'**
+  String get errorNotAuthenticated;
+
+  /// Error when PKCE verifier is missing - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'The sign-in verifier was not found'**
+  String get errorPkceVerifierMissing;
+
+  /// Recoverable PKCE error asking user to restart login - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'The sign-in verifier was not found. Please start sign-in again.'**
+  String get errorPkceVerifierMissingRestartLogin;
+
+  /// Error when no server URL is configured - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Server URL is not configured'**
+  String get errorServerUrlNotConfigured;
+
+  /// Error when token refresh fails - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Your session expired. Please sign in again.'**
+  String get errorSessionExpired;
+
+  /// Generic SSO token exchange error - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not complete SSO sign-in'**
+  String get errorSsoTokenExchangeError;
+
+  /// SSO token exchange error with technical details - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not complete SSO sign-in: {details}'**
+  String errorSsoTokenExchangeErrorWithDetails(String details);
+
+  /// Generic token exchange error - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not complete sign-in'**
+  String get errorTokenExchangeError;
+
+  /// Token exchange error with technical details - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not complete sign-in: {details}'**
+  String errorTokenExchangeErrorWithDetails(String details);
+
+  /// Generic token exchange failure - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Token exchange failed'**
+  String get errorTokenExchangeFailed;
+
+  /// Token exchange failure with server details - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Token exchange failed: {details}'**
+  String errorTokenExchangeFailedWithDetails(String details);
+
+  /// Error for unsupported API response shape - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'The server returned an unexpected response'**
+  String get errorUnexpectedResponseFormat;
+
+  /// Error for unsupported HTTP method - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported HTTP method'**
+  String get errorUnsupportedHttpMethod;
+
+  /// Unsupported HTTP method error with method name - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported HTTP method: {details}'**
+  String errorUnsupportedHttpMethodWithDetails(String details);
+
   /// Title for login screen
   ///
   /// In en, this message translates to:

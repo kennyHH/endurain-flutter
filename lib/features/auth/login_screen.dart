@@ -85,7 +85,8 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     final sessionId = uri.queryParameters['session_id'];
-    final error = uri.queryParameters['message'] ?? uri.queryParameters['error'];
+    final error =
+        uri.queryParameters['message'] ?? uri.queryParameters['error'];
 
     if (error != null && error.isNotEmpty) {
       _ssoService.clearPkce();
@@ -304,7 +305,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _showError(String message) {
+  void _showError(Object message) {
     DialogUtils.showErrorDialog(context, message);
   }
 

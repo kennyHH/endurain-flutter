@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:endurain/app.dart';
 import 'package:endurain/features/auth/login_screen.dart';
+import 'package:endurain/l10n/app_localizations_en.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -18,6 +19,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(LoginScreen), findsOneWidget);
-    expect(find.text('Login'), findsWidgets);
+    expect(find.text(AppLocalizationsEn().loginTitle), findsWidgets);
   });
 }

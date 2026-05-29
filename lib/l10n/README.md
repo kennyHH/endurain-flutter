@@ -24,12 +24,18 @@ Used by: `features/auth/login_screen.dart`
 - MFA flow (mfaTitle, mfaCode, verify)
 - Logout (logout, logoutConfirmTitle, logoutConfirmMessage)
 
-### 3. **MAP**
+### 3. **ERRORS**
+Used by: `core/models/app_exception.dart`, `core/utils/error_localizations.dart`
+- Stable app error messages mapped from `AppErrorCode`
+- User-facing translations for service-layer failures
+- Optional `{details}` variants for server-provided or technical context
+
+### 4. **MAP**
 Used by: `features/map/map_screen.dart`
 - Map tab label
 - Location control tooltips
 
-### 4. **SETTINGS**
+### 5. **SETTINGS**
 Used by: `features/settings/settings_screen.dart`, `features/settings/server_settings_screen.dart`
 - Settings navigation (settingsTab, settingsScreen)
 - Server configuration (serverUrl, tileServerUrl, loggedIn)
@@ -44,6 +50,10 @@ When adding a new translation:
 3. **Include usage info** in the description: `"description": "Button label - Used in: your_screen.dart"`
 4. **Run** `flutter gen-l10n` to regenerate localization classes
 5. **Update this README** if adding a new section
+
+For user-facing errors, add a value to `AppErrorCode`, map it in
+`error_localizations.dart`, then add the matching ARB keys. Services should
+throw `AppException` with a stable code instead of hardcoded English strings.
 
 ## Usage Example
 
@@ -62,6 +72,7 @@ Text(l10n.login);  // "Login" (en) or "Entrar" (pt)
 |---------|------|
 | Common | error, ok, cancel, save, back, requiredField, invalidUrl |
 | Auth | loginTitle, login, logout, username, password, mfaTitle, mfaCode, verify |
+| Errors | errorServerUrlNotConfigured, errorNotAuthenticated, errorSessionExpired, errorLoginFailed, errorTokenExchangeFailed |
 | Map | mapTab, myLocation |
 | Settings | settingsTab, settingsScreen, serverSettings, serverUrl, tileServerUrl, notConfigured, notLoggedIn, savedSuccessfully |
 
@@ -75,3 +86,10 @@ Flutter's l10n system requires a single ARB file per locale (cannot merge multip
 - **Descriptive names** that indicate purpose (e.g., `mfaCodeRequired` not `error1`)
 - **Feature prefixes** when needed (e.g., `mapTab`, `settingsTab`)
 - **Context in description** showing which files use the translation
+
+## Generation Guardrails
+
+The root `l10n.yaml` enables `required-resource-attributes` so every user-facing
+string needs metadata, and writes missing translations to
+`build/untranslated_messages.json`. Treat that file as a CI signal: it should be
+empty or absent after `flutter gen-l10n`.
