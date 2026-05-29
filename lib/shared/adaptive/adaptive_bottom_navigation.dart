@@ -5,12 +5,14 @@ import 'package:endurain/core/utils/platform_utils.dart';
 
 class AdaptiveTab {
   const AdaptiveTab({
+    required this.routeName,
     required this.label,
     required this.materialIcon,
     required this.cupertinoIcon,
     required this.builder,
   });
 
+  final String routeName;
   final String label;
   final IconData materialIcon;
   final IconData cupertinoIcon;
@@ -58,7 +60,13 @@ class _AdaptiveBottomNavigationState extends State<AdaptiveBottomNavigation> {
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: [for (final tab in widget.tabs) tab.builder(context)],
+        children: [
+          for (final tab in widget.tabs)
+            KeyedSubtree(
+              key: PageStorageKey(tab.routeName),
+              child: tab.builder(context),
+            ),
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,

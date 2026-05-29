@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:endurain/core/navigation/app_routes.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/features/map/map_screen.dart';
 import 'package:endurain/features/settings/settings_screen.dart';
@@ -17,12 +18,14 @@ class AppBottomNav extends StatelessWidget {
     return AdaptiveBottomNavigation(
       tabs: [
         AdaptiveTab(
+          routeName: AppRoutes.map,
           label: l10n.mapTab,
           materialIcon: Icons.map,
           cupertinoIcon: CupertinoIcons.map,
           builder: (context) => const MapScreen(),
         ),
         AdaptiveTab(
+          routeName: AppRoutes.settings,
           label: l10n.settingsTab,
           materialIcon: Icons.settings,
           cupertinoIcon: CupertinoIcons.settings,
