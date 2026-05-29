@@ -1,7 +1,7 @@
-import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:endurain/core/models/server_settings.dart';
 import 'package:endurain/core/models/app_exception.dart';
+import 'package:endurain/core/services/api_response.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/api_constants.dart';
 
@@ -37,7 +37,7 @@ class ServerSettingsService {
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body) as Map<String, dynamic>;
+        final data = ApiResponse.decodeJsonObject(response);
         final settings = ServerSettings.fromJson(data);
 
         // Store tile server settings for later use
@@ -58,10 +58,9 @@ class ServerSettingsService {
 
         return settings;
       } else {
-        final error = json.decode(response.body);
-        throw AppException(
+        throw ApiResponse.failure(
+          response,
           AppErrorCode.fetchServerSettingsFailed,
-          details: error['detail']?.toString(),
         );
       }
     } on AppException {

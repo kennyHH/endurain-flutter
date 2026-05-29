@@ -1,7 +1,9 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:endurain/core/models/identity_provider.dart';
 import 'package:endurain/core/models/app_exception.dart';
+import 'package:endurain/core/services/api_response.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/api_constants.dart';
 import 'package:endurain/core/utils/pkce_utils.dart';
@@ -44,7 +46,7 @@ class SsoService {
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = ApiResponse.decodeJson(response);
 
         // Handle both array and object responses
         final List<dynamic> providers;
@@ -63,11 +65,7 @@ class SsoService {
             )
             .toList();
       } else {
-        final error = json.decode(response.body);
-        throw AppException(
-          AppErrorCode.fetchProvidersFailed,
-          details: error['detail']?.toString(),
-        );
+        throw ApiResponse.failure(response, AppErrorCode.fetchProvidersFailed);
       }
     } on AppException {
       rethrow;
@@ -132,14 +130,14 @@ class SsoService {
           ApiConstants.contentTypeHeader: ApiConstants.contentTypeJson,
           ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue,
         },
-        body: json.encode({'code_verifier': _ssoPkce!['verifier']}),
+        body: jsonEncode({'code_verifier': _ssoPkce!['verifier']}),
       );
 
       // Clear verifier after use (one-time exchange)
       _ssoPkce = null;
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = ApiResponse.decodeJsonObject(response);
 
         // Store tokens
         final accessToken = data['access_token'] as String?;
@@ -170,11 +168,7 @@ class SsoService {
           sessionId: returnedSessionId,
         );
       } else {
-        final error = json.decode(response.body);
-        throw AppException(
-          AppErrorCode.tokenExchangeFailed,
-          details: error['detail']?.toString(),
-        );
+        throw ApiResponse.failure(response, AppErrorCode.tokenExchangeFailed);
       }
     } on AppException {
       _ssoPkce = null;

@@ -1,5 +1,7 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
+import 'package:endurain/core/services/api_response.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/api_constants.dart';
 import 'package:endurain/core/models/app_exception.dart';
@@ -57,7 +59,7 @@ class AuthService {
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = ApiResponse.decodeJsonObject(response);
 
         // Check if MFA is required
         if (data['mfa_required'] == true) {
@@ -82,11 +84,7 @@ class AuthService {
 
         throw const AppException(AppErrorCode.noSessionIdReceived);
       } else {
-        final error = json.decode(response.body);
-        throw AppException(
-          AppErrorCode.loginFailed,
-          details: error['detail']?.toString(),
-        );
+        throw ApiResponse.failure(response, AppErrorCode.loginFailed);
       }
     } on AppException {
       _pkce = null;
@@ -120,11 +118,11 @@ class AuthService {
           ApiConstants.contentTypeHeader: ApiConstants.contentTypeJson,
           ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue,
         },
-        body: json.encode({'username': username, 'mfa_code': mfaCode}),
+        body: jsonEncode({'username': username, 'mfa_code': mfaCode}),
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = ApiResponse.decodeJsonObject(response);
 
         // PKCE flow returns session_id for token exchange
         final sessionId = data['session_id'] as String?;
@@ -140,11 +138,7 @@ class AuthService {
 
         throw const AppException(AppErrorCode.noSessionIdReceived);
       } else {
-        final error = json.decode(response.body);
-        throw AppException(
-          AppErrorCode.mfaVerificationFailed,
-          details: error['detail']?.toString(),
-        );
+        throw ApiResponse.failure(response, AppErrorCode.mfaVerificationFailed);
       }
     } on AppException {
       _pkce = null;
@@ -176,14 +170,14 @@ class AuthService {
           ApiConstants.contentTypeHeader: ApiConstants.contentTypeJson,
           ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue,
         },
-        body: json.encode({'code_verifier': _pkce!['verifier']}),
+        body: jsonEncode({'code_verifier': _pkce!['verifier']}),
       );
 
       // Clear verifier after use (one-time exchange)
       _pkce = null;
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = ApiResponse.decodeJsonObject(response);
 
         // Store tokens
         final accessToken = data['access_token'] as String?;
@@ -215,11 +209,7 @@ class AuthService {
           sessionId: returnedSessionId,
         );
       } else {
-        final error = json.decode(response.body);
-        throw AppException(
-          AppErrorCode.tokenExchangeFailed,
-          details: error['detail']?.toString(),
-        );
+        throw ApiResponse.failure(response, AppErrorCode.tokenExchangeFailed);
       }
     } on AppException {
       rethrow;
@@ -249,7 +239,7 @@ class AuthService {
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = ApiResponse.decodeJsonObject(response);
         final newAccessToken = data['access_token'] as String?;
         final newRefreshToken = data['refresh_token'] as String?;
         final returnedSessionId = data['session_id'] as String?;
