@@ -126,6 +126,10 @@
   "@mapTab": {
     "description": "Rótulo da aba do mapa - Usado em: app_bottom_nav.dart"
   },
+  "myLocation": "A minha localização",
+  "@myLocation": {
+    "description": "Dica do botão do mapa que centra na localização do utilizador - Usado em: map_screen.dart"
+  },
   "@sectionSettings": "=== CONFIGURAÇÕES (features/settings/) ===",
   "settingsTab": "Configurações",
   "@settingsTab": {
@@ -146,6 +150,14 @@
   "loggedIn": "Autenticado",
   "@loggedIn": {
     "description": "Cabeçalho da secção de autenticação - Usado em: server_settings_screen.dart"
+  },
+  "notConfigured": "Não configurado",
+  "@notConfigured": {
+    "description": "Texto exibido quando uma definição do servidor não tem valor configurado - Usado em: server_settings_screen.dart"
+  },
+  "notLoggedIn": "Sem sessão iniciada",
+  "@notLoggedIn": {
+    "description": "Texto exibido quando não existe nome de utilizador guardado - Usado em: server_settings_screen.dart"
   },
   "serverUrl": "URL do servidor",
   "@serverUrl": {

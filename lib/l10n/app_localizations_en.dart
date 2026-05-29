@@ -100,6 +100,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mapTab => 'Map';
 
   @override
+  String get myLocation => 'My Location';
+
+  @override
   String get settingsTab => 'Settings';
 
   @override
@@ -113,6 +116,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loggedIn => 'Logged in';
+
+  @override
+  String get notConfigured => 'Not configured';
+
+  @override
+  String get notLoggedIn => 'Not logged in';
 
   @override
   String get serverUrl => 'Server URL';

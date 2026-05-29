@@ -27,7 +27,7 @@ Used by: `features/auth/login_screen.dart`
 ### 3. **MAP**
 Used by: `features/map/map_screen.dart`
 - Map tab label
-- Future: location errors, map controls
+- Location control tooltips
 
 ### 4. **SETTINGS**
 Used by: `features/settings/settings_screen.dart`, `features/settings/server_settings_screen.dart`
@@ -62,8 +62,8 @@ Text(l10n.login);  // "Login" (en) or "Entrar" (pt)
 |---------|------|
 | Common | error, ok, cancel, save, back, requiredField, invalidUrl |
 | Auth | loginTitle, login, logout, username, password, mfaTitle, mfaCode, verify |
-| Map | mapTab |
-| Settings | settingsTab, settingsScreen, serverSettings, serverUrl, tileServerUrl, savedSuccessfully |
+| Map | mapTab, myLocation |
+| Settings | settingsTab, settingsScreen, serverSettings, serverUrl, tileServerUrl, notConfigured, notLoggedIn, savedSuccessfully |
 
 ## Why Not Split Files?
 

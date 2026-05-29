@@ -126,6 +126,10 @@
   "@mapTab": {
     "description": "Map tab label - Used in: app_bottom_nav.dart"
   },
+  "myLocation": "My Location",
+  "@myLocation": {
+    "description": "Tooltip for the map button that centers on the user's location - Used in: map_screen.dart"
+  },
   "@sectionSettings": "=== SETTINGS (features/settings/) ===",
   "settingsTab": "Settings",
   "@settingsTab": {
@@ -146,6 +150,14 @@
   "loggedIn": "Logged in",
   "@loggedIn": {
     "description": "Logged in section header - Used in: server_settings_screen.dart"
+  },
+  "notConfigured": "Not configured",
+  "@notConfigured": {
+    "description": "Fallback shown when server settings have no configured value - Used in: server_settings_screen.dart"
+  },
+  "notLoggedIn": "Not logged in",
+  "@notLoggedIn": {
+    "description": "Fallback shown when no username is stored - Used in: server_settings_screen.dart"
   },
   "serverUrl": "Server URL",
   "@serverUrl": {

@@ -11,6 +11,7 @@ import 'package:endurain/core/services/location_service.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/core/constants/map_constants.dart';
+import 'package:endurain/l10n/app_localizations.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -184,6 +185,8 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     // Cupertino style for iOS/macOS
     if (PlatformUtils.isApplePlatform) {
       return CupertinoPageScaffold(
@@ -239,7 +242,7 @@ class _MapScreenState extends State<MapScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _toggleLocationLock,
-        tooltip: 'My Location',
+        tooltip: l10n.myLocation,
         child: Icon(
           _isLocationLocked ? Icons.my_location : Icons.location_searching,
         ),

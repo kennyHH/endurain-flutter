@@ -272,6 +272,12 @@ abstract class AppLocalizations {
   /// **'Map'**
   String get mapTab;
 
+  /// Tooltip for the map button that centers on the user's location - Used in: map_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'My Location'**
+  String get myLocation;
+
   /// Settings tab label - Used in: app_bottom_nav.dart
   ///
   /// In en, this message translates to:
@@ -301,6 +307,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Logged in'**
   String get loggedIn;
+
+  /// Fallback shown when server settings have no configured value - Used in: server_settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Not configured'**
+  String get notConfigured;
+
+  /// Fallback shown when no username is stored - Used in: server_settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Not logged in'**
+  String get notLoggedIn;
 
   /// Server URL field label - Used in: login_screen.dart, server_settings_screen.dart
   ///

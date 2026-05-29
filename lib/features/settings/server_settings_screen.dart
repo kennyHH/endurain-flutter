@@ -7,6 +7,7 @@ import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/core/utils/validators.dart';
 import 'package:endurain/core/utils/dialog_utils.dart';
 import 'package:endurain/core/constants/ui_constants.dart';
+import 'package:endurain/core/constants/map_constants.dart';
 
 class ServerSettingsScreen extends StatefulWidget {
   const ServerSettingsScreen({super.key, this.onLogout});
@@ -44,11 +45,13 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
     final tileServerUrl = await _storage.getTileServerUrl();
 
     if (mounted) {
+      final l10n = AppLocalizations.of(context)!;
+
       setState(() {
-        _serverUrl = serverUrl ?? 'Not configured';
-        _username = username ?? 'Not logged in';
+        _serverUrl = serverUrl ?? l10n.notConfigured;
+        _username = username ?? l10n.notLoggedIn;
         _tileServerUrlController.text =
-            tileServerUrl ?? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+            tileServerUrl ?? MapConstants.defaultTileServerUrl;
         _isLoading = false;
       });
     }

@@ -4,7 +4,7 @@
   # Endurain Mobile
 
   ![License](https://img.shields.io/github/license/endurain-project/endurain-flutter)
-  [![GitHub release](https://img.shields.io/github/v/release/endurain-project/endurain)](https://github.com/endurain-project/endurain-flutter/releases)
+  [![GitHub release](https://img.shields.io/github/v/release/endurain-project/endurain-flutter)](https://github.com/endurain-project/endurain-flutter/releases)
   [![Trademark Policy](https://img.shields.io/badge/trademark-Endurain%E2%84%A2-blue)](TRADEMARK.md)
 
   **Mobile companion app for Endurain fitness tracking service**  
@@ -22,6 +22,7 @@
 - [Planned Features](#planned-features)
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
+- [SSO/OAuth Callback](#ssooauth-callback)
 - [Building from Source](#building-from-source)
 - [Contributing](#contributing)
 - [License](#license)
@@ -57,7 +58,7 @@ The app is designed with privacy in mind, connecting directly to your self-hoste
 ✅ **User Experience**
 - Multi-language support (English, Portuguese)
 - Dark/light theme support
-- Offline-first architecture
+- Secure local session storage
 - F-Droid compatible (100% FOSS dependencies)
 
 ## Planned Features
@@ -71,6 +72,8 @@ The app is designed with privacy in mind, connecting directly to your self-hoste
 - Automatic upload to Endurain server upon completion
 - Activity history and details view
 
+See the [Activity Tracking MVP Plan](devdocs/activity_tracking_mvp_plan.md) for the current implementation roadmap.
+
 ## Tech Stack
 
 - **Framework:** Flutter 3.38+ (Dart 3.10+)
@@ -81,7 +84,7 @@ The app is designed with privacy in mind, connecting directly to your self-hoste
 - **Secure Storage:** flutter_secure_storage
 - **Compass:** flutter_compass (mobile only)
 - **HTTP Client:** http package for API communication
-- **SSO/OAuth:** webview_flutter for OAuth flow, flutter_svg for provider icons
+- **SSO/OAuth:** app_links for deep-link callbacks, url_launcher for system browser OAuth flow, flutter_svg for provider icons
 - **Security:** crypto package for PKCE challenge generation
 
 **All dependencies are open-source (FOSS) to ensure F-Droid compatibility.**
@@ -125,6 +128,22 @@ flutter run -d android
 # For macOS
 flutter run -d macos
 ```
+
+## SSO/OAuth Callback
+
+SSO providers must redirect back to the app with this callback URL:
+
+```text
+endurain://auth/sso/callback
+```
+
+The callback currently expects a `session_id` query parameter, for example:
+
+```text
+endurain://auth/sso/callback?session_id=...
+```
+
+Register this callback URL in the Endurain server or identity provider configuration used for mobile SSO.
 
 ## Building from Source
 
