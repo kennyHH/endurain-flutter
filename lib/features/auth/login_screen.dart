@@ -11,10 +11,10 @@ import 'package:endurain/core/services/sso_service.dart';
 import 'package:endurain/core/services/server_settings_service.dart';
 import 'package:endurain/core/models/identity_provider.dart';
 import 'package:endurain/core/models/server_settings.dart';
-import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/core/utils/validators.dart';
 import 'package:endurain/core/utils/dialog_utils.dart';
 import 'package:endurain/core/constants/ui_constants.dart';
+import 'package:endurain/shared/adaptive/adaptive.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, this.onLoginSuccess});
@@ -71,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _handleSsoCallbackUri,
       onError: (Object error) {
         if (mounted) {
-          _showError(error.toString());
+          _showError(error);
         }
       },
     );
@@ -127,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() {
           _isLoading = false;
         });
-        _showError(e.toString());
+        _showError(e);
       }
     }
   }
@@ -191,7 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
           _isLoading = false;
         });
         // If server settings fetch fails, show error
-        _showError(e.toString());
+        _showError(e);
       }
     }
   }
@@ -230,7 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() {
           _isLoading = false;
         });
-        _showError(e.toString());
+        _showError(e);
       }
     }
   }
@@ -270,7 +270,7 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() {
           _isLoading = false;
         });
-        _showError(e.toString());
+        _showError(e);
       }
     }
   }
@@ -300,7 +300,7 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() {
           _isLoading = false;
         });
-        _showError(e.toString());
+        _showError(e);
       }
     }
   }
@@ -309,14 +309,29 @@ class _LoginScreenState extends State<LoginScreen> {
     DialogUtils.showErrorDialog(context, message);
   }
 
+  void _goBackToServerStep() {
+    setState(() {
+      _isStep2 = false;
+      _availableIdPs = [];
+      _serverSettings = null;
+    });
+  }
+
+  void _goBackFromMfa() {
+    setState(() {
+      _showMfaInput = false;
+      _mfaCodeController.clear();
+    });
+  }
+
   /// Build SSO provider icon widget
   /// Checks for local asset first, then tries URL, with fallback icon
-  Widget _buildSsoIcon(IdentityProvider idp, {bool isCupertino = false}) {
+  Widget _buildSsoIcon(IdentityProvider idp) {
     if (idp.icon == null || idp.icon!.isEmpty) {
-      return Icon(
-        isCupertino ? CupertinoIcons.person_circle : Icons.person_outline,
+      return const AdaptiveIcon(
+        materialIcon: Icons.person_outline,
+        cupertinoIcon: CupertinoIcons.person_circle,
         size: 24,
-        color: isCupertino ? CupertinoColors.white : null,
       );
     }
 
@@ -342,10 +357,10 @@ class _LoginScreenState extends State<LoginScreen> {
           fit: BoxFit.contain,
         );
       } catch (e) {
-        return Icon(
-          isCupertino ? CupertinoIcons.person_circle : Icons.person_outline,
+        return const AdaptiveIcon(
+          materialIcon: Icons.person_outline,
+          cupertinoIcon: CupertinoIcons.person_circle,
           size: 24,
-          color: isCupertino ? CupertinoColors.white : null,
         );
       }
     }
@@ -355,10 +370,10 @@ class _LoginScreenState extends State<LoginScreen> {
       idp.icon!,
       width: 24,
       height: 24,
-      errorBuilder: (context, error, stackTrace) => Icon(
-        isCupertino ? CupertinoIcons.person_circle : Icons.person_outline,
+      errorBuilder: (context, error, stackTrace) => const AdaptiveIcon(
+        materialIcon: Icons.person_outline,
+        cupertinoIcon: CupertinoIcons.person_circle,
         size: 24,
-        color: isCupertino ? CupertinoColors.white : null,
       ),
     );
   }
@@ -367,267 +382,19 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    // Cupertino style for iOS/macOS
-    if (PlatformUtils.isApplePlatform) {
-      return CupertinoPageScaffold(
-        navigationBar: CupertinoNavigationBar(
-          middle: Text(_showMfaInput ? l10n.mfaTitle : l10n.loginTitle),
-          leading: _isStep2 && !_showMfaInput
-              ? CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  onPressed: () {
-                    setState(() {
-                      _isStep2 = false;
-                      _availableIdPs = [];
-                      _serverSettings = null;
-                    });
-                  },
-                  child: const Icon(CupertinoIcons.back),
-                )
-              : null,
-        ),
-        child: SafeArea(
-          child: _isLoading
-              ? const Center(child: CupertinoActivityIndicator())
-              : Form(
-                  key: _formKey,
-                  child: ListView(
-                    padding: const EdgeInsets.all(UIConstants.paddingStandard),
-                    children: [
-                      const SizedBox(height: 40),
-                      // App logo or title
-                      Center(
-                        child: Image.asset(
-                          'assets/logo/logo.png',
-                          width: 120,
-                          height: 120,
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-                      if (!_showMfaInput) ...[
-                        // Step 1: Server URL only
-                        if (!_isStep2) ...[
-                          CupertinoListSection.insetGrouped(
-                            header: Text(l10n.serverUrl.toUpperCase()),
-                            children: [
-                              CupertinoTextFormFieldRow(
-                                controller: _serverUrlController,
-                                placeholder: l10n.serverUrlHint,
-                                keyboardType: TextInputType.url,
-                                textInputAction: TextInputAction.done,
-                                validator: (value) =>
-                                    Validators.validateUrl(value, l10n),
-                                onFieldSubmitted: (_) => _handleServerUrlNext(),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                            ),
-                            child: CupertinoButton.filled(
-                              onPressed: _handleServerUrlNext,
-                              child: Text(l10n.next),
-                            ),
-                          ),
-                        ]
-                        // Step 2: SSO providers + username/password
-                        else ...[
-                          // Local login (username/password) - only if enabled
-                          if (_localLoginEnabled) ...[
-                            // Username field
-                            CupertinoListSection.insetGrouped(
-                              header: Text(l10n.username.toUpperCase()),
-                              children: [
-                                CupertinoTextFormFieldRow(
-                                  controller: _usernameController,
-                                  placeholder: l10n.usernameHint,
-                                  textInputAction: TextInputAction.next,
-                                  validator: (value) =>
-                                      Validators.validateRequired(
-                                        value,
-                                        l10n,
-                                        l10n.username,
-                                      ),
-                                ),
-                              ],
-                            ),
-                            // Password field
-                            CupertinoListSection.insetGrouped(
-                              header: Text(l10n.password.toUpperCase()),
-                              children: [
-                                CupertinoTextFormFieldRow(
-                                  controller: _passwordController,
-                                  placeholder: l10n.passwordHint,
-                                  obscureText: _obscurePassword,
-                                  textInputAction: TextInputAction.done,
-                                  validator: (value) =>
-                                      Validators.validateRequired(
-                                        value,
-                                        l10n,
-                                        l10n.password,
-                                      ),
-                                  onFieldSubmitted: (_) => _handleLogin(),
-                                ),
-                                CupertinoListTile(
-                                  title: Text(l10n.showPassword),
-                                  trailing: CupertinoSwitch(
-                                    value: !_obscurePassword,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _obscurePassword = !value;
-                                      });
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16.0,
-                              ),
-                              child: CupertinoButton.filled(
-                                onPressed: _handleLogin,
-                                child: Text(l10n.login),
-                              ),
-                            ),
-                          ],
-                          // SSO providers (if available)
-                          if (_availableIdPs.isNotEmpty) ...[
-                            // OR divider - only show if local login is also enabled
-                            if (_localLoginEnabled) ...[
-                              const SizedBox(height: 24),
-                              Row(
-                                children: [
-                                  const Expanded(child: Divider()),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16.0,
-                                    ),
-                                    child: Text(
-                                      l10n.ssoOrDivider,
-                                      style: const TextStyle(
-                                        color: CupertinoColors.systemGrey,
-                                      ),
-                                    ),
-                                  ),
-                                  const Expanded(child: Divider()),
-                                ],
-                              ),
-                            ],
-                            const SizedBox(height: 16),
-                            for (final idp in _availableIdPs)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8.0,
-                                  horizontal: 16.0,
-                                ),
-                                child: CupertinoButton(
-                                  color: CupertinoColors.systemBlue,
-                                  onPressed: () => _handleSsoLogin(idp),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (idp.icon != null &&
-                                          idp.icon!.isNotEmpty)
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            right: 8.0,
-                                          ),
-                                          child: _buildSsoIcon(
-                                            idp,
-                                            isCupertino: true,
-                                          ),
-                                        ),
-                                      Text(
-                                        l10n.ssoSignInWith(idp.name),
-                                        style: const TextStyle(
-                                          color: CupertinoColors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ],
-                      ] else ...[
-                        // MFA code field
-                        CupertinoListSection.insetGrouped(
-                          header: Text(l10n.mfaCode.toUpperCase()),
-                          children: [
-                            CupertinoTextFormFieldRow(
-                              controller: _mfaCodeController,
-                              placeholder: l10n.mfaCodeHint,
-                              keyboardType: TextInputType.number,
-                              textInputAction: TextInputAction.done,
-                              validator: (value) => Validators.validateRequired(
-                                value,
-                                l10n,
-                                l10n.mfaCode,
-                              ),
-                              onFieldSubmitted: (_) => _handleMfaVerification(),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: UIConstants.paddingStandard,
-                          ),
-                          child: CupertinoButton.filled(
-                            onPressed: _handleMfaVerification,
-                            child: Text(l10n.verify),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Center(
-                          child: CupertinoButton(
-                            onPressed: () {
-                              setState(() {
-                                _showMfaInput = false;
-                                _mfaCodeController.clear();
-                              });
-                            },
-                            child: Text(l10n.back),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-        ),
-      );
-    }
-
-    // Material style for Android
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_showMfaInput ? l10n.mfaTitle : l10n.loginTitle),
-        leading: _isStep2 && !_showMfaInput
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () {
-                  setState(() {
-                    _isStep2 = false;
-                    _availableIdPs = [];
-                    _serverSettings = null;
-                  });
-                },
-              )
-            : null,
-      ),
+    return AdaptiveScaffold(
+      title: _showMfaInput ? l10n.mfaTitle : l10n.loginTitle,
+      leading: _isStep2 && !_showMfaInput
+          ? AdaptiveBackButton(onPressed: _goBackToServerStep)
+          : null,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: AdaptiveLoadingIndicator())
           : Form(
               key: _formKey,
               child: ListView(
                 padding: const EdgeInsets.all(UIConstants.paddingStandard),
                 children: [
                   const SizedBox(height: 40),
-                  // App logo or title
                   Center(
                     child: Image.asset(
                       'assets/logo/logo.png',
@@ -636,177 +403,135 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 40),
-                  if (!_showMfaInput) ...[
-                    // Step 1: Server URL only
-                    if (!_isStep2) ...[
-                      TextFormField(
-                        controller: _serverUrlController,
-                        decoration: InputDecoration(
-                          labelText: l10n.serverUrl,
-                          hintText: l10n.serverUrlHint,
-                          border: const OutlineInputBorder(),
-                          prefixIcon: const Icon(Icons.dns),
-                        ),
-                        keyboardType: TextInputType.url,
-                        textInputAction: TextInputAction.done,
-                        validator: (value) =>
-                            Validators.validateUrl(value, l10n),
-                        onFieldSubmitted: (_) => _handleServerUrlNext(),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: _handleServerUrlNext,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: Text(l10n.next),
-                      ),
-                    ]
-                    // Step 2: SSO providers + username/password
-                    else ...[
-                      // Local login (username/password) - only if enabled
-                      if (_localLoginEnabled) ...[
-                        // Username field
-                        TextFormField(
-                          controller: _usernameController,
-                          decoration: InputDecoration(
-                            labelText: l10n.username,
-                            hintText: l10n.usernameHint,
-                            border: const OutlineInputBorder(),
-                            prefixIcon: const Icon(Icons.person),
-                          ),
-                          textInputAction: TextInputAction.next,
-                          validator: (value) => Validators.validateRequired(
-                            value,
-                            l10n,
-                            l10n.username,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        // Password field
-                        TextFormField(
-                          controller: _passwordController,
-                          decoration: InputDecoration(
-                            labelText: l10n.password,
-                            hintText: l10n.passwordHint,
-                            border: const OutlineInputBorder(),
-                            prefixIcon: const Icon(Icons.lock),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility
-                                    : Icons.visibility_off,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
-                            ),
-                          ),
-                          obscureText: _obscurePassword,
-                          textInputAction: TextInputAction.done,
-                          validator: (value) => Validators.validateRequired(
-                            value,
-                            l10n,
-                            l10n.password,
-                          ),
-                          onFieldSubmitted: (_) => _handleLogin(),
-                        ),
-                        const SizedBox(height: 24),
-                        FilledButton(
-                          onPressed: _handleLogin,
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                          child: Text(l10n.login),
-                        ),
-                      ],
-                      // SSO providers (if available)
-                      if (_availableIdPs.isNotEmpty) ...[
-                        // OR divider - only show if local login is also enabled
-                        if (_localLoginEnabled) ...[
-                          const SizedBox(height: 24),
-                          Row(
-                            children: [
-                              const Expanded(child: Divider()),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0,
-                                ),
-                                child: Text(
-                                  l10n.ssoOrDivider,
-                                  style: TextStyle(
-                                    color: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall?.color,
-                                  ),
-                                ),
-                              ),
-                              const Expanded(child: Divider()),
-                            ],
-                          ),
-                        ],
-                        const SizedBox(height: 16),
-                        for (final idp in _availableIdPs)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 12.0),
-                            child: ElevatedButton.icon(
-                              onPressed: () => _handleSsoLogin(idp),
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                              ),
-                              icon: _buildSsoIcon(idp),
-                              label: Text(l10n.ssoSignInWith(idp.name)),
-                            ),
-                          ),
-                      ],
-                    ],
-                  ] else ...[
-                    // MFA code field
-                    TextFormField(
-                      controller: _mfaCodeController,
-                      decoration: InputDecoration(
-                        labelText: l10n.mfaCode,
-                        hintText: l10n.mfaCodeHint,
-                        border: const OutlineInputBorder(),
-                        prefixIcon: const Icon(Icons.security),
-                      ),
-                      keyboardType: TextInputType.number,
-                      textInputAction: TextInputAction.done,
-                      validator: (value) => Validators.validateRequired(
-                        value,
-                        l10n,
-                        l10n.mfaCode,
-                      ),
-                      onFieldSubmitted: (_) => _handleMfaVerification(),
-                    ),
-                    const SizedBox(height: 24),
-                    FilledButton(
-                      onPressed: _handleMfaVerification,
-                      child: Padding(
-                        padding: const EdgeInsets.all(
-                          UIConstants.paddingMedium,
-                        ),
-                        child: Text(l10n.verify),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _showMfaInput = false;
-                          _mfaCodeController.clear();
-                        });
-                      },
-                      child: Text(l10n.back),
-                    ),
-                  ],
+                  if (_showMfaInput)
+                    ..._buildMfaFields(l10n)
+                  else if (_isStep2)
+                    ..._buildLoginFields(l10n)
+                  else
+                    ..._buildServerUrlFields(l10n),
                 ],
               ),
             ),
     );
+  }
+
+  List<Widget> _buildServerUrlFields(AppLocalizations l10n) {
+    return [
+      AdaptiveTextFormField(
+        label: l10n.serverUrl,
+        placeholder: l10n.serverUrlHint,
+        controller: _serverUrlController,
+        keyboardType: TextInputType.url,
+        textInputAction: TextInputAction.done,
+        prefixIcon: const Icon(Icons.dns),
+        validator: (value) => Validators.validateUrl(value, l10n),
+        onFieldSubmitted: (_) => _handleServerUrlNext(),
+      ),
+      const SizedBox(height: UIConstants.paddingLarge),
+      AdaptiveButton(
+        label: l10n.next,
+        onPressed: _handleServerUrlNext,
+        expand: true,
+      ),
+    ];
+  }
+
+  List<Widget> _buildLoginFields(AppLocalizations l10n) {
+    return [
+      if (_localLoginEnabled) ...[
+        AdaptiveTextFormField(
+          label: l10n.username,
+          placeholder: l10n.usernameHint,
+          controller: _usernameController,
+          textInputAction: TextInputAction.next,
+          prefixIcon: const Icon(Icons.person),
+          validator: (value) =>
+              Validators.validateRequired(value, l10n, l10n.username),
+        ),
+        const SizedBox(height: UIConstants.paddingStandard),
+        AdaptiveTextFormField(
+          label: l10n.password,
+          placeholder: l10n.passwordHint,
+          controller: _passwordController,
+          obscureText: _obscurePassword,
+          textInputAction: TextInputAction.done,
+          prefixIcon: const Icon(Icons.lock),
+          validator: (value) =>
+              Validators.validateRequired(value, l10n, l10n.password),
+          onFieldSubmitted: (_) => _handleLogin(),
+        ),
+        AdaptiveSwitchListTile(
+          title: l10n.showPassword,
+          value: !_obscurePassword,
+          onChanged: (value) {
+            setState(() {
+              _obscurePassword = !value;
+            });
+          },
+        ),
+        const SizedBox(height: UIConstants.paddingLarge),
+        AdaptiveButton(
+          label: l10n.login,
+          onPressed: _handleLogin,
+          expand: true,
+        ),
+      ],
+      if (_availableIdPs.isNotEmpty) ...[
+        if (_localLoginEnabled) ...[
+          const SizedBox(height: UIConstants.paddingLarge),
+          Row(
+            children: [
+              const Expanded(child: Divider()),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: UIConstants.paddingStandard,
+                ),
+                child: Text(l10n.ssoOrDivider),
+              ),
+              const Expanded(child: Divider()),
+            ],
+          ),
+        ],
+        const SizedBox(height: UIConstants.paddingStandard),
+        for (final idp in _availableIdPs) ...[
+          AdaptiveButton(
+            label: l10n.ssoSignInWith(idp.name),
+            icon: _buildSsoIcon(idp),
+            onPressed: () => _handleSsoLogin(idp),
+            expand: true,
+          ),
+          const SizedBox(height: UIConstants.paddingMedium),
+        ],
+      ],
+    ];
+  }
+
+  List<Widget> _buildMfaFields(AppLocalizations l10n) {
+    return [
+      AdaptiveTextFormField(
+        label: l10n.mfaCode,
+        placeholder: l10n.mfaCodeHint,
+        controller: _mfaCodeController,
+        keyboardType: TextInputType.number,
+        textInputAction: TextInputAction.done,
+        prefixIcon: const Icon(Icons.security),
+        validator: (value) =>
+            Validators.validateRequired(value, l10n, l10n.mfaCode),
+        onFieldSubmitted: (_) => _handleMfaVerification(),
+      ),
+      const SizedBox(height: UIConstants.paddingLarge),
+      AdaptiveButton(
+        label: l10n.verify,
+        onPressed: _handleMfaVerification,
+        expand: true,
+      ),
+      const SizedBox(height: UIConstants.paddingStandard),
+      AdaptiveButton(
+        label: l10n.back,
+        onPressed: _goBackFromMfa,
+        variant: AdaptiveButtonVariant.secondary,
+        expand: true,
+      ),
+    ];
   }
 }

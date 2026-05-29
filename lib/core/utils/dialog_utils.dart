@@ -79,6 +79,31 @@ class DialogUtils {
     }
   }
 
+  /// Show a short platform-adaptive message.
+  static Future<void> showMessage(BuildContext context, String message) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    if (PlatformUtils.isApplePlatform) {
+      await showCupertinoDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) => CupertinoAlertDialog(
+          content: Text(message),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(context),
+              child: Text(l10n.ok),
+            ),
+          ],
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), duration: const Duration(seconds: 3)),
+      );
+    }
+  }
+
   /// Show a confirmation dialog with platform-adaptive UI
   static Future<bool> showConfirmDialog(
     BuildContext context, {

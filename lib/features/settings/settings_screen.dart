@@ -3,8 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/features/settings/server_settings_screen.dart';
-import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/core/constants/ui_constants.dart';
+import 'package:endurain/shared/adaptive/adaptive.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key, this.onLogout});
@@ -39,71 +39,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    // Cupertino style for iOS/macOS
-    if (PlatformUtils.isApplePlatform) {
-      return CupertinoPageScaffold(
-        navigationBar: CupertinoNavigationBar(
-          middle: Text(l10n.settingsScreen),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              CupertinoListSection.insetGrouped(
-                children: [
-                  CupertinoListTile(
-                    leading: const Icon(CupertinoIcons.globe),
-                    title: Text(l10n.serverSettings),
-                    trailing: const CupertinoListTileChevron(),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        CupertinoPageRoute<void>(
-                          builder: (context) =>
-                              ServerSettingsScreen(onLogout: widget.onLogout),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-              const Spacer(),
-              Padding(
-                padding: const EdgeInsets.only(
-                  bottom: UIConstants.paddingStandard,
-                ),
-                child: Text(
-                  _version,
-                  style: CupertinoTheme.of(context).textTheme.tabLabelTextStyle
-                      .copyWith(color: CupertinoColors.systemGrey),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // Material style for Android
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.settingsScreen)),
+    return AdaptiveScaffold(
+      title: l10n.settingsScreen,
       body: Column(
         children: [
           Expanded(
             child: ListView(
               children: [
-                ListTile(
-                  leading: const Icon(Icons.dns),
-                  title: Text(l10n.serverSettings),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute<void>(
-                        builder: (context) =>
-                            ServerSettingsScreen(onLogout: widget.onLogout),
+                AdaptiveListSection(
+                  children: [
+                    AdaptiveListTile(
+                      leading: const AdaptiveIcon(
+                        materialIcon: Icons.dns,
+                        cupertinoIcon: CupertinoIcons.globe,
                       ),
-                    );
-                  },
+                      title: l10n.serverSettings,
+                      onTap: () {
+                        adaptivePush<void>(
+                          context,
+                          (context) =>
+                              ServerSettingsScreen(onLogout: widget.onLogout),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),

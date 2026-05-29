@@ -12,6 +12,7 @@ import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/core/constants/map_constants.dart';
 import 'package:endurain/l10n/app_localizations.dart';
+import 'package:endurain/shared/adaptive/adaptive.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -187,48 +188,8 @@ class _MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    // Cupertino style for iOS/macOS
-    if (PlatformUtils.isApplePlatform) {
-      return CupertinoPageScaffold(
-        child: Stack(
-          children: [
-            FlutterMap(
-              mapController: _mapController,
-              options: _buildMapOptions(),
-              children: _buildMapLayers(),
-            ),
-            if (_isLoadingLocation)
-              const Center(child: CupertinoActivityIndicator()),
-            // Position button with SafeArea to avoid tab bar
-            SafeArea(
-              child: Align(
-                alignment: Alignment.bottomRight,
-                child: Padding(
-                  padding: const EdgeInsets.all(
-                    LocationMarkerConstants.buttonOuterPadding,
-                  ),
-                  child: CupertinoButton.filled(
-                    padding: const EdgeInsets.all(
-                      LocationMarkerConstants.buttonInnerPadding,
-                    ),
-                    onPressed: _toggleLocationLock,
-                    child: Icon(
-                      _isLocationLocked
-                          ? CupertinoIcons.location_solid
-                          : CupertinoIcons.location,
-                      color: CupertinoColors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // Material style for Android
-    return Scaffold(
+    return AdaptiveScaffold(
+      safeArea: false,
       body: Stack(
         children: [
           FlutterMap(
@@ -237,15 +198,18 @@ class _MapScreenState extends State<MapScreen> {
             children: _buildMapLayers(),
           ),
           if (_isLoadingLocation)
-            const Center(child: CircularProgressIndicator()),
+            const Center(child: AdaptiveLoadingIndicator()),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: AdaptiveFloatingActionButton(
         onPressed: _toggleLocationLock,
         tooltip: l10n.myLocation,
-        child: Icon(
-          _isLocationLocked ? Icons.my_location : Icons.location_searching,
-        ),
+        materialIcon: _isLocationLocked
+            ? Icons.my_location
+            : Icons.location_searching,
+        cupertinoIcon: _isLocationLocked
+            ? CupertinoIcons.location_solid
+            : CupertinoIcons.location,
       ),
     );
   }

@@ -3,11 +3,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/services/auth_service.dart';
-import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/core/utils/validators.dart';
 import 'package:endurain/core/utils/dialog_utils.dart';
 import 'package:endurain/core/constants/ui_constants.dart';
 import 'package:endurain/core/constants/map_constants.dart';
+import 'package:endurain/shared/adaptive/adaptive.dart';
 
 class ServerSettingsScreen extends StatefulWidget {
   const ServerSettingsScreen({super.key, this.onLogout});
@@ -76,7 +76,7 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        await DialogUtils.showErrorDialog(context, e.toString());
+        await DialogUtils.showErrorDialog(context, e);
       }
     }
   }
@@ -95,32 +95,11 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
     if (confirmed && mounted) {
       final serverLogoutSuccess = await _authService.logout();
       if (mounted) {
-        // Show warning if server logout failed
         if (!serverLogoutSuccess) {
-          if (PlatformUtils.isApplePlatform) {
-            // iOS/macOS: Show banner
-            await showCupertinoDialog<void>(
-              context: context,
-              barrierDismissible: true,
-              builder: (context) => CupertinoAlertDialog(
-                content: Text(l10n.logoutServerFailedWarning),
-                actions: [
-                  CupertinoDialogAction(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(l10n.ok),
-                  ),
-                ],
-              ),
-            );
-          } else {
-            // Android: Show snackbar
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(l10n.logoutServerFailedWarning),
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
+          await DialogUtils.showMessage(
+            context,
+            l10n.logoutServerFailedWarning,
+          );
 
           if (!mounted) {
             return;
@@ -137,168 +116,62 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    // Cupertino style for iOS/macOS
-    if (PlatformUtils.isApplePlatform) {
-      if (_isLoading) {
-        return const CupertinoPageScaffold(
-          navigationBar: CupertinoNavigationBar(),
-          child: Center(child: CupertinoActivityIndicator()),
-        );
-      }
-
-      return CupertinoPageScaffold(
-        navigationBar: CupertinoNavigationBar(
-          middle: Text(l10n.serverSettingsTitle),
-        ),
-        child: SafeArea(
-          child: Form(
-            key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.all(UIConstants.paddingStandard),
-              children: [
-                CupertinoListSection.insetGrouped(
-                  header: Text(l10n.loggedIn),
-                  children: [
-                    CupertinoListTile(
-                      title: Text(l10n.serverUrl),
-                      subtitle: Text(_serverUrl),
-                    ),
-                    CupertinoListTile(
-                      title: Text(l10n.username),
-                      subtitle: Text(_username),
-                    ),
-                    CupertinoListTile(
-                      leading: const Icon(
-                        CupertinoIcons.square_arrow_right,
-                        color: CupertinoColors.systemRed,
-                      ),
-                      title: Text(
-                        l10n.logout,
-                        style: const TextStyle(
-                          color: CupertinoColors.systemRed,
-                        ),
-                      ),
-                      onTap: _handleLogout,
-                    ),
-                  ],
-                ),
-                CupertinoListSection.insetGrouped(
-                  header: Text(l10n.tileServerUrl),
-                  children: [
-                    CupertinoTextFormFieldRow(
-                      controller: _tileServerUrlController,
-                      placeholder: l10n.tileServerUrlHint,
-                      keyboardType: TextInputType.url,
-                      textInputAction: TextInputAction.done,
-                      validator: (value) => Validators.validateUrl(value, l10n),
-                      onFieldSubmitted: (_) => _saveSettings(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: UIConstants.paddingStandard,
-                  ),
-                  child: CupertinoButton.filled(
-                    onPressed: _saveSettings,
-                    child: Text(l10n.save),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    // Material style for Android
-    if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(title: Text(l10n.serverSettingsTitle)),
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.serverSettingsTitle)),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(UIConstants.paddingStandard),
-          children: [
-            Card(
-              child: Padding(
+    return AdaptiveScaffold(
+      title: l10n.serverSettingsTitle,
+      body: _isLoading
+          ? const Center(child: AdaptiveLoadingIndicator())
+          : Form(
+              key: _formKey,
+              child: ListView(
                 padding: const EdgeInsets.all(UIConstants.paddingStandard),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.loggedIn,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                children: [
+                  AdaptiveListSection(
+                    header: l10n.loggedIn,
+                    children: [
+                      AdaptiveListTile(
+                        title: l10n.serverUrl,
+                        subtitle: _serverUrl,
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Text(
-                          l10n.serverUrl,
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        Expanded(child: Text(_serverUrl)),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Text(
-                          l10n.username,
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        Text(_username),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    const Divider(),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.logout, color: Colors.red),
-                      title: Text(
-                        l10n.logout,
-                        style: const TextStyle(color: Colors.red),
+                      AdaptiveListTile(
+                        title: l10n.username,
+                        subtitle: _username,
                       ),
-                      onTap: _handleLogout,
+                      AdaptiveListTile(
+                        leading: const AdaptiveIcon(
+                          materialIcon: Icons.logout,
+                          cupertinoIcon: CupertinoIcons.square_arrow_right,
+                          color: Colors.red,
+                        ),
+                        title: l10n.logout,
+                        destructive: true,
+                        onTap: _handleLogout,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: UIConstants.paddingStandard),
+                  AdaptiveTextFormField(
+                    label: l10n.tileServerUrl,
+                    placeholder: l10n.tileServerUrlHint,
+                    controller: _tileServerUrlController,
+                    keyboardType: TextInputType.url,
+                    textInputAction: TextInputAction.done,
+                    validator: (value) => Validators.validateUrl(value, l10n),
+                    onFieldSubmitted: (_) => _saveSettings(),
+                  ),
+                  const SizedBox(height: UIConstants.paddingLarge),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: UIConstants.paddingStandard,
                     ),
-                  ],
-                ),
+                    child: AdaptiveButton(
+                      label: l10n.save,
+                      onPressed: _saveSettings,
+                      expand: true,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _tileServerUrlController,
-              decoration: InputDecoration(
-                labelText: l10n.tileServerUrl,
-                hintText: l10n.tileServerUrlHint,
-                border: const OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.url,
-              textInputAction: TextInputAction.done,
-              validator: (value) => Validators.validateUrl(value, l10n),
-              onFieldSubmitted: (_) => _saveSettings(),
-            ),
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: _saveSettings,
-              child: Padding(
-                padding: const EdgeInsets.all(UIConstants.paddingMedium),
-                child: Text(l10n.save),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
