@@ -1,6 +1,3 @@
-import 'dart:async';
-
-import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -11,10 +8,11 @@ import 'package:endurain/core/services/auth_service.dart';
 import 'package:endurain/core/services/sso_service.dart';
 import 'package:endurain/core/services/server_settings_service.dart';
 import 'package:endurain/core/models/identity_provider.dart';
-import 'package:endurain/core/models/server_settings.dart';
 import 'package:endurain/core/utils/validators.dart';
 import 'package:endurain/core/utils/dialog_utils.dart';
 import 'package:endurain/core/constants/ui_constants.dart';
+import 'package:endurain/features/auth/auth_repository.dart';
+import 'package:endurain/features/auth/login_controller.dart';
 import 'package:endurain/shared/adaptive/adaptive.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -24,318 +22,126 @@ class LoginScreen extends StatefulWidget {
     this.authService,
     this.ssoService,
     this.serverSettingsService,
+    this.controller,
   });
 
   final VoidCallback? onLoginSuccess;
   final AuthService? authService;
   final SsoService? ssoService;
   final ServerSettingsService? serverSettingsService;
+  final LoginController? controller;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _serverUrlController = TextEditingController();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _mfaCodeController = TextEditingController();
-  late final AuthService _authService;
-  late final SsoService _ssoService;
-  late final ServerSettingsService _serverSettingsService;
-  late final AppLinks _appLinks;
-  StreamSubscription<Uri>? _linkSubscription;
-
-  bool _isLoading = false;
-  bool _obscurePassword = true;
-  bool _showMfaInput = false;
-  bool _isStep2 =
-      false; // Two-step flow: Step 1 = server URL, Step 2 = login/SSO
-  String? _mfaUsername;
-  List<IdentityProvider> _availableIdPs = [];
-  ServerSettings? _serverSettings;
+  late final LoginController _controller;
+  late final bool _ownsController;
 
   @override
   void initState() {
     super.initState();
-    _authService = widget.authService ?? AppServices.instance.auth;
-    _ssoService = widget.ssoService ?? AppServices.instance.sso;
-    _serverSettingsService =
-        widget.serverSettingsService ?? AppServices.instance.serverSettings;
-    _initializeSsoCallbackListener();
-  }
-
-  /// Whether local login (username/password) is enabled
-  bool get _localLoginEnabled => _serverSettings?.localLoginEnabled ?? true;
-
-  @override
-  void dispose() {
-    _serverUrlController.dispose();
-    _usernameController.dispose();
-    _passwordController.dispose();
-    _mfaCodeController.dispose();
-    _linkSubscription?.cancel();
-    super.dispose();
-  }
-
-  void _initializeSsoCallbackListener() {
-    _appLinks = AppLinks();
-    _linkSubscription = _appLinks.uriLinkStream.listen(
-      _handleSsoCallbackUri,
-      onError: (Object error) {
-        if (mounted) {
-          _showError(error);
-        }
-      },
+    _ownsController = widget.controller == null;
+    _controller = widget.controller ?? _createController();
+    _controller.addListener(_handleControllerChanged);
+    _controller.startSsoCallbackListener(
+      onLoginSuccess: () => widget.onLoginSuccess?.call(),
+      onError: _showError,
     );
   }
 
-  Future<void> _handleSsoCallbackUri(Uri uri) async {
-    if (uri.scheme != 'endurain' ||
-        uri.host != 'auth' ||
-        uri.path != '/sso/callback') {
-      return;
+  LoginController _createController() {
+    final services = AppServices.instance;
+    return LoginController(
+      authRepository: AuthRepository(
+        authService: widget.authService ?? services.auth,
+        ssoService: widget.ssoService ?? services.sso,
+        serverSettingsService:
+            widget.serverSettingsService ?? services.serverSettings,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_handleControllerChanged);
+    if (_ownsController) {
+      _controller.dispose();
     }
+    super.dispose();
+  }
 
-    final sessionId = uri.queryParameters['session_id'];
-    final error =
-        uri.queryParameters['message'] ?? uri.queryParameters['error'];
-
-    if (error != null && error.isNotEmpty) {
-      _ssoService.clearPkce();
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        _showError(error);
-      }
-      return;
-    }
-
-    if (sessionId == null || sessionId.isEmpty) {
-      _ssoService.clearPkce();
-      if (mounted) {
-        final l10n = AppLocalizations.of(context)!;
-        setState(() {
-          _isLoading = false;
-        });
-        _showError(l10n.ssoMissingSessionId);
-      }
-      return;
-    }
-
+  void _handleControllerChanged() {
     if (mounted) {
-      setState(() {
-        _isLoading = true;
-      });
-    }
-
-    try {
-      await _ssoService.exchangeSessionForTokens(sessionId);
-      if (mounted) {
-        widget.onLoginSuccess?.call();
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        _showError(e);
-      }
+      setState(() {});
     }
   }
 
   /// Step 1: Validate server URL, fetch server settings and available IdPs
   Future<void> _handleServerUrlNext() async {
-    if (!_formKey.currentState!.validate()) {
+    if (!_controller.formKey.currentState!.validate()) {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final serverUrl = _serverUrlController.text.trim();
-
-      // First, fetch server settings
-      final settings = await _serverSettingsService.getServerSettings(
-        serverUrl: serverUrl,
-      );
-
-      // Store settings
-      _serverSettings = settings;
-
-      // Only fetch SSO providers if SSO is enabled
-      List<IdentityProvider> idps = [];
-      if (settings.ssoEnabled) {
-        try {
-          idps = await _ssoService.getEnabledProviders(serverUrl: serverUrl);
-        } catch (e) {
-          // If SSO fetch fails, continue with empty list
-          idps = [];
-        }
-      }
-
+    final autoRedirectProvider = await _controller.submitServerUrl();
+    if (autoRedirectProvider != null) {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
       if (mounted) {
-        setState(() {
-          _availableIdPs = idps;
-          _isStep2 = true;
-          _isLoading = false;
-        });
-
-        // Auto-redirect to SSO if:
-        // - SSO is enabled
-        // - Only one provider available
-        // - sso_auto_redirect is true
-        if (settings.ssoEnabled &&
-            settings.ssoAutoRedirect &&
-            idps.length == 1) {
-          // Slight delay to show the step 2 briefly before redirecting
-          await Future<void>.delayed(const Duration(milliseconds: 100));
-          if (mounted) {
-            await _handleSsoLogin(idps.first);
-          }
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        // If server settings fetch fails, show error
-        _showError(e);
+        await _handleSsoLogin(autoRedirectProvider);
       }
     }
   }
 
   /// Handle SSO provider selection
   Future<void> _handleSsoLogin(IdentityProvider idp) async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final oauthUrl = await _ssoService.initiateOAuth(
-        idp.slug,
-        serverUrl: _serverUrlController.text.trim(),
-      );
-
-      if (mounted) {
-        final l10n = AppLocalizations.of(context)!;
-
-        setState(() {
-          _isLoading = false;
-        });
-
-        final launched = await launchUrl(
-          Uri.parse(oauthUrl),
-          mode: LaunchMode.externalApplication,
-        );
-
-        if (!launched && mounted) {
-          _ssoService.clearPkce();
-          _showError(l10n.ssoBrowserLaunchFailed);
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        _showError(e);
-      }
-    }
-  }
-
-  /// Step 2: Traditional username/password login
-  Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) {
+    final oauthUrl = await _controller.beginSsoLogin(idp);
+    if (oauthUrl == null || !mounted) {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    final launched = await launchUrl(
+      Uri.parse(oauthUrl),
+      mode: LaunchMode.externalApplication,
+    );
 
-    try {
-      final result = await _authService.login(
-        _usernameController.text.trim(),
-        _passwordController.text,
-        serverUrl: _serverUrlController.text.trim(),
-      );
-
-      if (mounted) {
-        if (result.mfaRequired) {
-          // Show MFA input
-          setState(() {
-            _showMfaInput = true;
-            _mfaUsername = result.username;
-            _isLoading = false;
-          });
-        } else {
-          // Login successful, notify parent or navigate
-          widget.onLoginSuccess?.call();
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        _showError(e);
-      }
+    if (!launched && mounted) {
+      final l10n = AppLocalizations.of(context)!;
+      _controller.clearSsoPkce();
+      _showError(l10n.ssoBrowserLaunchFailed);
     }
+  }
+
+  Future<void> _handleLogin() async {
+    if (!_controller.formKey.currentState!.validate()) {
+      return;
+    }
+
+    await _controller.submitLogin();
   }
 
   Future<void> _handleMfaVerification() async {
     final l10n = AppLocalizations.of(context)!;
-    if (_mfaCodeController.text.trim().isEmpty) {
+    if (_controller.mfaCodeController.text.trim().isEmpty) {
       _showError(l10n.mfaCodeRequired);
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      await _authService.verifyMfa(
-        _mfaUsername!,
-        _mfaCodeController.text.trim(),
-      );
-
-      if (mounted) {
-        widget.onLoginSuccess?.call();
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        _showError(e);
-      }
-    }
+    await _controller.submitMfa();
   }
 
   void _showError(Object message) {
-    DialogUtils.showErrorDialog(context, message);
+    if (mounted) {
+      DialogUtils.showErrorDialog(context, message);
+    }
   }
 
   void _goBackToServerStep() {
-    setState(() {
-      _isStep2 = false;
-      _availableIdPs = [];
-      _serverSettings = null;
-    });
+    _controller.backToServerStep();
   }
 
   void _goBackFromMfa() {
-    setState(() {
-      _showMfaInput = false;
-      _mfaCodeController.clear();
-    });
+    _controller.backFromMfa();
   }
 
   /// Build SSO provider icon widget
@@ -397,14 +203,14 @@ class _LoginScreenState extends State<LoginScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return AdaptiveScaffold(
-      title: _showMfaInput ? l10n.mfaTitle : l10n.loginTitle,
-      leading: _isStep2 && !_showMfaInput
+      title: _controller.showMfaInput ? l10n.mfaTitle : l10n.loginTitle,
+      leading: _controller.isStep2 && !_controller.showMfaInput
           ? AdaptiveBackButton(onPressed: _goBackToServerStep)
           : null,
-      body: _isLoading
+      body: _controller.isLoading
           ? const Center(child: AdaptiveLoadingIndicator())
           : Form(
-              key: _formKey,
+              key: _controller.formKey,
               child: ListView(
                 padding: const EdgeInsets.all(UIConstants.paddingStandard),
                 children: [
@@ -417,9 +223,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 40),
-                  if (_showMfaInput)
+                  if (_controller.showMfaInput)
                     ..._buildMfaFields(l10n)
-                  else if (_isStep2)
+                  else if (_controller.isStep2)
                     ..._buildLoginFields(l10n)
                   else
                     ..._buildServerUrlFields(l10n),
@@ -434,7 +240,7 @@ class _LoginScreenState extends State<LoginScreen> {
       AdaptiveTextFormField(
         label: l10n.serverUrl,
         placeholder: l10n.serverUrlHint,
-        controller: _serverUrlController,
+        controller: _controller.serverUrlController,
         keyboardType: TextInputType.url,
         textInputAction: TextInputAction.done,
         prefixIcon: const Icon(Icons.dns),
@@ -452,11 +258,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   List<Widget> _buildLoginFields(AppLocalizations l10n) {
     return [
-      if (_localLoginEnabled) ...[
+      if (_controller.localLoginEnabled) ...[
         AdaptiveTextFormField(
           label: l10n.username,
           placeholder: l10n.usernameHint,
-          controller: _usernameController,
+          controller: _controller.usernameController,
           textInputAction: TextInputAction.next,
           prefixIcon: const Icon(Icons.person),
           validator: (value) =>
@@ -466,8 +272,8 @@ class _LoginScreenState extends State<LoginScreen> {
         AdaptiveTextFormField(
           label: l10n.password,
           placeholder: l10n.passwordHint,
-          controller: _passwordController,
-          obscureText: _obscurePassword,
+          controller: _controller.passwordController,
+          obscureText: _controller.obscurePassword,
           textInputAction: TextInputAction.done,
           prefixIcon: const Icon(Icons.lock),
           validator: (value) =>
@@ -476,12 +282,8 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         AdaptiveSwitchListTile(
           title: l10n.showPassword,
-          value: !_obscurePassword,
-          onChanged: (value) {
-            setState(() {
-              _obscurePassword = !value;
-            });
-          },
+          value: !_controller.obscurePassword,
+          onChanged: _controller.setPasswordVisible,
         ),
         const SizedBox(height: UIConstants.paddingLarge),
         AdaptiveButton(
@@ -490,8 +292,8 @@ class _LoginScreenState extends State<LoginScreen> {
           expand: true,
         ),
       ],
-      if (_availableIdPs.isNotEmpty) ...[
-        if (_localLoginEnabled) ...[
+      if (_controller.availableIdPs.isNotEmpty) ...[
+        if (_controller.localLoginEnabled) ...[
           const SizedBox(height: UIConstants.paddingLarge),
           Row(
             children: [
@@ -507,7 +309,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ],
         const SizedBox(height: UIConstants.paddingStandard),
-        for (final idp in _availableIdPs) ...[
+        for (final idp in _controller.availableIdPs) ...[
           AdaptiveButton(
             label: l10n.ssoSignInWith(idp.name),
             icon: _buildSsoIcon(idp),
@@ -525,7 +327,7 @@ class _LoginScreenState extends State<LoginScreen> {
       AdaptiveTextFormField(
         label: l10n.mfaCode,
         placeholder: l10n.mfaCodeHint,
-        controller: _mfaCodeController,
+        controller: _controller.mfaCodeController,
         keyboardType: TextInputType.number,
         textInputAction: TextInputAction.done,
         prefixIcon: const Icon(Icons.security),
