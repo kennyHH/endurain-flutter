@@ -1,23 +1,26 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:flutter_compass/flutter_compass.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:endurain/core/services/app_services.dart';
 import 'package:endurain/core/services/location_service.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
-import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/core/constants/map_constants.dart';
+import 'package:endurain/features/map/map_state_controller.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/shared/adaptive/adaptive.dart';
 
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key, this.locationService, this.storage});
+  const MapScreen({
+    super.key,
+    this.controller,
+    this.locationService,
+    this.storage,
+  });
 
+  final MapStateController? controller;
   final LocationService? locationService;
   final SecureStorageService? storage;
 
@@ -27,135 +30,99 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
-  late final LocationService _locationService;
-  late final SecureStorageService _storage;
-  LatLng _currentLocation = const LatLng(
-    MapConstants.defaultLatitude,
-    MapConstants.defaultLongitude,
-  );
-  String _tileServerUrl = MapConstants.defaultTileServerUrl;
-  bool _isLoadingLocation = false;
-  bool _hasLocationPermission = false;
-  bool _isLocationLocked = true; // Track if location is locked to user
-  double _heading = 0.0; // Device heading in degrees
-  StreamSubscription<CompassEvent>? _compassSubscription;
-  StreamSubscription<Position>? _positionSubscription;
+  late final MapStateController _controller;
+  late final bool _ownsController;
+  LatLng? _lastFollowedLocation;
+  bool _centeredInitialLocation = false;
 
   @override
   void initState() {
     super.initState();
-    _locationService = widget.locationService ?? AppServices.instance.location;
-    _storage = widget.storage ?? AppServices.instance.secureStorage;
-    _loadSettings();
-    _loadUserLocation();
-    _startCompassUpdates();
+    _ownsController = widget.controller == null;
+    _controller = widget.controller ?? _createController();
+    _controller.addListener(_handleControllerChanged);
+    _controller.initialize();
+  }
+
+  MapStateController _createController() {
+    final services = AppServices.instance;
+    return MapStateController(
+      locationService: widget.locationService ?? services.location,
+      storage: widget.storage ?? services.secureStorage,
+    );
   }
 
   @override
   void dispose() {
-    _compassSubscription?.cancel();
-    _positionSubscription?.cancel();
+    _controller.removeListener(_handleControllerChanged);
+    if (_ownsController) {
+      _controller.dispose();
+    }
     super.dispose();
   }
 
-  /// Start listening to compass heading updates
-  void _startCompassUpdates() {
-    // Compass is only supported on iOS and Android (not macOS)
-    if (PlatformUtils.isMobile) {
-      _compassSubscription = FlutterCompass.events?.listen((
-        CompassEvent event,
-      ) {
-        if (mounted && event.heading != null) {
-          setState(() {
-            _heading = event.heading!;
-          });
-        }
+  void _handleControllerChanged() {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {});
+    _syncMapToLocationState();
+  }
+
+  void _syncMapToLocationState() {
+    if (!_controller.hasLocationPermission) {
+      return;
+    }
+
+    if (!_centeredInitialLocation) {
+      _centeredInitialLocation = true;
+      _lastFollowedLocation = _controller.currentLocation;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _mapController.move(
+          _controller.currentLocation,
+          MapConstants.initialLoadZoom,
+        );
       });
+      return;
     }
-  }
 
-  Future<void> _loadSettings() async {
-    final tileUrl = await _storage.getTileServerUrl();
-    if (mounted && tileUrl != null && tileUrl.isNotEmpty) {
-      setState(() {
-        _tileServerUrl = tileUrl;
-      });
+    if (!_controller.isLocationLocked ||
+        _lastFollowedLocation == _controller.currentLocation) {
+      return;
     }
-  }
 
-  Future<void> _loadUserLocation() async {
-    setState(() {
-      _isLoadingLocation = true;
-    });
-
-    final position = await _locationService.getCurrentPosition();
-
-    if (mounted) {
-      if (position != null) {
-        setState(() {
-          _currentLocation = LatLng(position.latitude, position.longitude);
-          _hasLocationPermission = true;
-          _isLoadingLocation = false;
-        });
-        // Wait for next frame to ensure map is ready
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _mapController.move(_currentLocation, MapConstants.initialLoadZoom);
-        });
-        // Start continuous position tracking
-        _startPositionUpdates();
-      } else {
-        setState(() {
-          _hasLocationPermission = false;
-          _isLoadingLocation = false;
-        });
-      }
-    }
-  }
-
-  /// Start listening to continuous position updates
-  void _startPositionUpdates() {
-    _positionSubscription = _locationService.getPositionStream().listen((
-      Position position,
-    ) {
-      if (mounted) {
-        final newLocation = LatLng(position.latitude, position.longitude);
-        setState(() {
-          _currentLocation = newLocation;
-        });
-
-        // If location is locked, move map to follow user
-        if (_isLocationLocked) {
-          _mapController.move(newLocation, _mapController.camera.zoom);
-        }
-      }
+    _lastFollowedLocation = _controller.currentLocation;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _mapController.move(
+        _controller.currentLocation,
+        _mapController.camera.zoom,
+      );
     });
   }
 
   /// Toggle location lock
   void _toggleLocationLock() {
-    setState(() {
-      _isLocationLocked = !_isLocationLocked;
-    });
+    _controller.toggleLocationLock();
 
     // If locking, center on current position
-    if (_isLocationLocked && _hasLocationPermission) {
-      _mapController.move(_currentLocation, _mapController.camera.zoom);
+    if (_controller.isLocationLocked && _controller.hasLocationPermission) {
+      _mapController.move(
+        _controller.currentLocation,
+        _mapController.camera.zoom,
+      );
     }
   }
 
   /// Handle map movement by user - unlock location
   void _onMapMoved() {
-    if (_isLocationLocked) {
-      setState(() {
-        _isLocationLocked = false;
-      });
-    }
+    _controller.unlockLocation();
   }
 
   /// Build map options with common configuration
   MapOptions _buildMapOptions() {
     return MapOptions(
-      initialCenter: _currentLocation,
+      initialCenter: _controller.currentLocation,
       initialZoom: MapConstants.defaultZoom,
       minZoom: MapConstants.minZoom,
       maxZoom: MapConstants.maxZoom,
@@ -172,18 +139,18 @@ class _MapScreenState extends State<MapScreen> {
   List<Widget> _buildMapLayers() {
     return [
       TileLayer(
-        urlTemplate: _tileServerUrl,
+        urlTemplate: _controller.tileServerUrl,
         userAgentPackageName: MapConstants.userAgent,
       ),
-      if (_hasLocationPermission)
+      if (_controller.hasLocationPermission)
         MarkerLayer(
           markers: [
             Marker(
-              point: _currentLocation,
+              point: _controller.currentLocation,
               width: LocationMarkerConstants.markerSize,
               height: LocationMarkerConstants.markerSize,
               alignment: Alignment.center,
-              child: _LocationMarker(heading: _heading),
+              child: _LocationMarker(heading: _controller.heading),
             ),
           ],
         ),
@@ -203,17 +170,17 @@ class _MapScreenState extends State<MapScreen> {
             options: _buildMapOptions(),
             children: _buildMapLayers(),
           ),
-          if (_isLoadingLocation)
+          if (_controller.isLoadingLocation)
             const Center(child: AdaptiveLoadingIndicator()),
         ],
       ),
       floatingActionButton: AdaptiveFloatingActionButton(
         onPressed: _toggleLocationLock,
         tooltip: l10n.myLocation,
-        materialIcon: _isLocationLocked
+        materialIcon: _controller.isLocationLocked
             ? Icons.my_location
             : Icons.location_searching,
-        cupertinoIcon: _isLocationLocked
+        cupertinoIcon: _controller.isLocationLocked
             ? CupertinoIcons.location_solid
             : CupertinoIcons.location,
       ),
