@@ -1,3 +1,7 @@
+// Adaptive widgets must map intent to native Flutter platform libraries:
+// Cupertino on Apple platforms and Material/Material 3 on Android.
+// Do not add custom platform-lookalike effects here unless Flutter exposes
+// them through the corresponding native widget family.
 export 'adaptive_app.dart';
 export 'adaptive_back_button.dart';
 export 'adaptive_bottom_navigation.dart';
