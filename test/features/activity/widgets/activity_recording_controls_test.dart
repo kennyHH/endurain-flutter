@@ -1,4 +1,5 @@
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
+import 'package:endurain/features/activity/models/activity_upload_state.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
 import 'package:endurain/features/activity/services/activity_recording_service.dart';
 import 'package:endurain/features/activity/widgets/activity_recording_controls.dart';
@@ -178,6 +179,38 @@ void main() {
       await tester.tap(find.text(AppLocalizationsEn().activityOpenSettings));
 
       expect(openedSettings, isTrue);
+    });
+
+    testWidgets('shows upload actions for completed recordings', (tester) async {
+      var retried = false;
+      var discarded = false;
+
+      await tester.pumpWidget(
+        _TestApp(
+          child: ActivityRecordingControls(
+            state: ActivityRecordingState(
+              status: ActivityRecordingStatus.completed,
+            ),
+            selectedActivityType: ActivityType.run,
+            onActivityTypeChanged: null,
+            onStart: null,
+            onPause: null,
+            onResume: null,
+            onStop: null,
+            uploadStatus: ActivityUploadStatus.failed,
+            onRetryUpload: () => retried = true,
+            onDiscard: () => discarded = true,
+          ),
+        ),
+      );
+
+      expect(find.text(AppLocalizationsEn().activityUploadFailed), findsOneWidget);
+
+      await tester.tap(find.text(AppLocalizationsEn().activityRetryUpload));
+      await tester.tap(find.text(AppLocalizationsEn().activityDiscard));
+
+      expect(retried, isTrue);
+      expect(discarded, isTrue);
     });
   });
 }
