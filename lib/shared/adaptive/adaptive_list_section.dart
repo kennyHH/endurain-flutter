@@ -12,10 +12,30 @@ class AdaptiveListSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (PlatformUtils.isApplePlatform) {
-      return CupertinoListSection.insetGrouped(
-        header: header == null ? null : Text(header!),
+      final section = CupertinoListSection.insetGrouped(
         margin: EdgeInsets.zero,
         children: children,
+      );
+
+      if (header == null) {
+        return section;
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: UIConstants.paddingSmall),
+            child: Text(
+              header!,
+              style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          section,
+        ],
       );
     }
 

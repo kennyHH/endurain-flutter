@@ -33,7 +33,9 @@ void main() {
 
       final sectionTileRect = tester.getRect(find.byType(CupertinoListTile));
       final fieldRect = tester.getRect(find.byType(CupertinoTextFormFieldRow));
+      final headerRect = tester.getRect(find.text('Logged in'));
 
+      expect(headerRect.left, fieldRect.left);
       expect(sectionTileRect.left, fieldRect.left);
       expect(sectionTileRect.right, fieldRect.right);
     },
