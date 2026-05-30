@@ -8,7 +8,7 @@
 PRODUCT_NAME = endurain
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.dev.endurain
+PRODUCT_BUNDLE_IDENTIFIER = com.endurain.endurain
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2025 com.endurain. All rights reserved.

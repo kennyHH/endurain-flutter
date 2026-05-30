@@ -42,10 +42,10 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>NSLocationUsageDescription</key>
-	<string>This app needs access to your location to show your position on the map and track your activities.</string>
+	<string>This app uses location to show your position on the map and record activities while you are using the app.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app needs access to your location to show your position on the map and track your activities.</string>
+	<string>This app uses location to show your position on the map and record activities while you are using the app.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>This app needs access to your location to track your activities even when the app is in the background.</string>
+	<string>This app uses location to show your position on the map and record activities while you are using the app.</string>
 </dict>
 </plist>
