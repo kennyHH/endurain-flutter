@@ -252,7 +252,10 @@ class _LoginScreenState extends State<LoginScreen> {
         controller: _controller.serverUrlController,
         keyboardType: TextInputType.url,
         textInputAction: TextInputAction.done,
-        prefixIcon: const Icon(Icons.dns),
+        prefixIcon: const AdaptiveIcon(
+          materialIcon: Icons.dns,
+          cupertinoIcon: CupertinoIcons.globe,
+        ),
         validator: (value) => Validators.validateUrl(value, l10n),
         onFieldSubmitted: (_) => _handleServerUrlNext(),
       ),
@@ -273,7 +276,10 @@ class _LoginScreenState extends State<LoginScreen> {
           placeholder: l10n.usernameHint,
           controller: _controller.usernameController,
           textInputAction: TextInputAction.next,
-          prefixIcon: const Icon(Icons.person),
+          prefixIcon: const AdaptiveIcon(
+            materialIcon: Icons.person,
+            cupertinoIcon: CupertinoIcons.person,
+          ),
           validator: (value) =>
               Validators.validateRequired(value, l10n, l10n.username),
         ),
@@ -284,7 +290,10 @@ class _LoginScreenState extends State<LoginScreen> {
           controller: _controller.passwordController,
           obscureText: _controller.obscurePassword,
           textInputAction: TextInputAction.done,
-          prefixIcon: const Icon(Icons.lock),
+          prefixIcon: const AdaptiveIcon(
+            materialIcon: Icons.lock,
+            cupertinoIcon: CupertinoIcons.lock,
+          ),
           validator: (value) =>
               Validators.validateRequired(value, l10n, l10n.password),
           onFieldSubmitted: (_) => _handleLogin(),
@@ -339,7 +348,10 @@ class _LoginScreenState extends State<LoginScreen> {
         controller: _controller.mfaCodeController,
         keyboardType: TextInputType.number,
         textInputAction: TextInputAction.done,
-        prefixIcon: const Icon(Icons.security),
+        prefixIcon: const AdaptiveIcon(
+          materialIcon: Icons.security,
+          cupertinoIcon: CupertinoIcons.shield,
+        ),
         validator: (value) =>
             Validators.validateRequired(value, l10n, l10n.mfaCode),
         onFieldSubmitted: (_) => _handleMfaVerification(),

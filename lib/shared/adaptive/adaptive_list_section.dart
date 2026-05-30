@@ -18,25 +18,31 @@ class AdaptiveListSection extends StatelessWidget {
       );
     }
 
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(UIConstants.paddingStandard),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (header != null) ...[
-              Text(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (header != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                UIConstants.paddingStandard,
+                UIConstants.paddingMedium,
+                UIConstants.paddingStandard,
+                UIConstants.paddingSmall,
+              ),
+              child: Text(
                 header!,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: UIConstants.paddingMedium),
-            ],
-            ...children,
-          ],
-        ),
+            ),
+          ...children,
+        ],
       ),
     );
   }

@@ -22,15 +22,16 @@ class AdaptiveListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isApplePlatform = PlatformUtils.isApplePlatform;
     final titleStyle = destructive
         ? TextStyle(
-            color: PlatformUtils.isApplePlatform
+            color: isApplePlatform
                 ? CupertinoColors.systemRed
-                : Colors.red,
+                : Theme.of(context).colorScheme.error,
           )
         : null;
 
-    if (PlatformUtils.isApplePlatform) {
+    if (isApplePlatform) {
       return CupertinoListTile(
         leading: leading,
         title: Text(title, style: titleStyle),
@@ -43,7 +44,6 @@ class AdaptiveListTile extends StatelessWidget {
     }
 
     return ListTile(
-      contentPadding: EdgeInsets.zero,
       leading: leading,
       title: Text(title, style: titleStyle),
       subtitle: subtitle == null ? null : Text(subtitle!),
