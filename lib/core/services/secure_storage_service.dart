@@ -9,7 +9,6 @@ class SecureStorageService {
   // Keys for stored values
   static const _serverUrlKey = 'server_url';
   static const _usernameKey = 'username';
-  static const _passwordKey = 'password';
   static const _tileServerUrlKey = 'tile_server_url';
   static const _tileServerAttributionKey = 'tile_server_attribution';
   static const _mapBackgroundColorKey = 'map_background_color';
@@ -64,11 +63,6 @@ class SecureStorageService {
   Future<void> setUsername(String username) =>
       write(key: _usernameKey, value: username);
   Future<void> deleteUsername() => delete(key: _usernameKey);
-
-  Future<String?> getPassword() => read(key: _passwordKey);
-  Future<void> setPassword(String password) =>
-      write(key: _passwordKey, value: password);
-  Future<void> deletePassword() => delete(key: _passwordKey);
 
   Future<String?> getTileServerUrl() => read(key: _tileServerUrlKey);
   Future<void> setTileServerUrl(String url) =>
