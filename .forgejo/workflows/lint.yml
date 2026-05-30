@@ -62,5 +62,5 @@ jobs:
       - name: Check coverage threshold
         run: >-
           dart run tool/check_coverage.dart
-          --min-line-coverage 60
+          --min-line-coverage 70
           --exclude 'lib/l10n/app_localizations*.dart'
