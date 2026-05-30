@@ -218,6 +218,21 @@ class AppLocalizationsPt extends AppLocalizations {
   String get verify => 'Verificar';
 
   @override
+  String get activityPause => 'Pausar';
+
+  @override
+  String get activityResume => 'Retomar';
+
+  @override
+  String get activityStart => 'Iniciar';
+
+  @override
+  String get activityStop => 'Parar';
+
+  @override
+  String get activityStopping => 'A parar';
+
+  @override
   String get activityTypeHike => 'Caminhada';
 
   @override

@@ -305,6 +305,26 @@
     "description": "MFA verification button label"
   },
   "@sectionActivity": "=== ACTIVITY (features/activity/) ===",
+  "activityPause": "Pause",
+  "@activityPause": {
+    "description": "Pause recording button label and tooltip - Used in: activity_recording_controls.dart"
+  },
+  "activityResume": "Resume",
+  "@activityResume": {
+    "description": "Resume recording button label and tooltip - Used in: activity_recording_controls.dart"
+  },
+  "activityStart": "Start",
+  "@activityStart": {
+    "description": "Start recording button label and tooltip - Used in: activity_recording_controls.dart"
+  },
+  "activityStop": "Stop",
+  "@activityStop": {
+    "description": "Stop recording button label and tooltip - Used in: activity_recording_controls.dart"
+  },
+  "activityStopping": "Stopping",
+  "@activityStopping": {
+    "description": "Disabled stop button label while a recording is stopping - Used in: activity_recording_controls.dart"
+  },
   "activityTypeHike": "Hike",
   "@activityTypeHike": {
     "description": "Activity type label for hiking - Used in: activity_type_picker.dart"

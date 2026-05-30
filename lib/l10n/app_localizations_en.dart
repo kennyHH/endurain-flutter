@@ -211,6 +211,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get verify => 'Verify';
 
   @override
+  String get activityPause => 'Pause';
+
+  @override
+  String get activityResume => 'Resume';
+
+  @override
+  String get activityStart => 'Start';
+
+  @override
+  String get activityStop => 'Stop';
+
+  @override
+  String get activityStopping => 'Stopping';
+
+  @override
   String get activityTypeHike => 'Hike';
 
   @override

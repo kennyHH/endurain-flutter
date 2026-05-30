@@ -305,6 +305,26 @@
     "description": "Rótulo do botão de verificação MFA"
   },
   "@sectionActivity": "=== ATIVIDADE (features/activity/) ===",
+  "activityPause": "Pausar",
+  "@activityPause": {
+    "description": "Rótulo e dica do botão de pausar gravação - Usado em: activity_recording_controls.dart"
+  },
+  "activityResume": "Retomar",
+  "@activityResume": {
+    "description": "Rótulo e dica do botão de retomar gravação - Usado em: activity_recording_controls.dart"
+  },
+  "activityStart": "Iniciar",
+  "@activityStart": {
+    "description": "Rótulo e dica do botão de iniciar gravação - Usado em: activity_recording_controls.dart"
+  },
+  "activityStop": "Parar",
+  "@activityStop": {
+    "description": "Rótulo e dica do botão de parar gravação - Usado em: activity_recording_controls.dart"
+  },
+  "activityStopping": "A parar",
+  "@activityStopping": {
+    "description": "Rótulo do botão desativado enquanto a gravação está a parar - Usado em: activity_recording_controls.dart"
+  },
   "activityTypeHike": "Caminhada",
   "@activityTypeHike": {
     "description": "Rótulo do tipo de atividade para trilhos/caminhadas - Usado em: activity_type_picker.dart"

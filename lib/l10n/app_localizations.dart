@@ -440,6 +440,36 @@ abstract class AppLocalizations {
   /// **'Verify'**
   String get verify;
 
+  /// Pause recording button label and tooltip - Used in: activity_recording_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get activityPause;
+
+  /// Resume recording button label and tooltip - Used in: activity_recording_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get activityResume;
+
+  /// Start recording button label and tooltip - Used in: activity_recording_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get activityStart;
+
+  /// Stop recording button label and tooltip - Used in: activity_recording_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get activityStop;
+
+  /// Disabled stop button label while a recording is stopping - Used in: activity_recording_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Stopping'**
+  String get activityStopping;
+
   /// Activity type label for hiking - Used in: activity_type_picker.dart
   ///
   /// In en, this message translates to:
