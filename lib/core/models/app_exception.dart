@@ -1,4 +1,6 @@
 enum AppErrorCode {
+  activityUploadFailed,
+  activityUploadNotConfigured,
   fetchIdentityProvidersFailed,
   fetchProvidersFailed,
   fetchServerSettingsFailed,

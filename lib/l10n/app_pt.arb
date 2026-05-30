@@ -31,6 +31,24 @@
     "description": "Mensagem de validação para URL inválido - Usado em: validators.dart"
   },
   "@sectionErrors": "=== ERROS (core/models/app_exception.dart, core/utils/error_localizations.dart) ===",
+  "errorActivityUploadFailed": "Não foi possível enviar a atividade",
+  "@errorActivityUploadFailed": {
+    "description": "Erro genérico de envio de atividade - Usado em: error_localizations.dart"
+  },
+  "errorActivityUploadFailedWithDetails": "Não foi possível enviar a atividade: {details}",
+  "@errorActivityUploadFailedWithDetails": {
+    "description": "Erro de envio de atividade com detalhes seguros de estado - Usado em: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "HTTP 422"
+      }
+    }
+  },
+  "errorActivityUploadNotConfigured": "O envio de atividades ainda não está configurado",
+  "@errorActivityUploadNotConfigured": {
+    "description": "Envio de atividade bloqueado porque endpoint e campo multipart não estão configurados - Usado em: error_localizations.dart"
+  },
   "errorFetchIdentityProvidersFailed": "Não foi possível carregar os provedores de identidade",
   "@errorFetchIdentityProvidersFailed": {
     "description": "Erro genérico ao carregar provedores de identidade - Usado em: error_localizations.dart"

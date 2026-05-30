@@ -30,6 +30,18 @@ class AppLocalizationsPt extends AppLocalizations {
   String get invalidUrl => 'Por favor, insira um URL válido';
 
   @override
+  String get errorActivityUploadFailed => 'Não foi possível enviar a atividade';
+
+  @override
+  String errorActivityUploadFailedWithDetails(String details) {
+    return 'Não foi possível enviar a atividade: $details';
+  }
+
+  @override
+  String get errorActivityUploadNotConfigured =>
+      'O envio de atividades ainda não está configurado';
+
+  @override
   String get errorFetchIdentityProvidersFailed =>
       'Não foi possível carregar os provedores de identidade';
 

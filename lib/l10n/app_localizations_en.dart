@@ -30,6 +30,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalidUrl => 'Please enter a valid URL';
 
   @override
+  String get errorActivityUploadFailed => 'Could not upload activity';
+
+  @override
+  String errorActivityUploadFailedWithDetails(String details) {
+    return 'Could not upload activity: $details';
+  }
+
+  @override
+  String get errorActivityUploadNotConfigured =>
+      'Activity upload is not configured yet';
+
+  @override
   String get errorFetchIdentityProvidersFailed =>
       'Could not load identity providers';
 

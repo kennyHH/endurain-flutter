@@ -19,6 +19,12 @@ String _localizedAppException(AppException error, AppLocalizations l10n) {
   final details = error.details;
 
   return switch (error.code) {
+    AppErrorCode.activityUploadFailed =>
+      details == null
+          ? l10n.errorActivityUploadFailed
+          : l10n.errorActivityUploadFailedWithDetails(details),
+    AppErrorCode.activityUploadNotConfigured =>
+      l10n.errorActivityUploadNotConfigured,
     AppErrorCode.fetchIdentityProvidersFailed =>
       details == null
           ? l10n.errorFetchIdentityProvidersFailed

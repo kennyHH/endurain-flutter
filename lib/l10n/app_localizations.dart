@@ -140,6 +140,24 @@ abstract class AppLocalizations {
   /// **'Please enter a valid URL'**
   String get invalidUrl;
 
+  /// Generic activity upload error - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not upload activity'**
+  String get errorActivityUploadFailed;
+
+  /// Activity upload error with safe status details - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not upload activity: {details}'**
+  String errorActivityUploadFailedWithDetails(String details);
+
+  /// Activity upload blocked because endpoint and multipart field are not configured - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Activity upload is not configured yet'**
+  String get errorActivityUploadNotConfigured;
+
   /// Generic identity provider loading error - Used in: error_localizations.dart
   ///
   /// In en, this message translates to:

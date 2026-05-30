@@ -31,6 +31,24 @@
     "description": "Validation message for invalid URL - Used in: validators.dart"
   },
   "@sectionErrors": "=== ERRORS (core/models/app_exception.dart, core/utils/error_localizations.dart) ===",
+  "errorActivityUploadFailed": "Could not upload activity",
+  "@errorActivityUploadFailed": {
+    "description": "Generic activity upload error - Used in: error_localizations.dart"
+  },
+  "errorActivityUploadFailedWithDetails": "Could not upload activity: {details}",
+  "@errorActivityUploadFailedWithDetails": {
+    "description": "Activity upload error with safe status details - Used in: error_localizations.dart",
+    "placeholders": {
+      "details": {
+        "type": "String",
+        "example": "HTTP 422"
+      }
+    }
+  },
+  "errorActivityUploadNotConfigured": "Activity upload is not configured yet",
+  "@errorActivityUploadNotConfigured": {
+    "description": "Activity upload blocked because endpoint and multipart field are not configured - Used in: error_localizations.dart"
+  },
   "errorFetchIdentityProvidersFailed": "Could not load identity providers",
   "@errorFetchIdentityProvidersFailed": {
     "description": "Generic identity provider loading error - Used in: error_localizations.dart"
