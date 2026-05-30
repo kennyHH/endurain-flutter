@@ -1,6 +1,7 @@
+import 'package:endurain/core/constants/ui_constants.dart';
+import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:endurain/core/utils/platform_utils.dart';
 
 class AdaptiveTextFormField extends StatelessWidget {
   const AdaptiveTextFormField({
@@ -31,18 +32,52 @@ class AdaptiveTextFormField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (PlatformUtils.isApplePlatform) {
-      return CupertinoListSection.insetGrouped(
-        header: Text(label.toUpperCase()),
+      final colorScheme = CupertinoTheme.of(context);
+      final labelColor = CupertinoDynamicColor.resolve(
+        CupertinoColors.secondaryLabel,
+        context,
+      );
+      final fieldColor = CupertinoDynamicColor.resolve(
+        CupertinoColors.secondarySystemGroupedBackground,
+        context,
+      );
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CupertinoTextFormFieldRow(
-            controller: controller,
-            placeholder: placeholder,
-            keyboardType: keyboardType,
-            textInputAction: textInputAction,
-            validator: validator,
-            onFieldSubmitted: onFieldSubmitted,
-            obscureText: obscureText,
-            prefix: prefixIcon,
+          Padding(
+            padding: const EdgeInsets.only(bottom: UIConstants.paddingSmall),
+            child: Text(
+              label.toUpperCase(),
+              style: colorScheme.textTheme.textStyle.copyWith(
+                color: labelColor,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: double.infinity,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: fieldColor,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: CupertinoTextFormFieldRow(
+                controller: controller,
+                placeholder: placeholder,
+                keyboardType: keyboardType,
+                textInputAction: textInputAction,
+                validator: validator,
+                onFieldSubmitted: onFieldSubmitted,
+                obscureText: obscureText,
+                prefix: prefixIcon,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: UIConstants.paddingStandard,
+                  vertical: UIConstants.paddingMedium,
+                ),
+              ),
+            ),
           ),
         ],
       );
