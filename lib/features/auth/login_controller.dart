@@ -12,7 +12,7 @@ class LoginController extends ChangeNotifier {
     required AuthRepository authRepository,
     AppLinksService? appLinksService,
   }) : _authRepository = authRepository,
-       _appLinksService = appLinksService ?? AppLinksService();
+       _appLinksService = appLinksService ?? DefaultAppLinksService();
 
   final AuthRepository _authRepository;
   final AppLinksService _appLinksService;

@@ -34,7 +34,7 @@ class AppServices {
     authService: auth,
   );
   final LocationService location = LocationService();
-  final AppLinksService appLinks = AppLinksService();
+  final AppLinksService appLinks = DefaultAppLinksService();
   final UrlLauncherService urlLauncher = const UrlLauncherService();
   final PackageInfoService packageInfo = const PackageInfoService();
 }

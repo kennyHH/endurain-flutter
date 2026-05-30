@@ -280,7 +280,7 @@ Recommended changes:
   refresh, authentication checks, and logout.
 - Add tests for expiry thresholds, refresh persistence, and token clearing.
 
-### 16. Add focused controller and adaptive UI tests
+### 16. Add focused controller and adaptive UI tests - Done
 
 The current tests cover core service, parser, model, and validator contracts.
 The next risk is behavior that now lives in feature controllers and adaptive
