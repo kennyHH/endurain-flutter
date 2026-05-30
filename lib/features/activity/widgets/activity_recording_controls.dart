@@ -1,4 +1,6 @@
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
+import 'package:endurain/features/activity/models/activity_type.dart';
+import 'package:endurain/features/activity/widgets/activity_type_picker.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/shared/adaptive/adaptive.dart';
 import 'package:flutter/cupertino.dart';
@@ -8,6 +10,8 @@ class ActivityRecordingControls extends StatelessWidget {
   const ActivityRecordingControls({
     super.key,
     required this.state,
+    required this.selectedActivityType,
+    required this.onActivityTypeChanged,
     required this.onStart,
     required this.onPause,
     required this.onResume,
@@ -15,7 +19,9 @@ class ActivityRecordingControls extends StatelessWidget {
   });
 
   final ActivityRecordingState state;
-  final VoidCallback? onStart;
+  final ActivityType selectedActivityType;
+  final ValueChanged<ActivityType>? onActivityTypeChanged;
+  final ValueChanged<ActivityType>? onStart;
   final VoidCallback? onPause;
   final VoidCallback? onResume;
   final VoidCallback? onStop;
@@ -105,11 +111,20 @@ class ActivityRecordingControls extends StatelessWidget {
       case ActivityRecordingStatus.completed:
       case ActivityRecordingStatus.failed:
         return [
+          SizedBox(
+            width: 180,
+            child: ActivityTypePicker(
+              selectedType: selectedActivityType,
+              onChanged: onActivityTypeChanged,
+            ),
+          ),
           _controlButton(
             label: l10n.activityStart,
             materialIcon: Icons.play_arrow,
             cupertinoIcon: CupertinoIcons.play_arrow,
-            onPressed: onStart,
+            onPressed: onStart == null
+                ? null
+                : () => onStart!(selectedActivityType),
           ),
         ];
     }

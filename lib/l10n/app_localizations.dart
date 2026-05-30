@@ -476,6 +476,12 @@ abstract class AppLocalizations {
   /// **'Hike'**
   String get activityTypeHike;
 
+  /// Dropdown label for selecting the activity type before recording - Used in: activity_type_picker.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Activity type'**
+  String get activityTypeLabel;
+
   /// Activity type label for uncategorized activities - Used in: activity_type_picker.dart
   ///
   /// In en, this message translates to:

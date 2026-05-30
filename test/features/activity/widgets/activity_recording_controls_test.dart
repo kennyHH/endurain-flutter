@@ -1,4 +1,5 @@
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
+import 'package:endurain/features/activity/models/activity_type.dart';
 import 'package:endurain/features/activity/widgets/activity_recording_controls.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/l10n/app_localizations_en.dart';
@@ -8,13 +9,15 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('ActivityRecordingControls', () {
     testWidgets('shows start action when idle', (tester) async {
-      var started = false;
+      ActivityType? startedType;
 
       await tester.pumpWidget(
         _TestApp(
           child: ActivityRecordingControls(
             state: ActivityRecordingState(),
-            onStart: () => started = true,
+            selectedActivityType: ActivityType.run,
+            onActivityTypeChanged: (_) {},
+            onStart: (type) => startedType = type,
             onPause: null,
             onResume: null,
             onStop: null,
@@ -26,7 +29,35 @@ void main() {
 
       await tester.tap(find.text(AppLocalizationsEn().activityStart));
 
-      expect(started, isTrue);
+      expect(startedType, ActivityType.run);
+    });
+
+    testWidgets('shows activity type picker before start', (tester) async {
+      ActivityType? selectedType;
+
+      await tester.pumpWidget(
+        _TestApp(
+          child: ActivityRecordingControls(
+            state: ActivityRecordingState(),
+            selectedActivityType: ActivityType.run,
+            onActivityTypeChanged: (type) => selectedType = type,
+            onStart: (_) {},
+            onPause: null,
+            onResume: null,
+            onStop: null,
+          ),
+        ),
+      );
+
+      expect(find.text(AppLocalizationsEn().activityTypeLabel), findsOneWidget);
+      expect(find.text(AppLocalizationsEn().activityTypeRun), findsOneWidget);
+
+      await tester.tap(find.text(AppLocalizationsEn().activityTypeRun));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(AppLocalizationsEn().activityTypeRide).last);
+      await tester.pumpAndSettle();
+
+      expect(selectedType, ActivityType.ride);
     });
 
     testWidgets('shows pause and stop while recording', (tester) async {
@@ -36,6 +67,8 @@ void main() {
             state: ActivityRecordingState(
               status: ActivityRecordingStatus.recording,
             ),
+            selectedActivityType: ActivityType.run,
+            onActivityTypeChanged: null,
             onStart: null,
             onPause: () {},
             onResume: null,
@@ -53,6 +86,8 @@ void main() {
         _TestApp(
           child: ActivityRecordingControls(
             state: ActivityRecordingState(status: ActivityRecordingStatus.paused),
+            selectedActivityType: ActivityType.run,
+            onActivityTypeChanged: null,
             onStart: null,
             onPause: null,
             onResume: () {},
@@ -74,6 +109,8 @@ void main() {
             state: ActivityRecordingState(
               status: ActivityRecordingStatus.stopping,
             ),
+            selectedActivityType: ActivityType.run,
+            onActivityTypeChanged: null,
             onStart: null,
             onPause: null,
             onResume: null,

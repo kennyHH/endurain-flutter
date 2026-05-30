@@ -236,6 +236,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get activityTypeHike => 'Caminhada';
 
   @override
+  String get activityTypeLabel => 'Tipo de atividade';
+
+  @override
   String get activityTypeOther => 'Outra';
 
   @override

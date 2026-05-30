@@ -229,6 +229,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityTypeHike => 'Hike';
 
   @override
+  String get activityTypeLabel => 'Activity type';
+
+  @override
   String get activityTypeOther => 'Other';
 
   @override

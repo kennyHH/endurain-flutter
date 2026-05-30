@@ -329,6 +329,10 @@
   "@activityTypeHike": {
     "description": "Rótulo do tipo de atividade para trilhos/caminhadas - Usado em: activity_type_picker.dart"
   },
+  "activityTypeLabel": "Tipo de atividade",
+  "@activityTypeLabel": {
+    "description": "Rótulo do seletor de tipo de atividade antes da gravação - Usado em: activity_type_picker.dart"
+  },
   "activityTypeOther": "Outra",
   "@activityTypeOther": {
     "description": "Rótulo do tipo de atividade para atividades sem categoria - Usado em: activity_type_picker.dart"
