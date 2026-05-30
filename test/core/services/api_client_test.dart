@@ -117,6 +117,6 @@ class _FakeMultipartUploadAdapter implements MultipartUploadAdapter {
     this.headers = headers;
     this.filePath = filePath;
     this.fieldName = fieldName;
-    return http.StreamedResponse(Stream<List<int>>.empty(), 200);
+    return http.StreamedResponse(const Stream<List<int>>.empty(), 200);
   }
 }
