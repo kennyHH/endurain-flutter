@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:endurain/l10n/app_localizations.dart';
+import 'package:endurain/core/services/app_services.dart';
+import 'package:endurain/core/services/package_info_service.dart';
 import 'package:endurain/features/settings/server_settings_screen.dart';
 import 'package:endurain/core/constants/ui_constants.dart';
 import 'package:endurain/shared/adaptive/adaptive.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key, this.onLogout});
+  const SettingsScreen({super.key, this.onLogout, this.packageInfoService});
 
   final VoidCallback? onLogout;
+  final PackageInfoService? packageInfoService;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -17,15 +19,18 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   String _version = '';
+  late final PackageInfoService _packageInfoService;
 
   @override
   void initState() {
     super.initState();
+    _packageInfoService =
+        widget.packageInfoService ?? AppServices.instance.packageInfo;
     _loadVersion();
   }
 
   Future<void> _loadVersion() async {
-    final packageInfo = await PackageInfo.fromPlatform();
+    final packageInfo = await _packageInfoService.fromPlatform();
     final currentYear = DateTime.now().year;
     if (mounted) {
       setState(() {

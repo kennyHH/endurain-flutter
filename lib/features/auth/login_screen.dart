@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/core/services/app_services.dart';
+import 'package:endurain/core/services/app_links_service.dart';
 import 'package:endurain/core/services/auth_service.dart';
 import 'package:endurain/core/services/sso_service.dart';
 import 'package:endurain/core/services/server_settings_service.dart';
+import 'package:endurain/core/services/url_launcher_service.dart';
 import 'package:endurain/core/models/identity_provider.dart';
 import 'package:endurain/core/utils/validators.dart';
 import 'package:endurain/core/utils/dialog_utils.dart';
@@ -22,6 +23,8 @@ class LoginScreen extends StatefulWidget {
     this.authService,
     this.ssoService,
     this.serverSettingsService,
+    this.appLinksService,
+    this.urlLauncherService,
     this.controller,
   });
 
@@ -29,6 +32,8 @@ class LoginScreen extends StatefulWidget {
   final AuthService? authService;
   final SsoService? ssoService;
   final ServerSettingsService? serverSettingsService;
+  final AppLinksService? appLinksService;
+  final UrlLauncherService? urlLauncherService;
   final LoginController? controller;
 
   @override
@@ -38,11 +43,14 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   late final LoginController _controller;
   late final bool _ownsController;
+  late final UrlLauncherService _urlLauncherService;
 
   @override
   void initState() {
     super.initState();
     _ownsController = widget.controller == null;
+    _urlLauncherService =
+        widget.urlLauncherService ?? AppServices.instance.urlLauncher;
     _controller = widget.controller ?? _createController();
     _controller.addListener(_handleControllerChanged);
     _controller.startSsoCallbackListener(
@@ -60,6 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
         serverSettingsService:
             widget.serverSettingsService ?? services.serverSettings,
       ),
+      appLinksService: widget.appLinksService ?? services.appLinks,
     );
   }
 
@@ -100,9 +109,8 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final launched = await launchUrl(
+    final launched = await _urlLauncherService.launchExternalApplication(
       Uri.parse(oauthUrl),
-      mode: LaunchMode.externalApplication,
     );
 
     if (!launched && mounted) {

@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/services/auth_service.dart';
 import 'package:endurain/core/services/api_response.dart';
+import 'package:endurain/core/services/multipart_upload_adapter.dart';
 import 'package:endurain/core/constants/api_constants.dart';
 import 'package:endurain/core/models/app_exception.dart';
 
@@ -11,8 +12,10 @@ class ApiClient {
     SecureStorageService? storage,
     AuthService? authService,
     http.Client? httpClient,
+    MultipartUploadAdapter? uploadAdapter,
   }) : _storage = storage ?? SecureStorageService(),
        _httpClient = httpClient ?? http.Client(),
+       _uploadAdapter = uploadAdapter ?? const HttpMultipartUploadAdapter(),
        _authService =
            authService ??
            AuthService(storage: storage ?? SecureStorageService());
@@ -20,6 +23,7 @@ class ApiClient {
   final SecureStorageService _storage;
   final AuthService _authService;
   final http.Client _httpClient;
+  final MultipartUploadAdapter _uploadAdapter;
 
   /// Make an authenticated GET request
   Future<http.Response> get(String endpoint) {
@@ -111,15 +115,15 @@ class ApiClient {
     }
 
     final url = Uri.parse('$serverUrl$endpoint');
-    final request = http.MultipartRequest('POST', url);
-
-    request.headers[ApiConstants.authorizationHeader] = 'Bearer $accessToken';
-    request.headers[ApiConstants.clientTypeHeader] =
-        ApiConstants.clientTypeValue;
-
-    request.files.add(await http.MultipartFile.fromPath(fieldName, filePath));
-
-    return request.send();
+    return _uploadAdapter.uploadFile(
+      url: url,
+      headers: {
+        ApiConstants.authorizationHeader: 'Bearer $accessToken',
+        ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue,
+      },
+      filePath: filePath,
+      fieldName: fieldName,
+    );
   }
 
   /// Execute an HTTP request with the given method, URL, headers, and optional body

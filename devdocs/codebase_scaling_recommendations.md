@@ -250,7 +250,7 @@ Recommended changes:
 - Ensure feature repositories consume typed data and return typed models or
   results, not transport responses.
 
-### 14. Add thin adapters around remaining platform plugins
+### 14. Add thin adapters around remaining platform plugins - Done
 
 Some platform APIs still sit directly in services or screens: `Geolocator` in
 `LocationService`, `AppLinks` in `LoginController`, `launchUrl` in

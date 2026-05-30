@@ -1,19 +1,21 @@
 import 'dart:async';
 
-import 'package:app_links/app_links.dart';
 import 'package:flutter/widgets.dart';
 import 'package:endurain/core/models/app_exception.dart';
 import 'package:endurain/core/models/identity_provider.dart';
 import 'package:endurain/core/models/server_settings.dart';
+import 'package:endurain/core/services/app_links_service.dart';
 import 'package:endurain/features/auth/auth_repository.dart';
 
 class LoginController extends ChangeNotifier {
-  LoginController({required AuthRepository authRepository, AppLinks? appLinks})
-    : _authRepository = authRepository,
-      _appLinks = appLinks ?? AppLinks();
+  LoginController({
+    required AuthRepository authRepository,
+    AppLinksService? appLinksService,
+  }) : _authRepository = authRepository,
+       _appLinksService = appLinksService ?? AppLinksService();
 
   final AuthRepository _authRepository;
-  final AppLinks _appLinks;
+  final AppLinksService _appLinksService;
 
   final formKey = GlobalKey<FormState>();
   final serverUrlController = TextEditingController();
@@ -41,7 +43,7 @@ class LoginController extends ChangeNotifier {
   }) {
     _onLoginSuccess = onLoginSuccess;
     _onError = onError;
-    _linkSubscription ??= _appLinks.uriLinkStream.listen(
+    _linkSubscription ??= _appLinksService.uriLinkStream.listen(
       _handleSsoCallbackUri,
       onError: _notifyError,
     );
