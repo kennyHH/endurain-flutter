@@ -117,7 +117,7 @@ Recommended changes:
 - Consider `json_serializable` later if model count or complexity grows.
 - Avoid silently defaulting fields that are required by the backend contract.
 
-### 6. Expand test coverage beyond the smoke test - Partially done
+### 6. Expand test coverage beyond the smoke test - Done
 
 The current test suite is mostly a single widget smoke test. That is not enough
 for rapid SaaS iteration.
