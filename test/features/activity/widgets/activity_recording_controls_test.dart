@@ -136,6 +136,10 @@ void main() {
         find.byTooltip(AppLocalizationsEn().activityStart),
         findsOneWidget,
       );
+      expect(
+        tester.widget<Icon>(find.byIcon(CupertinoIcons.play_arrow)).color,
+        CupertinoColors.white,
+      );
     });
 
     testWidgets('reserves trailing space for map floating controls', (

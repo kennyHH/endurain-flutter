@@ -322,7 +322,13 @@ class _StartActivityIconButton extends StatelessWidget {
             color: CupertinoTheme.of(context).primaryColor,
             disabledColor: CupertinoColors.quaternarySystemFill,
             onPressed: onPressed,
-            child: const Icon(CupertinoIcons.play_arrow, size: 26),
+            child: Icon(
+              CupertinoIcons.play_arrow,
+              color: onPressed == null
+                  ? CupertinoColors.inactiveGray
+                  : CupertinoColors.white,
+              size: 26,
+            ),
           )
         : FilledButton(
             key: const ValueKey('activityStartButton'),
@@ -339,7 +345,11 @@ class _StartActivityIconButton extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Icon(Icons.play_arrow, size: 28),
+            child: Icon(
+              Icons.play_arrow,
+              color: Theme.of(context).colorScheme.onPrimary,
+              size: 28,
+            ),
           );
 
     return Tooltip(
