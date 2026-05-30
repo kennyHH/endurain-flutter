@@ -323,10 +323,6 @@
     "description": "MFA verification button label"
   },
   "@sectionActivity": "=== ACTIVITY (features/activity/) ===",
-  "activityPause": "Pause",
-  "@activityPause": {
-    "description": "Pause recording button label and tooltip - Used in: activity_recording_controls.dart"
-  },
   "activityDiscard": "Discard",
   "@activityDiscard": {
     "description": "Discard activity button label - Used in: activity_stop_confirmation_dialog.dart"
@@ -338,14 +334,6 @@
   "activityDiscardConfirmTitle": "Discard activity?",
   "@activityDiscardConfirmTitle": {
     "description": "Discard activity confirmation dialog title - Used in: activity_stop_confirmation_dialog.dart"
-  },
-  "activityResume": "Resume",
-  "@activityResume": {
-    "description": "Resume recording button label and tooltip - Used in: activity_recording_controls.dart"
-  },
-  "activityLocationStreamFailed": "Location updates stopped unexpectedly.",
-  "@activityLocationStreamFailed": {
-    "description": "Recording error shown when GPS stream fails - Used in: activity_recording_controls.dart"
   },
   "activityLocationPermissionDenied": "Location permission is required to record an activity.",
   "@activityLocationPermissionDenied": {
@@ -359,9 +347,17 @@
   "@activityLocationServiceDisabled": {
     "description": "Recording error shown when device location services are disabled - Used in: activity_recording_controls.dart"
   },
+  "activityLocationStreamFailed": "Location updates stopped unexpectedly.",
+  "@activityLocationStreamFailed": {
+    "description": "Recording error shown when GPS stream fails - Used in: activity_recording_controls.dart"
+  },
   "activityOpenSettings": "Open settings",
   "@activityOpenSettings": {
     "description": "Button label to open app settings for location permission - Used in: activity_recording_controls.dart"
+  },
+  "activityPause": "Pause",
+  "@activityPause": {
+    "description": "Pause recording button label and tooltip - Used in: activity_recording_controls.dart"
   },
   "activityRecordingEmpty": "No GPS points were recorded.",
   "@activityRecordingEmpty": {
@@ -370,6 +366,14 @@
   "activityRecordingFailed": "Recording failed.",
   "@activityRecordingFailed": {
     "description": "Fallback recording error message - Used in: activity_recording_controls.dart"
+  },
+  "activityResume": "Resume",
+  "@activityResume": {
+    "description": "Resume recording button label and tooltip - Used in: activity_recording_controls.dart"
+  },
+  "activityRetryUpload": "Retry upload",
+  "@activityRetryUpload": {
+    "description": "Retry activity upload button label - Used in: activity_upload_status_panel.dart"
   },
   "activityStart": "Start",
   "@activityStart": {
@@ -430,10 +434,6 @@
   "activityTypeWalk": "Walk",
   "@activityTypeWalk": {
     "description": "Activity type label for walking - Used in: activity_type_picker.dart"
-  },
-  "activityRetryUpload": "Retry upload",
-  "@activityRetryUpload": {
-    "description": "Retry activity upload button label - Used in: activity_upload_status_panel.dart"
   },
   "activityUploadFailed": "Upload failed",
   "@activityUploadFailed": {

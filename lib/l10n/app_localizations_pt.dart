@@ -230,9 +230,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get verify => 'Verificar';
 
   @override
-  String get activityPause => 'Pausar';
-
-  @override
   String get activityDiscard => 'Descartar';
 
   @override
@@ -241,13 +238,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get activityDiscardConfirmTitle => 'Descartar atividade?';
-
-  @override
-  String get activityResume => 'Retomar';
-
-  @override
-  String get activityLocationStreamFailed =>
-      'As atualizações de localização pararam inesperadamente.';
 
   @override
   String get activityLocationPermissionDenied =>
@@ -262,13 +252,26 @@ class AppLocalizationsPt extends AppLocalizations {
       'Os serviços de localização estão desativados.';
 
   @override
+  String get activityLocationStreamFailed =>
+      'As atualizações de localização pararam inesperadamente.';
+
+  @override
   String get activityOpenSettings => 'Abrir definições';
+
+  @override
+  String get activityPause => 'Pausar';
 
   @override
   String get activityRecordingEmpty => 'Não foram gravados pontos GPS.';
 
   @override
   String get activityRecordingFailed => 'A gravação falhou.';
+
+  @override
+  String get activityResume => 'Retomar';
+
+  @override
+  String get activityRetryUpload => 'Tentar envio novamente';
 
   @override
   String get activityStart => 'Iniciar';
@@ -315,9 +318,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get activityTypeWalk => 'Passeio';
-
-  @override
-  String get activityRetryUpload => 'Tentar envio novamente';
 
   @override
   String get activityUploadFailed => 'Falha no envio';

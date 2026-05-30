@@ -323,10 +323,6 @@
     "description": "Rótulo do botão de verificação MFA"
   },
   "@sectionActivity": "=== ATIVIDADE (features/activity/) ===",
-  "activityPause": "Pausar",
-  "@activityPause": {
-    "description": "Rótulo e dica do botão de pausar gravação - Usado em: activity_recording_controls.dart"
-  },
   "activityDiscard": "Descartar",
   "@activityDiscard": {
     "description": "Rótulo do botão de descartar atividade - Usado em: activity_stop_confirmation_dialog.dart"
@@ -338,14 +334,6 @@
   "activityDiscardConfirmTitle": "Descartar atividade?",
   "@activityDiscardConfirmTitle": {
     "description": "Título do diálogo de confirmação para descartar atividade - Usado em: activity_stop_confirmation_dialog.dart"
-  },
-  "activityResume": "Retomar",
-  "@activityResume": {
-    "description": "Rótulo e dica do botão de retomar gravação - Usado em: activity_recording_controls.dart"
-  },
-  "activityLocationStreamFailed": "As atualizações de localização pararam inesperadamente.",
-  "@activityLocationStreamFailed": {
-    "description": "Erro de gravação exibido quando o stream GPS falha - Usado em: activity_recording_controls.dart"
   },
   "activityLocationPermissionDenied": "É necessária permissão de localização para gravar uma atividade.",
   "@activityLocationPermissionDenied": {
@@ -359,9 +347,17 @@
   "@activityLocationServiceDisabled": {
     "description": "Erro exibido quando os serviços de localização do dispositivo estão desativados - Usado em: activity_recording_controls.dart"
   },
+  "activityLocationStreamFailed": "As atualizações de localização pararam inesperadamente.",
+  "@activityLocationStreamFailed": {
+    "description": "Erro de gravação exibido quando o stream GPS falha - Usado em: activity_recording_controls.dart"
+  },
   "activityOpenSettings": "Abrir definições",
   "@activityOpenSettings": {
     "description": "Rótulo do botão para abrir definições da app para permissão de localização - Usado em: activity_recording_controls.dart"
+  },
+  "activityPause": "Pausar",
+  "@activityPause": {
+    "description": "Rótulo e dica do botão de pausar gravação - Usado em: activity_recording_controls.dart"
   },
   "activityRecordingEmpty": "Não foram gravados pontos GPS.",
   "@activityRecordingEmpty": {
@@ -370,6 +366,14 @@
   "activityRecordingFailed": "A gravação falhou.",
   "@activityRecordingFailed": {
     "description": "Mensagem genérica de erro de gravação - Usado em: activity_recording_controls.dart"
+  },
+  "activityResume": "Retomar",
+  "@activityResume": {
+    "description": "Rótulo e dica do botão de retomar gravação - Usado em: activity_recording_controls.dart"
+  },
+  "activityRetryUpload": "Tentar envio novamente",
+  "@activityRetryUpload": {
+    "description": "Rótulo do botão de repetir envio da atividade - Usado em: activity_upload_status_panel.dart"
   },
   "activityStart": "Iniciar",
   "@activityStart": {
@@ -430,10 +434,6 @@
   "activityTypeWalk": "Passeio",
   "@activityTypeWalk": {
     "description": "Rótulo do tipo de atividade para caminhada urbana - Usado em: activity_type_picker.dart"
-  },
-  "activityRetryUpload": "Tentar envio novamente",
-  "@activityRetryUpload": {
-    "description": "Rótulo do botão de repetir envio da atividade - Usado em: activity_upload_status_panel.dart"
   },
   "activityUploadFailed": "Falha no envio",
   "@activityUploadFailed": {

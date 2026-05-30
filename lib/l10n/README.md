@@ -33,7 +33,7 @@ Used by: `core/models/app_exception.dart`, `core/utils/error_localizations.dart`
 ### 4. **ACTIVITY**
 Used by: `features/activity/`
 - Activity type labels
-- Recording controls and status text
+- Recording controls, stats, stop/discard dialogs, upload states, and location errors
 
 ### 5. **MAP**
 Used by: `features/map/map_screen.dart`
@@ -78,7 +78,7 @@ Text(l10n.login);  // "Login" (en) or "Entrar" (pt)
 | Common | error, ok, cancel, save, back, requiredField, invalidUrl |
 | Auth | loginTitle, login, logout, username, password, mfaTitle, mfaCode, verify |
 | Errors | errorServerUrlNotConfigured, errorNotAuthenticated, errorSessionExpired, errorLoginFailed, errorTokenExchangeFailed |
-| Activity | activityTypeRun, activityTypeRide, activityTypeWalk, activityTypeHike, activityTypeOther |
+| Activity | activityStart, activityPause, activityStop, activityStatDistance, activityRetryUpload, activityTypeRun, activityTypeRide, activityTypeWalk, activityTypeHike, activityTypeOther |
 | Map | mapTab, myLocation |
 | Settings | settingsTab, settingsScreen, serverSettings, serverUrl, tileServerUrl, notConfigured, notLoggedIn, savedSuccessfully |
 

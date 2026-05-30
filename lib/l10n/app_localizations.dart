@@ -458,12 +458,6 @@ abstract class AppLocalizations {
   /// **'Verify'**
   String get verify;
 
-  /// Pause recording button label and tooltip - Used in: activity_recording_controls.dart
-  ///
-  /// In en, this message translates to:
-  /// **'Pause'**
-  String get activityPause;
-
   /// Discard activity button label - Used in: activity_stop_confirmation_dialog.dart
   ///
   /// In en, this message translates to:
@@ -481,18 +475,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Discard activity?'**
   String get activityDiscardConfirmTitle;
-
-  /// Resume recording button label and tooltip - Used in: activity_recording_controls.dart
-  ///
-  /// In en, this message translates to:
-  /// **'Resume'**
-  String get activityResume;
-
-  /// Recording error shown when GPS stream fails - Used in: activity_recording_controls.dart
-  ///
-  /// In en, this message translates to:
-  /// **'Location updates stopped unexpectedly.'**
-  String get activityLocationStreamFailed;
 
   /// Recording error shown when location permission is denied - Used in: activity_recording_controls.dart
   ///
@@ -512,11 +494,23 @@ abstract class AppLocalizations {
   /// **'Location services are disabled.'**
   String get activityLocationServiceDisabled;
 
+  /// Recording error shown when GPS stream fails - Used in: activity_recording_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Location updates stopped unexpectedly.'**
+  String get activityLocationStreamFailed;
+
   /// Button label to open app settings for location permission - Used in: activity_recording_controls.dart
   ///
   /// In en, this message translates to:
   /// **'Open settings'**
   String get activityOpenSettings;
+
+  /// Pause recording button label and tooltip - Used in: activity_recording_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get activityPause;
 
   /// Recording error shown when stopping without GPS points - Used in: activity_recording_controls.dart
   ///
@@ -529,6 +523,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recording failed.'**
   String get activityRecordingFailed;
+
+  /// Resume recording button label and tooltip - Used in: activity_recording_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get activityResume;
+
+  /// Retry activity upload button label - Used in: activity_upload_status_panel.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Retry upload'**
+  String get activityRetryUpload;
 
   /// Start recording button label and tooltip - Used in: activity_recording_controls.dart
   ///
@@ -619,12 +625,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Walk'**
   String get activityTypeWalk;
-
-  /// Retry activity upload button label - Used in: activity_upload_status_panel.dart
-  ///
-  /// In en, this message translates to:
-  /// **'Retry upload'**
-  String get activityRetryUpload;
 
   /// Activity upload failed status label - Used in: activity_upload_status_panel.dart
   ///

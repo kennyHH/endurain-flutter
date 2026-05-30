@@ -223,9 +223,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get verify => 'Verify';
 
   @override
-  String get activityPause => 'Pause';
-
-  @override
   String get activityDiscard => 'Discard';
 
   @override
@@ -234,13 +231,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activityDiscardConfirmTitle => 'Discard activity?';
-
-  @override
-  String get activityResume => 'Resume';
-
-  @override
-  String get activityLocationStreamFailed =>
-      'Location updates stopped unexpectedly.';
 
   @override
   String get activityLocationPermissionDenied =>
@@ -255,13 +245,26 @@ class AppLocalizationsEn extends AppLocalizations {
       'Location services are disabled.';
 
   @override
+  String get activityLocationStreamFailed =>
+      'Location updates stopped unexpectedly.';
+
+  @override
   String get activityOpenSettings => 'Open settings';
+
+  @override
+  String get activityPause => 'Pause';
 
   @override
   String get activityRecordingEmpty => 'No GPS points were recorded.';
 
   @override
   String get activityRecordingFailed => 'Recording failed.';
+
+  @override
+  String get activityResume => 'Resume';
+
+  @override
+  String get activityRetryUpload => 'Retry upload';
 
   @override
   String get activityStart => 'Start';
@@ -308,9 +311,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activityTypeWalk => 'Walk';
-
-  @override
-  String get activityRetryUpload => 'Retry upload';
 
   @override
   String get activityUploadFailed => 'Upload failed';
