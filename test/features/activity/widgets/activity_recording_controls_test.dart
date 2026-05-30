@@ -94,6 +94,51 @@ void main() {
       skip: !Platform.isMacOS && !Platform.isIOS,
     );
 
+    testWidgets('reserves trailing space for map floating controls', (
+      tester,
+    ) async {
+      const floatingButtonKey = ValueKey('mapFloatingButton');
+
+      await tester.pumpWidget(
+        _TestApp(
+          child: SizedBox(
+            width: 390,
+            height: 600,
+            child: Stack(
+              children: [
+                ActivityRecordingControls(
+                  state: ActivityRecordingState(),
+                  selectedActivityType: ActivityType.run,
+                  trailingReservedWidth: 88,
+                  onActivityTypeChanged: (_) {},
+                  onStart: (_) {},
+                  onPause: null,
+                  onResume: null,
+                  onStop: null,
+                ),
+                const Positioned(
+                  right: 0,
+                  bottom: 88,
+                  child: SizedBox(
+                    key: floatingButtonKey,
+                    width: 56,
+                    height: 56,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      final controlsRect = tester.getRect(
+        find.byKey(const ValueKey('activityRecordingControlsSurface')),
+      );
+      final floatingButtonRect = tester.getRect(find.byKey(floatingButtonKey));
+
+      expect(controlsRect.right, lessThanOrEqualTo(floatingButtonRect.left));
+    });
+
     testWidgets('shows pause and stop while recording', (tester) async {
       await tester.pumpWidget(
         _TestApp(

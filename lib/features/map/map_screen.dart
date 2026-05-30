@@ -37,6 +37,9 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
+  static const double _activityOverlayTrailingReservedWidth =
+      56 + LocationMarkerConstants.buttonOuterPadding * 2;
+
   final MapController _mapController = MapController();
   late final MapStateController _controller;
   late final ActivityRecordingController _activityController;
@@ -229,6 +232,7 @@ class _MapScreenState extends State<MapScreen> {
           ActivityRecordingControls(
             state: _activityController.state,
             selectedActivityType: _activityController.selectedActivityType,
+            trailingReservedWidth: _activityOverlayTrailingReservedWidth,
             onActivityTypeChanged: _activityController.selectActivityType,
             onStart: _activityController.start,
             onPause: _activityController.pause,

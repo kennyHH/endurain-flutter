@@ -41,12 +41,12 @@ refactors.
 
 Timebox: 15 minutes.
 
-Status: Checked in this mobile repository. No existing GPX or activity upload
-endpoint, multipart field name, or expected response contract is defined in
-`lib/` or `devdocs/`. Upload implementation must remain optional and blocked
-behind constants until the server contract is confirmed. The authenticated
-multipart path is available through `ApiClient.uploadFile`, which applies the
-existing auth bearer token and mobile client header.
+Status: Completed (documentation only). Checked in this mobile repository. No
+existing GPX or activity upload endpoint, multipart field name, or expected
+response contract is defined in `lib/` or `devdocs/`. Upload implementation
+remains optional and blocked until the server contract is confirmed. The
+authenticated multipart path is available through `ApiClient.uploadFile`, which
+applies the existing auth bearer token and mobile client header.
 
 Implementation:
 - Check Endurain server docs or backend code for the activity upload endpoint.
@@ -70,6 +70,9 @@ Acceptance checks:
 
 Timebox: 15 minutes.
 
+Status: Completed. `lib/features/activity/` exists with `models/`,
+`services/`, `controllers/`, `widgets/`, and a placeholder `repositories/`.
+
 Implementation:
 - Create `lib/features/activity/` with `models/`, `services/`, `repositories/`,
   `controllers/`, and `widgets/` subfolders as they become needed.
@@ -87,6 +90,8 @@ Acceptance checks:
 ## Phase 3: Add Track Point Model
 
 Timebox: 15 minutes.
+
+Status: Completed. `ActivityTrackPoint` with `fromPosition` factory and tests.
 
 Implementation:
 - Add an immutable `ActivityTrackPoint` model with latitude, longitude,
@@ -108,6 +113,8 @@ Acceptance checks:
 
 Timebox: 15 minutes.
 
+Status: Completed. `ActivityRecordingState` with status enum, `copyWith`, tests.
+
 Implementation:
 - Add an immutable `ActivityRecordingState` model.
 - Include status values for idle, recording, paused, stopping, completed, and
@@ -127,6 +134,8 @@ Acceptance checks:
 
 Timebox: 15 minutes.
 
+Status: Completed. `ActivityStatsCalculator` (latlong2) with tests.
+
 Implementation:
 - Add a pure helper for distance, duration, average speed, and current speed.
 - Use `latlong2` distance calculations rather than custom trigonometry.
@@ -145,6 +154,9 @@ Acceptance checks:
 ## Phase 6: Add Recording Service Contract
 
 Timebox: 15 minutes.
+
+Status: Completed. `ActivityRecordingService` with start/pause/resume/stop/
+discard and a broadcast state stream, plus tests.
 
 Implementation:
 - Add `ActivityRecordingService` with start, pause, resume, stop, discard, and
@@ -166,6 +178,9 @@ Acceptance checks:
 
 Timebox: 15 minutes.
 
+Status: Completed. Service subscribes to `LocationService.getPositionStream()`
+while recording and cancels on stop/discard/failure, with fake-stream tests.
+
 Implementation:
 - Subscribe to `LocationService.getPositionStream()` only while recording.
 - Convert each `Position` to an `ActivityTrackPoint`.
@@ -184,6 +199,9 @@ Acceptance checks:
 
 Timebox: 15 minutes.
 
+Status: Completed. `ActivityType` enum (run/ride/walk/hike/other) with
+`apiValue`, localized labels, and EN/PT ARB entries.
+
 Implementation:
 - Define supported MVP activity types: run, ride, walk, hike, and other.
 - Keep API values separate from localized display labels.
@@ -200,6 +218,9 @@ Acceptance checks:
 ## Phase 9: Add Recording Control Widget
 
 Timebox: 15 minutes.
+
+Status: Completed. `ActivityRecordingControls` overlay with adaptive,
+state-driven controls and tests.
 
 Implementation:
 - Add a compact map overlay widget for start, pause/resume, and stop actions.
@@ -221,6 +242,9 @@ Acceptance checks:
 
 Timebox: 15 minutes.
 
+Status: Completed. `ActivityTypePicker` with a Material dropdown on Android and
+a Cupertino action sheet on Apple platforms.
+
 Implementation:
 - Add a small type picker before starting recording.
 - Default to the last selected type only if it is stored safely and not required
@@ -238,6 +262,9 @@ Acceptance checks:
 ## Phase 11: Integrate Controls Into Map Screen
 
 Timebox: 15 minutes.
+
+Status: Completed. `MapScreen` owns and disposes `ActivityRecordingController`
+and renders the recording overlay above the map.
 
 Implementation:
 - Instantiate an `ActivityRecordingController` from `MapScreen` using
@@ -260,6 +287,9 @@ Acceptance checks:
 
 Timebox: 15 minutes.
 
+Status: Completed. `ActivityStatsDisplay` with `ActivityStatsFormatter` and
+tests for empty and populated stats.
+
 Implementation:
 - Display elapsed duration, distance, and current or average pace/speed while
   recording.
@@ -278,6 +308,9 @@ Acceptance checks:
 
 Timebox: 15 minutes.
 
+Status: Completed. `showActivityStopConfirmationDialog` (adaptive) returning
+`ActivityStopAction` with cancel/stop/discard, plus tests.
+
 Implementation:
 - Show a platform-adaptive confirmation before ending an activity.
 - Include stop and discard paths.
@@ -294,6 +327,9 @@ Acceptance checks:
 ## Phase 14: Add GPX Builder
 
 Timebox: 15 minutes.
+
+Status: Completed. `ActivityGpxBuilder` produces escaped GPX 1.1 XML with
+timestamps and elevation, covered by tests.
 
 Implementation:
 - Add a pure GPX builder that converts a completed recording to GPX XML.
@@ -313,6 +349,9 @@ Acceptance checks:
 ## Phase 15: Add Temporary GPX File Writer
 
 Timebox: 15 minutes.
+
+Status: Completed. `ActivityGpxFileWriter` writes to the temp directory with a
+unique prefix/suffix and provides a delete path, plus tests.
 
 Implementation:
 - Write generated GPX to the app temporary directory only when upload/export is
@@ -334,6 +373,11 @@ Acceptance checks:
 
 Timebox: 15 minutes.
 
+Status: Completed (pending server endpoint). `ActivityUploadService` uses
+`ApiClient.uploadFile`; the endpoint/field name are config-driven and the
+service stays blocked via `AppException` until configured. The endpoint is not
+yet hardcoded in `ApiConstants` because the server contract is unconfirmed.
+
 Implementation:
 - Add `ActivityUploadService` or an activity repository method that accepts a GPX
   file path and activity metadata.
@@ -354,6 +398,9 @@ Acceptance checks:
 
 Timebox: 15 minutes.
 
+Status: Completed. The controller builds a completed recording and generates
+GPX on stop while keeping upload optional, with tests.
+
 Implementation:
 - On stop, build a completed recording object.
 - Generate GPX from the completed recording.
@@ -370,6 +417,9 @@ Acceptance checks:
 ## Phase 18: Add Upload UI State
 
 Timebox: 15 minutes.
+
+Status: Completed. `ActivityUploadStatusPanel` shows uploading/uploaded/failed
+with retry and discard actions, plus tests.
 
 Implementation:
 - Show uploading, uploaded, and upload failed states after recording stops.
@@ -389,6 +439,9 @@ Acceptance checks:
 
 Timebox: 15 minutes.
 
+Status: Completed. Permission denied, denied-forever (open settings), service
+disabled, and stream failure states are surfaced via localized error UX.
+
 Implementation:
 - Surface location permission denied, denied forever, and service disabled states
   before recording starts.
@@ -406,6 +459,9 @@ Acceptance checks:
 ## Phase 20: Add Localization Pass
 
 Timebox: 15 minutes.
+
+Status: Completed. All new activity strings have EN and PT ARB entries and
+`flutter analyze` reports no l10n issues.
 
 Implementation:
 - Review all new user-facing strings.
@@ -426,6 +482,9 @@ Acceptance checks:
 
 Timebox: 15 minutes.
 
+Status: Completed. Unit tests cover models, stats, state transitions, GPX
+generation, and upload error mapping.
+
 Implementation:
 - Add focused tests for models, stats, state transitions, GPX generation, and
   upload error mapping.
@@ -442,6 +501,9 @@ Acceptance checks:
 ## Phase 22: Add Widget Test Pass
 
 Timebox: 15 minutes.
+
+Status: Completed. Widget tests cover recording controls, stats display, stop
+confirmation, and upload states, including a Cupertino-shell regression test.
 
 Implementation:
 - Add widget tests for recording controls, type picker, stop confirmation, and
@@ -502,6 +564,9 @@ Acceptance checks:
 ## Phase 25: Final Quality Gate
 
 Timebox: 15 minutes.
+
+Status: Completed. `dart format`, `flutter analyze` (no issues), and the
+activity test suite pass; the diff remains scoped to activity tracking.
 
 Implementation:
 - Run `dart format .`.

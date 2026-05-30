@@ -27,6 +27,7 @@ class ActivityRecordingControls extends StatelessWidget {
     this.onRetryUpload,
     this.onDiscard,
     this.onOpenLocationSettings,
+    this.trailingReservedWidth = 0,
   });
 
   final ActivityRecordingState state;
@@ -41,6 +42,7 @@ class ActivityRecordingControls extends StatelessWidget {
   final VoidCallback? onRetryUpload;
   final VoidCallback? onDiscard;
   final VoidCallback? onOpenLocationSettings;
+  final double trailingReservedWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -52,15 +54,23 @@ class ActivityRecordingControls extends StatelessWidget {
       minimum: const EdgeInsets.fromLTRB(12, 12, 12, 88),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final maxWidth = math.min(360.0, constraints.maxWidth);
+          final reserveTrailingSpace =
+              trailingReservedWidth > 0 && constraints.maxWidth < 480;
+          final availableWidth = reserveTrailingSpace
+              ? math.max(0.0, constraints.maxWidth - trailingReservedWidth)
+              : constraints.maxWidth;
+          final maxWidth = math.min(360.0, availableWidth);
           final maxHeight = math.min(
             360.0,
             math.max(120.0, constraints.maxHeight),
           );
 
           return Align(
-            alignment: Alignment.bottomCenter,
+            alignment: reserveTrailingSpace
+                ? Alignment.bottomLeft
+                : Alignment.bottomCenter,
             child: ConstrainedBox(
+              key: const ValueKey('activityRecordingControlsSurface'),
               constraints: BoxConstraints(
                 maxWidth: maxWidth,
                 maxHeight: maxHeight,
@@ -189,7 +199,7 @@ class ActivityRecordingControls extends StatelessWidget {
       case ActivityRecordingStatus.failed:
         return [
           SizedBox(
-            width: 180,
+            width: 160,
             child: ActivityTypePicker(
               selectedType: selectedActivityType,
               onChanged: onActivityTypeChanged,
