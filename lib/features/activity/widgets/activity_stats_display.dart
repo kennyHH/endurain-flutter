@@ -24,6 +24,9 @@ class ActivityStatsDisplay extends StatelessWidget {
 
     final l10n = AppLocalizations.of(context)!;
     final stats = calculator.calculate(state.points);
+    final durationSeconds = stats.durationSeconds > state.elapsedDurationSeconds
+        ? stats.durationSeconds
+        : state.elapsedDurationSeconds;
 
     return Wrap(
       alignment: WrapAlignment.center,
@@ -32,7 +35,7 @@ class ActivityStatsDisplay extends StatelessWidget {
       children: [
         _StatItem(
           label: l10n.activityStatDuration,
-          value: formatter.formatDuration(stats.durationSeconds),
+          value: formatter.formatDuration(durationSeconds),
         ),
         _StatItem(
           label: l10n.activityStatDistance,

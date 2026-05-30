@@ -28,6 +28,24 @@ void main() {
       expect(find.text('-'), findsOneWidget);
     });
 
+    testWidgets('shows elapsed recording time before GPS duration exists', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _TestApp(
+          child: ActivityStatsDisplay(
+            state: ActivityRecordingState(
+              status: ActivityRecordingStatus.recording,
+              elapsedDurationSeconds: 5,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('0:05'), findsOneWidget);
+      expect(find.text('0 m'), findsOneWidget);
+    });
+
     testWidgets('shows populated recording stats', (tester) async {
       await tester.pumpWidget(
         _TestApp(

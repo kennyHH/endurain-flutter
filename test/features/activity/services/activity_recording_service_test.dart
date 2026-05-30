@@ -5,6 +5,7 @@ import 'package:endurain/core/services/location_service.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
 import 'package:endurain/features/activity/services/activity_recording_service.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart' hide ActivityType;
 
@@ -99,6 +100,66 @@ void main() {
       expect(service.state.points, hasLength(1));
       expect(service.state.points.single.latitude, 41.1);
       expect(service.state.points.single.longitude, -8.6);
+    });
+
+    test('updates elapsed duration while recording without GPS points', () {
+      fakeAsync((async) {
+        var now = DateTime.utc(2026, 5, 30, 10);
+        final adapter = _FakeLocationPlatformAdapter();
+        final service = ActivityRecordingService(
+          now: () => now,
+          locationService: LocationService(platformAdapter: adapter),
+        );
+
+        unawaited(service.start(activityType: ActivityType.run));
+        async.flushMicrotasks();
+
+        expect(service.state.elapsedDurationSeconds, 0);
+
+        now = now.add(const Duration(seconds: 1));
+        async.elapse(const Duration(seconds: 1));
+
+        expect(service.state.status, ActivityRecordingStatus.recording);
+        expect(service.state.points, isEmpty);
+        expect(service.state.elapsedDurationSeconds, 1);
+
+        service.dispose();
+      });
+    });
+
+    test('does not count paused time in elapsed duration', () {
+      fakeAsync((async) {
+        var now = DateTime.utc(2026, 5, 30, 10);
+        final adapter = _FakeLocationPlatformAdapter();
+        final service = ActivityRecordingService(
+          now: () => now,
+          locationService: LocationService(platformAdapter: adapter),
+        );
+
+        unawaited(service.start(activityType: ActivityType.ride));
+        async.flushMicrotasks();
+        now = now.add(const Duration(seconds: 3));
+        unawaited(service.pause());
+        async.flushMicrotasks();
+
+        expect(service.state.status, ActivityRecordingStatus.paused);
+        expect(service.state.elapsedDurationSeconds, 3);
+
+        now = now.add(const Duration(seconds: 10));
+        async.elapse(const Duration(seconds: 10));
+
+        expect(service.state.elapsedDurationSeconds, 3);
+
+        unawaited(service.resume());
+        async.flushMicrotasks();
+        now = now.add(const Duration(seconds: 2));
+        async.elapse(const Duration(seconds: 2));
+
+        expect(service.state.status, ActivityRecordingStatus.recording);
+        expect(service.state.elapsedDurationSeconds, 5);
+
+        service.dispose();
+      });
     });
 
     test('pause and resume update state', () async {

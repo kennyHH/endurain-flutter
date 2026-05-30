@@ -34,6 +34,9 @@ class ActivityRecordingService {
 
   ActivityRecordingState _state = ActivityRecordingState();
   StreamSubscription<Position>? _positionSubscription;
+  Timer? _elapsedTimer;
+  DateTime? _recordingSegmentStartedAt;
+  int _elapsedBeforeCurrentSegmentSeconds = 0;
   bool _isDisposed = false;
 
   ActivityRecordingState get state => _state;
@@ -58,13 +61,17 @@ class ActivityRecordingService {
       return;
     }
 
+    final startedAt = _now();
+    _recordingSegmentStartedAt = startedAt;
+    _elapsedBeforeCurrentSegmentSeconds = 0;
     _emit(
       ActivityRecordingState(
         status: ActivityRecordingStatus.recording,
         activityType: activityType,
-        startedAt: _now(),
+        startedAt: startedAt,
       ),
     );
+    _startElapsedTimer();
     _startLocationStream();
   }
 
@@ -82,8 +89,18 @@ class ActivityRecordingService {
       return;
     }
 
-    await _cancelPositionSubscription();
-    _emit(_state.copyWith(status: ActivityRecordingStatus.paused));
+    final elapsedDurationSeconds = _currentElapsedDurationSeconds();
+    _elapsedBeforeCurrentSegmentSeconds = elapsedDurationSeconds;
+    _recordingSegmentStartedAt = null;
+    _cancelElapsedTimer();
+    final cancelPositionSubscription = _cancelPositionSubscription();
+    _emit(
+      _state.copyWith(
+        status: ActivityRecordingStatus.paused,
+        elapsedDurationSeconds: elapsedDurationSeconds,
+      ),
+    );
+    await cancelPositionSubscription;
   }
 
   Future<void> resume() async {
@@ -96,7 +113,9 @@ class ActivityRecordingService {
       return;
     }
 
+    _recordingSegmentStartedAt = _now();
     _emit(_state.copyWith(status: ActivityRecordingStatus.recording));
+    _startElapsedTimer();
     _startLocationStream();
   }
 
@@ -106,6 +125,10 @@ class ActivityRecordingService {
       return;
     }
 
+    final elapsedDurationSeconds = _currentElapsedDurationSeconds();
+    _elapsedBeforeCurrentSegmentSeconds = elapsedDurationSeconds;
+    _recordingSegmentStartedAt = null;
+    _cancelElapsedTimer();
     await _cancelPositionSubscription();
     if (_state.points.isEmpty) {
       _emit(
@@ -113,12 +136,18 @@ class ActivityRecordingService {
           status: ActivityRecordingStatus.failed,
           endedAt: _now(),
           lastErrorKey: ActivityRecordingErrorKeys.emptyRecording,
+          elapsedDurationSeconds: elapsedDurationSeconds,
         ),
       );
       return;
     }
 
-    _emit(_state.copyWith(status: ActivityRecordingStatus.stopping));
+    _emit(
+      _state.copyWith(
+        status: ActivityRecordingStatus.stopping,
+        elapsedDurationSeconds: elapsedDurationSeconds,
+      ),
+    );
     _emit(
       _state.copyWith(
         status: ActivityRecordingStatus.completed,
@@ -129,6 +158,9 @@ class ActivityRecordingService {
 
   Future<void> discard() async {
     _ensureNotDisposed();
+    _cancelElapsedTimer();
+    _recordingSegmentStartedAt = null;
+    _elapsedBeforeCurrentSegmentSeconds = 0;
     await _cancelPositionSubscription();
     _emit(ActivityRecordingState());
   }
@@ -138,9 +170,39 @@ class ActivityRecordingService {
       return;
     }
     _isDisposed = true;
+    _cancelElapsedTimer();
     _positionSubscription?.cancel();
     _positionSubscription = null;
     _stateController.close();
+  }
+
+  void _startElapsedTimer() {
+    _cancelElapsedTimer();
+    _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_state.status != ActivityRecordingStatus.recording) {
+        return;
+      }
+      final elapsedDurationSeconds = _currentElapsedDurationSeconds();
+      if (elapsedDurationSeconds == _state.elapsedDurationSeconds) {
+        return;
+      }
+      _emit(_state.copyWith(elapsedDurationSeconds: elapsedDurationSeconds));
+    });
+  }
+
+  void _cancelElapsedTimer() {
+    _elapsedTimer?.cancel();
+    _elapsedTimer = null;
+  }
+
+  int _currentElapsedDurationSeconds() {
+    final segmentStartedAt = _recordingSegmentStartedAt;
+    if (segmentStartedAt == null) {
+      return _elapsedBeforeCurrentSegmentSeconds;
+    }
+    final segmentSeconds = _now().difference(segmentStartedAt).inSeconds;
+    return _elapsedBeforeCurrentSegmentSeconds +
+        (segmentSeconds < 0 ? 0 : segmentSeconds);
   }
 
   void _startLocationStream() {
@@ -201,6 +263,8 @@ class ActivityRecordingService {
   }
 
   void _fail(String errorKey) {
+    _cancelElapsedTimer();
+    _recordingSegmentStartedAt = null;
     unawaited(_cancelPositionSubscription());
     _emit(
       _state.copyWith(

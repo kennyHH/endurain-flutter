@@ -19,6 +19,7 @@ class ActivityRecordingState {
     this.startedAt,
     this.endedAt,
     this.lastErrorKey,
+    this.elapsedDurationSeconds = 0,
     List<ActivityTrackPoint> points = const [],
   }) : _points = List<ActivityTrackPoint>.unmodifiable(points);
 
@@ -27,6 +28,7 @@ class ActivityRecordingState {
   final DateTime? startedAt;
   final DateTime? endedAt;
   final String? lastErrorKey;
+  final int elapsedDurationSeconds;
   final List<ActivityTrackPoint> _points;
 
   List<ActivityTrackPoint> get points => UnmodifiableListView(_points);
@@ -42,6 +44,7 @@ class ActivityRecordingState {
     Object? startedAt = _unset,
     Object? endedAt = _unset,
     Object? lastErrorKey = _unset,
+    int? elapsedDurationSeconds,
     List<ActivityTrackPoint>? points,
   }) {
     return ActivityRecordingState(
@@ -56,6 +59,8 @@ class ActivityRecordingState {
       lastErrorKey: identical(lastErrorKey, _unset)
           ? this.lastErrorKey
           : lastErrorKey as String?,
+      elapsedDurationSeconds:
+          elapsedDurationSeconds ?? this.elapsedDurationSeconds,
       points: points ?? _points,
     );
   }

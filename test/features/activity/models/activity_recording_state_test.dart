@@ -19,7 +19,19 @@ void main() {
       expect(updated.activityType, ActivityType.run);
       expect(updated.startedAt, startedAt);
       expect(updated.endedAt, isNull);
+      expect(updated.elapsedDurationSeconds, 0);
       expect(updated.points, isEmpty);
+    });
+
+    test('copyWith can update elapsed duration', () {
+      final state = ActivityRecordingState(
+        status: ActivityRecordingStatus.recording,
+        elapsedDurationSeconds: 4,
+      );
+
+      final updated = state.copyWith(elapsedDurationSeconds: 5);
+
+      expect(updated.elapsedDurationSeconds, 5);
     });
 
     test('copyWith can clear nullable fields', () {
