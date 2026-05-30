@@ -235,7 +235,7 @@ class AuthService {
     final refreshToken = await _storage.getRefreshToken();
 
     if (serverUrl == null || serverUrl.isEmpty || refreshToken == null) {
-      return false;
+      return _clearSessionAfterRefreshFailure();
     }
 
     final url = Uri.parse('$serverUrl${ApiConstants.refreshEndpoint}');
@@ -265,10 +265,15 @@ class AuthService {
         return true;
       }
 
-      return false;
+      return _clearSessionAfterRefreshFailure();
     } catch (e) {
-      return false;
+      return _clearSessionAfterRefreshFailure();
     }
+  }
+
+  Future<bool> _clearSessionAfterRefreshFailure() async {
+    await _sessionStore.clear();
+    return false;
   }
 
   /// Logout and clear all tokens

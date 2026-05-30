@@ -75,6 +75,91 @@ void main() {
         ),
       );
     });
+
+    test('clears tokens when pre-request refresh fails', () async {
+      final storage = SecureStorageService();
+      await storage.setServerUrl('https://example.test');
+      await storage.setAccessToken('access-1');
+      await storage.setRefreshToken('refresh-1');
+      await storage.setSessionId('session-1');
+      await storage.setAccessTokenExpiresAt(DateTime.now().toUtc());
+      final authService = AuthService(
+        storage: storage,
+        httpClient: MockClient((request) async {
+          expect(request.url.path, '/api/v1/auth/refresh');
+          return http.Response('{"detail":"Expired refresh token"}', 401);
+        }),
+      );
+      final client = ApiClient(
+        storage: storage,
+        authService: authService,
+        httpClient: MockClient((request) async {
+          fail('API request should not run without a refreshed access token');
+        }),
+      );
+
+      await expectLater(
+        client.getJsonObject(
+          '/api/profile',
+          failureCode: AppErrorCode.loginFailed,
+        ),
+        throwsA(
+          isA<AppException>().having(
+            (exception) => exception.code,
+            'code',
+            AppErrorCode.notAuthenticated,
+          ),
+        ),
+      );
+      expect(await storage.getAccessToken(), isNull);
+      expect(await storage.getRefreshToken(), isNull);
+      expect(await storage.getSessionId(), isNull);
+      expect(await storage.getAccessTokenExpiresAt(), isNull);
+    });
+
+    test('clears tokens when retry refresh after 401 fails', () async {
+      final storage = SecureStorageService();
+      await storage.setServerUrl('https://example.test');
+      await storage.setAccessToken('access-1');
+      await storage.setRefreshToken('refresh-1');
+      await storage.setSessionId('session-1');
+      await storage.setAccessTokenExpiresAt(
+        DateTime.now().toUtc().add(const Duration(hours: 1)),
+      );
+      final authService = AuthService(
+        storage: storage,
+        httpClient: MockClient((request) async {
+          expect(request.url.path, '/api/v1/auth/refresh');
+          return http.Response('{"detail":"Expired refresh token"}', 401);
+        }),
+      );
+      final client = ApiClient(
+        storage: storage,
+        authService: authService,
+        httpClient: MockClient((request) async {
+          expect(request.url.path, '/api/profile');
+          return http.Response('{"detail":"Expired access token"}', 401);
+        }),
+      );
+
+      await expectLater(
+        client.getJsonObject(
+          '/api/profile',
+          failureCode: AppErrorCode.loginFailed,
+        ),
+        throwsA(
+          isA<AppException>().having(
+            (exception) => exception.code,
+            'code',
+            AppErrorCode.sessionExpired,
+          ),
+        ),
+      );
+      expect(await storage.getAccessToken(), isNull);
+      expect(await storage.getRefreshToken(), isNull);
+      expect(await storage.getSessionId(), isNull);
+      expect(await storage.getAccessTokenExpiresAt(), isNull);
+    });
   });
 
   group('ApiClient uploads', () {
