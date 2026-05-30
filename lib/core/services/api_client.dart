@@ -25,21 +25,11 @@ class ApiClient {
   final http.Client _httpClient;
   final MultipartUploadAdapter _uploadAdapter;
 
-  /// Make an authenticated GET request
-  Future<http.Response> get(String endpoint) {
-    return _makeRequest('GET', endpoint);
-  }
-
   Future<Map<String, dynamic>> getJsonObject(
     String endpoint, {
     required AppErrorCode failureCode,
   }) {
     return _makeJsonObjectRequest('GET', endpoint, failureCode: failureCode);
-  }
-
-  /// Make an authenticated POST request
-  Future<http.Response> post(String endpoint, {Map<String, dynamic>? body}) {
-    return _makeRequest('POST', endpoint, body: body);
   }
 
   Future<Map<String, dynamic>> postJsonObject(
@@ -55,11 +45,6 @@ class ApiClient {
     );
   }
 
-  /// Make an authenticated PUT request
-  Future<http.Response> put(String endpoint, {Map<String, dynamic>? body}) {
-    return _makeRequest('PUT', endpoint, body: body);
-  }
-
   Future<Map<String, dynamic>> putJsonObject(
     String endpoint, {
     Map<String, dynamic>? body,
@@ -71,11 +56,6 @@ class ApiClient {
       body: body,
       failureCode: failureCode,
     );
-  }
-
-  /// Make an authenticated DELETE request
-  Future<http.Response> delete(String endpoint) {
-    return _makeRequest('DELETE', endpoint);
   }
 
   Future<Map<String, dynamic>> deleteJsonObject(

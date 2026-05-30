@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/core/services/app_scope.dart';
-import 'package:endurain/core/services/app_services.dart';
 import 'package:endurain/core/services/app_links_service.dart';
 import 'package:endurain/core/services/auth_service.dart';
 import 'package:endurain/core/services/sso_service.dart';
@@ -51,7 +50,8 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     _ownsController = widget.controller == null;
     _urlLauncherService =
-        widget.urlLauncherService ?? AppServices.instance.urlLauncher;
+        widget.urlLauncherService ??
+        AppScope.servicesOf(context, listen: false).urlLauncher;
     _controller = widget.controller ?? _createController();
     _controller.addListener(_handleControllerChanged);
     _controller.startSsoCallbackListener(
