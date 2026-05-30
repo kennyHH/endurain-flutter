@@ -193,7 +193,7 @@ Recommended changes:
 - Remove `getPassword`, `setPassword`, and `deletePassword` if unused.
 - Keep sensitive storage limited to tokens and explicitly required settings.
 
-### 12. Add a feature creation guide - Open
+### 12. Add a feature creation guide - Done
 
 The project now has useful rationale docs, but a short operational guide would
 help future rapid feature work stay consistent.
