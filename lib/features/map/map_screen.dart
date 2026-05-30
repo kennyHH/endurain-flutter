@@ -8,6 +8,7 @@ import 'package:endurain/core/services/app_services.dart';
 import 'package:endurain/core/services/location_service.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/map_constants.dart';
+import 'package:endurain/features/map/map_settings_repository.dart';
 import 'package:endurain/features/map/map_state_controller.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/shared/adaptive/adaptive.dart';
@@ -48,7 +49,9 @@ class _MapScreenState extends State<MapScreen> {
     final services = AppServices.instance;
     return MapStateController(
       locationService: widget.locationService ?? services.location,
-      storage: widget.storage ?? services.secureStorage,
+      mapSettingsRepository: MapSettingsRepository(
+        storage: widget.storage ?? services.secureStorage,
+      ),
     );
   }
 

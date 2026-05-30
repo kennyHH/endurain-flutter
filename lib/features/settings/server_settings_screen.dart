@@ -7,7 +7,8 @@ import 'package:endurain/core/services/auth_service.dart';
 import 'package:endurain/core/utils/validators.dart';
 import 'package:endurain/core/utils/dialog_utils.dart';
 import 'package:endurain/core/constants/ui_constants.dart';
-import 'package:endurain/core/constants/map_constants.dart';
+import 'package:endurain/features/map/map_settings_repository.dart';
+import 'package:endurain/features/settings/server_settings_repository.dart';
 import 'package:endurain/shared/adaptive/adaptive.dart';
 
 class ServerSettingsScreen extends StatefulWidget {
@@ -16,11 +17,13 @@ class ServerSettingsScreen extends StatefulWidget {
     this.onLogout,
     this.storage,
     this.authService,
+    this.repository,
   });
 
   final VoidCallback? onLogout;
   final SecureStorageService? storage;
   final AuthService? authService;
+  final ServerSettingsRepository? repository;
 
   @override
   State<ServerSettingsScreen> createState() => _ServerSettingsScreenState();
@@ -29,8 +32,7 @@ class ServerSettingsScreen extends StatefulWidget {
 class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
   final _formKey = GlobalKey<FormState>();
   final _tileServerUrlController = TextEditingController();
-  late final SecureStorageService _storage;
-  late final AuthService _authService;
+  late final ServerSettingsRepository _repository;
   bool _isLoading = true;
   String _serverUrl = '';
   String _username = '';
@@ -38,9 +40,18 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _storage = widget.storage ?? AppServices.instance.secureStorage;
-    _authService = widget.authService ?? AppServices.instance.auth;
+    _repository = widget.repository ?? _createRepository();
     _loadSettings();
+  }
+
+  ServerSettingsRepository _createRepository() {
+    final services = AppServices.instance;
+    final storage = widget.storage ?? services.secureStorage;
+    return ServerSettingsRepository(
+      storage: storage,
+      authService: widget.authService ?? services.auth,
+      mapSettingsRepository: MapSettingsRepository(storage: storage),
+    );
   }
 
   @override
@@ -50,18 +61,15 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
   }
 
   Future<void> _loadSettings() async {
-    final serverUrl = await _storage.getServerUrl();
-    final username = await _storage.getUsername();
-    final tileServerUrl = await _storage.getTileServerUrl();
+    final settings = await _repository.loadSettings();
 
     if (mounted) {
       final l10n = AppLocalizations.of(context)!;
 
       setState(() {
-        _serverUrl = serverUrl ?? l10n.notConfigured;
-        _username = username ?? l10n.notLoggedIn;
-        _tileServerUrlController.text =
-            tileServerUrl ?? MapConstants.defaultTileServerUrl;
+        _serverUrl = settings.serverUrl ?? l10n.notConfigured;
+        _username = settings.username ?? l10n.notLoggedIn;
+        _tileServerUrlController.text = settings.tileServerUrl;
         _isLoading = false;
       });
     }
@@ -75,7 +83,7 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     try {
-      await _storage.setTileServerUrl(_tileServerUrlController.text.trim());
+      await _repository.saveTileServerUrl(_tileServerUrlController.text.trim());
 
       if (mounted) {
         await DialogUtils.showSuccessDialog(
@@ -103,7 +111,7 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
     );
 
     if (confirmed && mounted) {
-      final serverLogoutSuccess = await _authService.logout();
+      final serverLogoutSuccess = await _repository.logout();
       if (mounted) {
         if (!serverLogoutSuccess) {
           await DialogUtils.showMessage(

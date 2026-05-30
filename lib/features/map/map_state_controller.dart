@@ -5,17 +5,17 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:endurain/core/constants/map_constants.dart';
 import 'package:endurain/core/services/location_service.dart';
-import 'package:endurain/core/services/secure_storage_service.dart';
+import 'package:endurain/features/map/map_settings_repository.dart';
 
 class MapStateController extends ChangeNotifier {
   MapStateController({
     required LocationService locationService,
-    required SecureStorageService storage,
+    required MapSettingsRepository mapSettingsRepository,
   }) : _locationService = locationService,
-       _storage = storage;
+       _mapSettingsRepository = mapSettingsRepository;
 
   final LocationService _locationService;
-  final SecureStorageService _storage;
+  final MapSettingsRepository _mapSettingsRepository;
 
   StreamSubscription<Position>? _positionSubscription;
   bool _initialized = false;
@@ -41,11 +41,8 @@ class MapStateController extends ChangeNotifier {
   }
 
   Future<void> _loadSettings() async {
-    final tileUrl = await _storage.getTileServerUrl();
-    if (tileUrl != null && tileUrl.isNotEmpty) {
-      tileServerUrl = tileUrl;
-      _notifyListeners();
-    }
+    tileServerUrl = await _mapSettingsRepository.getTileServerUrl();
+    _notifyListeners();
   }
 
   Future<void> _loadUserLocation() async {

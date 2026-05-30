@@ -77,7 +77,7 @@ Recommended changes:
   into that controller.
 - Keep `LoginScreen` focused on rendering and forwarding user intents.
 
-### 3. Create repository and API domain boundaries - Partially done
+### 3. Create repository and API domain boundaries - Done
 
 Services currently mix HTTP transport, JSON parsing, token handling, storage, and
 feature behavior. `AuthService` is the clearest example: it performs auth HTTP
