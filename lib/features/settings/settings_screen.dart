@@ -51,6 +51,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           Expanded(
             child: ListView(
+              padding: const EdgeInsets.all(UIConstants.paddingStandard),
               children: [
                 AdaptiveListSection(
                   children: [

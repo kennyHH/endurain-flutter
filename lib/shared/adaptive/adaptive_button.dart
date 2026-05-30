@@ -68,7 +68,10 @@ class AdaptiveButton extends StatelessWidget {
             style: destructive
                 ? TextButton.styleFrom(foregroundColor: colorScheme.error)
                 : null,
-            child: child,
+            child: Padding(
+              padding: const EdgeInsets.all(UIConstants.paddingMedium),
+              child: child,
+            ),
           );
 
     return expand ? SizedBox(width: double.infinity, child: button) : button;

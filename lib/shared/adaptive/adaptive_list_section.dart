@@ -14,6 +14,7 @@ class AdaptiveListSection extends StatelessWidget {
     if (PlatformUtils.isApplePlatform) {
       return CupertinoListSection.insetGrouped(
         header: header == null ? null : Text(header!),
+        margin: EdgeInsets.zero,
         children: children,
       );
     }

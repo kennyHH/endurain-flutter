@@ -68,7 +68,7 @@ class _StatItem extends StatelessWidget {
     final theme = Theme.of(context);
 
     return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 72),
+      constraints: const BoxConstraints(minWidth: 60),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

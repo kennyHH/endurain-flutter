@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:endurain/core/constants/ui_constants.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_upload_state.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
@@ -13,6 +14,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ActivityRecordingControls extends StatelessWidget {
+  static const double _bottomOverlaySpacing =
+      UIConstants.tabBarHeight +
+      UIConstants.paddingLarge +
+      UIConstants.paddingSmall;
+
   const ActivityRecordingControls({
     super.key,
     required this.state,
@@ -51,7 +57,7 @@ class ActivityRecordingControls extends StatelessWidget {
     final errorMessage = _recordingErrorMessage(l10n);
 
     return SafeArea(
-      minimum: const EdgeInsets.fromLTRB(12, 12, 12, 88),
+      minimum: const EdgeInsets.fromLTRB(12, 12, 12, _bottomOverlaySpacing),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final reserveTrailingSpace =

@@ -177,15 +177,10 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
                     onFieldSubmitted: (_) => _saveSettings(),
                   ),
                   const SizedBox(height: UIConstants.paddingLarge),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: UIConstants.paddingStandard,
-                    ),
-                    child: AdaptiveButton(
-                      label: l10n.save,
-                      onPressed: _saveSettings,
-                      expand: true,
-                    ),
+                  AdaptiveButton(
+                    label: l10n.save,
+                    onPressed: _saveSettings,
+                    expand: true,
                   ),
                 ],
               ),
