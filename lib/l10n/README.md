@@ -18,7 +18,7 @@ Used by: `core/utils/dialog_utils.dart`, `core/utils/validators.dart`
 - Validation messages (requiredField, invalidUrl)
 - Common actions (save, back)
 
-### 2. **AUTH** 
+### 2. **AUTH**
 Used by: `features/auth/login_screen.dart`
 - Login screen (loginTitle, login, username, password)
 - MFA flow (mfaTitle, mfaCode, verify)
