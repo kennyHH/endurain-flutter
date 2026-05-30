@@ -1,6 +1,3 @@
-import 'dart:async';
-
-import 'package:endurain/core/services/location_platform_adapter.dart';
 import 'package:endurain/core/services/location_service.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
@@ -10,12 +7,13 @@ import 'package:endurain/features/activity/services/activity_upload_service.dart
 import 'package:endurain/features/map/map_screen.dart';
 import 'package:endurain/features/map/map_settings_repository.dart';
 import 'package:endurain/features/map/map_state_controller.dart';
-import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/l10n/app_localizations_en.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:geolocator/geolocator.dart' hide ActivityType;
+
+import '../../helpers/fake_location_platform_adapter.dart';
+import '../../helpers/widget_test_app.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -33,8 +31,8 @@ void main() {
     testWidgets('renders map controls and toggles location lock', (
       tester,
     ) async {
-      final platform = _FakeLocationPlatformAdapter(
-        currentPosition: _position(
+      final platform = FakeLocationPlatformAdapter(
+        currentPosition: testPosition(
           latitude: 41.1579,
           longitude: -8.6291,
           heading: 30,
@@ -71,8 +69,8 @@ void main() {
     testWidgets('shows the loading indicator while location loads', (
       tester,
     ) async {
-      final platform = _FakeLocationPlatformAdapter(
-        currentPosition: _position(latitude: 41.1579, longitude: -8.6291),
+      final platform = FakeLocationPlatformAdapter(
+        currentPosition: testPosition(latitude: 41.1579, longitude: -8.6291),
         completeCurrentPosition: false,
       );
       final mapController = await _mapController(platform);
@@ -104,7 +102,7 @@ void main() {
 }
 
 Future<MapStateController> _mapController(
-  _FakeLocationPlatformAdapter platform,
+  FakeLocationPlatformAdapter platform,
 ) async {
   final storage = SecureStorageService();
   await storage.setTileServerUrl('https://tiles.example.test/{z}/{x}/{y}.png');
@@ -118,7 +116,7 @@ Future<MapStateController> _mapController(
 }
 
 ActivityRecordingController _activityController(
-  _FakeLocationPlatformAdapter platform,
+  FakeLocationPlatformAdapter platform,
 ) {
   return ActivityRecordingController(
     recordingService: ActivityRecordingService(
@@ -131,96 +129,6 @@ ActivityRecordingController _activityController(
   );
 }
 
-Position _position({
-  required double latitude,
-  required double longitude,
-  double heading = 0,
-}) {
-  return Position(
-    latitude: latitude,
-    longitude: longitude,
-    timestamp: DateTime.utc(2026),
-    accuracy: 5,
-    altitude: 10,
-    altitudeAccuracy: 1,
-    heading: heading,
-    headingAccuracy: 1,
-    speed: 3,
-    speedAccuracy: 1,
-  );
-}
-
-class _FakeLocationPlatformAdapter implements LocationPlatformAdapter {
-  _FakeLocationPlatformAdapter({
-    required this.currentPosition,
-    this.completeCurrentPosition = true,
-  });
-
-  final Position currentPosition;
-  final bool completeCurrentPosition;
-  final _positionController = StreamController<Position>.broadcast();
-  final _currentPositionCompleter = Completer<Position>();
-
-  void completePosition() {
-    if (!_currentPositionCompleter.isCompleted) {
-      _currentPositionCompleter.complete(currentPosition);
-    }
-  }
-
-  Future<void> close() {
-    return _positionController.close();
-  }
-
-  @override
-  Future<LocationPermission> checkPermission() async {
-    return LocationPermission.whileInUse;
-  }
-
-  @override
-  Future<Position> getCurrentPosition({
-    required LocationSettings locationSettings,
-  }) async {
-    if (completeCurrentPosition) {
-      return currentPosition;
-    }
-
-    return _currentPositionCompleter.future;
-  }
-
-  @override
-  Stream<Position> getPositionStream({
-    required LocationSettings locationSettings,
-  }) {
-    return _positionController.stream;
-  }
-
-  @override
-  Future<bool> isLocationServiceEnabled() async {
-    return true;
-  }
-
-  @override
-  Future<bool> openAppSettings() async {
-    return true;
-  }
-
-  @override
-  Future<LocationPermission> requestPermission() async {
-    return LocationPermission.whileInUse;
-  }
-}
-
-class _MapTestApp extends StatelessWidget {
-  const _MapTestApp({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: child,
-    );
-  }
+class _MapTestApp extends TestMaterialApp {
+  const _MapTestApp({required super.child});
 }

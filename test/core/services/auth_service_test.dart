@@ -107,5 +107,49 @@ void main() {
         ),
       );
     });
+
+    test('throws typed response error for malformed successful login JSON', () {
+      final service = AuthService(
+        storage: SecureStorageService(),
+        httpClient: MockClient((request) async {
+          return http.Response('not json', 200);
+        }),
+      );
+
+      expect(
+        () =>
+            service.login('joao', 'secret', serverUrl: 'https://example.test'),
+        throwsA(
+          isA<AppException>().having(
+            (exception) => exception.code,
+            'code',
+            AppErrorCode.unexpectedResponseFormat,
+          ),
+        ),
+      );
+    });
+
+    test('clears local tokens when server logout fails', () async {
+      final storage = SecureStorageService();
+      await storage.setServerUrl('https://example.test');
+      await storage.setAccessToken('access-1');
+      await storage.setRefreshToken('refresh-1');
+      await storage.setSessionId('session-1');
+      final service = AuthService(
+        storage: storage,
+        httpClient: MockClient((request) async {
+          expect(request.url.path, ApiConstants.logoutEndpoint);
+          return http.Response('', 500);
+        }),
+      );
+
+      final serverLogoutSucceeded = await service.logout();
+
+      expect(serverLogoutSucceeded, isFalse);
+      expect(await storage.getAccessToken(), isNull);
+      expect(await storage.getRefreshToken(), isNull);
+      expect(await storage.getSessionId(), isNull);
+      expect(await storage.getServerUrl(), 'https://example.test');
+    });
   });
 }

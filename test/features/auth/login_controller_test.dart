@@ -5,14 +5,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:endurain/core/constants/api_constants.dart';
+import 'package:endurain/core/models/app_exception.dart';
 import 'package:endurain/core/models/identity_provider.dart' as core;
-import 'package:endurain/core/services/app_links_service.dart';
 import 'package:endurain/core/services/auth_service.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/services/server_settings_service.dart';
 import 'package:endurain/core/services/sso_service.dart';
 import 'package:endurain/features/auth/auth_repository.dart';
 import 'package:endurain/features/auth/login_controller.dart';
+
+import '../../helpers/fake_app_links_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -43,7 +45,7 @@ void main() {
             fail('Unexpected request to ${request.url}');
           }),
         ),
-        appLinksService: _FakeAppLinksService(),
+        appLinksService: const EmptyAppLinksService(),
       );
       controller.serverUrlController.text = 'https://example.test';
 
@@ -69,7 +71,7 @@ void main() {
             );
           }),
         ),
-        appLinksService: _FakeAppLinksService(),
+        appLinksService: const EmptyAppLinksService(),
       );
       controller.serverUrlController.text = 'https://example.test';
       controller.usernameController.text = 'joao';
@@ -85,7 +87,7 @@ void main() {
 
     test('handles successful SSO callback', () async {
       final storage = SecureStorageService();
-      final appLinks = _FakeAppLinksService();
+      final appLinks = FakeAppLinksService();
       final controller = LoginController(
         authRepository: _repository(
           storage: storage,
@@ -120,6 +122,69 @@ void main() {
       controller.dispose();
       await appLinks.close();
     });
+
+    test('reports SSO callback errors without exchanging tokens', () async {
+      final storage = SecureStorageService();
+      final appLinks = FakeAppLinksService();
+      final errors = <Object>[];
+      final controller = LoginController(
+        authRepository: _repository(
+          storage: storage,
+          client: MockClient((request) async {
+            fail('No HTTP request expected for callback error.');
+          }),
+        ),
+        appLinksService: appLinks,
+      );
+      controller.startSsoCallbackListener(
+        onLoginSuccess: () => fail('Login should not complete.'),
+        onError: errors.add,
+      );
+
+      appLinks.add(
+        Uri.parse('endurain://auth/sso/callback?error=access_denied'),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(errors.single, 'access_denied');
+      expect(controller.isLoading, isFalse);
+      expect(await storage.getAccessToken(), isNull);
+      controller.dispose();
+      await appLinks.close();
+    });
+
+    test('reports SSO callbacks missing a session id', () async {
+      final appLinks = FakeAppLinksService();
+      final errors = <Object>[];
+      final controller = LoginController(
+        authRepository: _repository(
+          storage: SecureStorageService(),
+          client: MockClient((request) async {
+            fail('No HTTP request expected without a session id.');
+          }),
+        ),
+        appLinksService: appLinks,
+      );
+      controller.startSsoCallbackListener(
+        onLoginSuccess: () => fail('Login should not complete.'),
+        onError: errors.add,
+      );
+
+      appLinks.add(Uri.parse('endurain://auth/sso/callback'));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(
+        errors.single,
+        isA<AppException>().having(
+          (exception) => exception.code,
+          'code',
+          AppErrorCode.noSessionIdReceived,
+        ),
+      );
+      expect(controller.isLoading, isFalse);
+      controller.dispose();
+      await appLinks.close();
+    });
   });
 }
 
@@ -146,19 +211,4 @@ class IdentityProviderFixture {
     name: 'Keycloak',
     icon: 'keycloak',
   );
-}
-
-class _FakeAppLinksService implements AppLinksService {
-  final _controller = StreamController<Uri>.broadcast();
-
-  @override
-  Stream<Uri> get uriLinkStream => _controller.stream;
-
-  void add(Uri uri) {
-    _controller.add(uri);
-  }
-
-  Future<void> close() {
-    return _controller.close();
-  }
 }

@@ -99,6 +99,68 @@ void main() {
       expect(await result, isTrue);
     });
 
+    testWidgets('returns false when material confirmation is canceled', (
+      tester,
+    ) async {
+      late Future<bool> result;
+
+      await tester.pumpWidget(
+        _DialogTestApp(
+          builder: (context) => ElevatedButton(
+            onPressed: () {
+              result = DialogUtils.showConfirmDialog(
+                context,
+                title: 'Logout?',
+                message: 'End this session?',
+                confirmText: 'Logout',
+                isDestructive: true,
+              );
+            },
+            child: const Text('Show confirm'),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Show confirm'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.cancel));
+      await tester.pumpAndSettle();
+
+      expect(await result, isFalse);
+    });
+
+    testWidgets('shows cupertino success dialogs and dismisses', (
+      tester,
+    ) async {
+      PlatformUtils.debugIsApplePlatformOverride = true;
+      var dismissed = false;
+
+      await tester.pumpWidget(
+        _DialogTestApp(
+          builder: (context) => ElevatedButton(
+            onPressed: () => DialogUtils.showSuccessDialog(
+              context,
+              'Saved',
+              onDismiss: () => dismissed = true,
+            ),
+            child: const Text('Show success'),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Show success'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Saved'), findsOneWidget);
+      expect(dismissed, isFalse);
+
+      await tester.tap(find.text(l10n.ok));
+      await tester.pumpAndSettle();
+
+      expect(dismissed, isTrue);
+      expect(find.text('Saved'), findsNothing);
+    });
+
     testWidgets('shows material snack bar messages', (tester) async {
       await tester.pumpWidget(
         _DialogTestApp(
