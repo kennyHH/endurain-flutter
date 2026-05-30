@@ -1,19 +1,26 @@
 import 'package:geolocator/geolocator.dart';
+import 'package:endurain/core/services/location_platform_adapter.dart';
 
 class LocationService {
+  LocationService({LocationPlatformAdapter? platformAdapter})
+    : _platformAdapter =
+          platformAdapter ?? const GeolocatorLocationPlatformAdapter();
+
+  final LocationPlatformAdapter _platformAdapter;
+
   /// Check if location services are enabled
   Future<bool> isLocationServiceEnabled() async {
-    return Geolocator.isLocationServiceEnabled();
+    return _platformAdapter.isLocationServiceEnabled();
   }
 
   /// Check location permission status
   Future<LocationPermission> checkPermission() async {
-    return Geolocator.checkPermission();
+    return _platformAdapter.checkPermission();
   }
 
   /// Request location permission
   Future<LocationPermission> requestPermission() async {
-    return Geolocator.requestPermission();
+    return _platformAdapter.requestPermission();
   }
 
   /// Get current position
@@ -40,7 +47,7 @@ class LocationService {
 
     // Get position
     try {
-      return await Geolocator.getCurrentPosition(
+      return await _platformAdapter.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
           distanceFilter: 10,
@@ -53,7 +60,7 @@ class LocationService {
 
   /// Get position stream for continuous tracking
   Stream<Position> getPositionStream() {
-    return Geolocator.getPositionStream(
+    return _platformAdapter.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
         distanceFilter: 10,
@@ -65,7 +72,7 @@ class LocationService {
   /// Returns null if heading is unavailable
   Future<double?> getHeading() async {
     try {
-      final position = await Geolocator.getCurrentPosition(
+      final position = await _platformAdapter.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
         ),
@@ -78,6 +85,6 @@ class LocationService {
 
   /// Open app settings (useful when permission is permanently denied)
   Future<bool> openAppSettings() async {
-    return Geolocator.openAppSettings();
+    return _platformAdapter.openAppSettings();
   }
 }

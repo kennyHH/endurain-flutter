@@ -131,7 +131,7 @@ Recommended test layers:
 - Auth flow tests for server URL entry, local login, SSO provider loading, and
   MFA.
 
-### 7. Make platform and device services mockable - Partially done
+### 7. Make platform and device services mockable - Done
 
 `LocationService` calls `Geolocator` statically, and `SecureStorageService` wraps
 a static `FlutterSecureStorage`. That makes permission flows, storage behavior,
