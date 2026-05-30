@@ -1,0 +1,102 @@
+import 'package:endurain/core/services/auth_service.dart';
+import 'package:endurain/core/services/secure_storage_service.dart';
+import 'package:endurain/core/utils/platform_utils.dart';
+import 'package:endurain/features/map/map_settings_repository.dart';
+import 'package:endurain/features/settings/server_settings_repository.dart';
+import 'package:endurain/features/settings/server_settings_screen.dart';
+import 'package:endurain/l10n/app_localizations.dart';
+import 'package:endurain/l10n/app_localizations_en.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  final l10n = AppLocalizationsEn();
+
+  setUp(() {
+    PlatformUtils.debugIsApplePlatformOverride = false;
+    FlutterSecureStorage.setMockInitialValues(<String, String>{});
+  });
+
+  tearDown(PlatformUtils.debugResetOverrides);
+
+  group('ServerSettingsScreen', () {
+    testWidgets('loads stored account and tile server settings', (
+      tester,
+    ) async {
+      final storage = SecureStorageService();
+      await storage.setServerUrl('https://endurain.example.test');
+      await storage.setUsername('joao');
+      await storage.setTileServerUrl(
+        'https://tiles.example.test/{z}/{x}/{y}.png',
+      );
+
+      await tester.pumpWidget(
+        _SettingsTestApp(
+          child: ServerSettingsScreen(repository: _repository(storage)),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.serverSettingsTitle), findsOneWidget);
+      expect(find.text(l10n.loggedIn), findsOneWidget);
+      expect(find.text('https://endurain.example.test'), findsOneWidget);
+      expect(find.text('joao'), findsOneWidget);
+      expect(
+        find.widgetWithText(TextFormField, l10n.tileServerUrl),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('validates and saves tile server settings', (tester) async {
+      final storage = SecureStorageService();
+
+      await tester.pumpWidget(
+        _SettingsTestApp(
+          child: ServerSettingsScreen(repository: _repository(storage)),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextFormField), 'not a url');
+      await tester.tap(find.text(l10n.save));
+      await tester.pump();
+
+      expect(find.text(l10n.invalidUrl), findsOneWidget);
+
+      const tileServerUrl = 'https://tiles.example.test/{z}/{x}/{y}.png';
+      await tester.enterText(find.byType(TextFormField), tileServerUrl);
+      await tester.tap(find.text(l10n.save));
+      await tester.pumpAndSettle();
+
+      expect(await storage.getTileServerUrl(), tileServerUrl);
+    });
+  });
+}
+
+ServerSettingsRepository _repository(SecureStorageService storage) {
+  return ServerSettingsRepository(
+    storage: storage,
+    authService: AuthService(storage: storage),
+    mapSettingsRepository: MapSettingsRepository(storage: storage),
+  );
+}
+
+class _SettingsTestApp extends StatelessWidget {
+  const _SettingsTestApp({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: child,
+    );
+  }
+}

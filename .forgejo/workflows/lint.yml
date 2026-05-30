@@ -56,5 +56,11 @@ jobs:
       - name: Analyze Dart code
         run: flutter analyze
 
-      - name: Run tests
-        run: flutter test
+      - name: Run tests with coverage
+        run: flutter test --coverage
+
+      - name: Check coverage threshold
+        run: >-
+          dart run tool/check_coverage.dart
+          --min-line-coverage 60
+          --exclude 'lib/l10n/app_localizations*.dart'

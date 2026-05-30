@@ -1,0 +1,133 @@
+import 'package:endurain/core/models/app_exception.dart';
+import 'package:endurain/core/utils/dialog_utils.dart';
+import 'package:endurain/core/utils/platform_utils.dart';
+import 'package:endurain/l10n/app_localizations.dart';
+import 'package:endurain/l10n/app_localizations_en.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  final l10n = AppLocalizationsEn();
+
+  setUp(() {
+    PlatformUtils.debugIsApplePlatformOverride = false;
+  });
+
+  tearDown(PlatformUtils.debugResetOverrides);
+
+  group('DialogUtils', () {
+    testWidgets('shows localized material error dialogs', (tester) async {
+      await tester.pumpWidget(
+        _DialogTestApp(
+          builder: (context) => ElevatedButton(
+            onPressed: () => DialogUtils.showErrorDialog(
+              context,
+              const AppException(AppErrorCode.sessionExpired),
+            ),
+            child: const Text('Show error'),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Show error'));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.error), findsOneWidget);
+      expect(find.text(l10n.errorSessionExpired), findsOneWidget);
+
+      await tester.tap(find.text(l10n.ok));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.errorSessionExpired), findsNothing);
+    });
+
+    testWidgets('shows material success messages and dismisses', (
+      tester,
+    ) async {
+      var dismissed = false;
+
+      await tester.pumpWidget(
+        _DialogTestApp(
+          builder: (context) => ElevatedButton(
+            onPressed: () => DialogUtils.showSuccessDialog(
+              context,
+              'Saved',
+              onDismiss: () => dismissed = true,
+            ),
+            child: const Text('Show success'),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Show success'));
+      await tester.pump();
+
+      expect(find.text('Saved'), findsOneWidget);
+      expect(dismissed, isTrue);
+    });
+
+    testWidgets('returns the selected material confirmation result', (
+      tester,
+    ) async {
+      late Future<bool> result;
+
+      await tester.pumpWidget(
+        _DialogTestApp(
+          builder: (context) => ElevatedButton(
+            onPressed: () {
+              result = DialogUtils.showConfirmDialog(
+                context,
+                title: 'Discard recording?',
+                message: 'This cannot be undone.',
+                confirmText: 'Discard',
+                isDestructive: true,
+              );
+            },
+            child: const Text('Show confirm'),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Show confirm'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Discard recording?'), findsOneWidget);
+
+      await tester.tap(find.text('Discard'));
+      await tester.pumpAndSettle();
+
+      expect(await result, isTrue);
+    });
+
+    testWidgets('shows material snack bar messages', (tester) async {
+      await tester.pumpWidget(
+        _DialogTestApp(
+          builder: (context) => ElevatedButton(
+            onPressed: () => DialogUtils.showMessage(context, 'Logged out'),
+            child: const Text('Show message'),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Show message'));
+      await tester.pump();
+
+      expect(find.text('Logged out'), findsOneWidget);
+    });
+  });
+}
+
+class _DialogTestApp extends StatelessWidget {
+  const _DialogTestApp({required this.builder});
+
+  final WidgetBuilder builder;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(body: Builder(builder: builder)),
+    );
+  }
+}
