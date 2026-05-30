@@ -481,6 +481,11 @@ Acceptance checks:
 
 Timebox: 15 minutes.
 
+Status: Partially completed locally on 2026-05-30. `flutter build macos --debug`
+succeeded and produced `build/macos/Build/Products/Debug/endurain.app`. Manual
+GUI interaction for start, pause, resume, stop, discard, and upload retry still
+needs a human pass on macOS or iOS.
+
 Implementation:
 - Run on iOS or macOS depending on available local tooling.
 - Review Cupertino layout, dialogs, and map overlay spacing.
