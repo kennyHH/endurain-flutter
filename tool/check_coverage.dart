@@ -95,7 +95,7 @@ class CoverageOptions {
   static void _usage() {
     stderr.writeln(
       'Usage: dart run tool/check_coverage.dart '
-      '[--min-line-coverage 60] '
+      '[--min-line-coverage 75] '
       '[--exclude "lib/l10n/app_localizations*.dart"] '
       '[coverage/lcov.info]',
     );

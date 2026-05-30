@@ -51,6 +51,16 @@ PRs that are too large to review efficiently will be asked to be split before th
 - Pure refactor PRs (no behaviour change) are easiest to review. Keep them separate from feature or fix PRs
 - Include a clear explanation of what improved and why
 
+## Testing and Quality Checks
+
+Before opening a PR, run the same checks as CI:
+
+```bash
+dart format --output=none --set-exit-if-changed .
+flutter analyze
+flutter test --coverage
+dart run tool/check_coverage.dart --min-line-coverage 75 --exclude 'lib/l10n/app_localizations*.dart'
+```
 
 ## Getting Started
 
