@@ -415,6 +415,26 @@
   "@activityTypeWalk": {
     "description": "Rótulo do tipo de atividade para caminhada urbana - Usado em: activity_type_picker.dart"
   },
+  "activityRetryUpload": "Tentar envio novamente",
+  "@activityRetryUpload": {
+    "description": "Rótulo do botão de repetir envio da atividade - Usado em: activity_upload_status_panel.dart"
+  },
+  "activityUploadFailed": "Falha no envio",
+  "@activityUploadFailed": {
+    "description": "Estado de falha no envio de atividade - Usado em: activity_upload_status_panel.dart"
+  },
+  "activityUploadReady": "Pronto para enviar",
+  "@activityUploadReady": {
+    "description": "Estado de envio pendente de atividade - Usado em: activity_upload_status_panel.dart"
+  },
+  "activityUploaded": "Enviado",
+  "@activityUploaded": {
+    "description": "Estado de atividade enviada - Usado em: activity_upload_status_panel.dart"
+  },
+  "activityUploading": "A enviar",
+  "@activityUploading": {
+    "description": "Estado de envio da atividade em curso - Usado em: activity_upload_status_panel.dart"
+  },
   "@sectionMap": "=== MAPA (features/map/map_screen.dart) ===",
   "mapTab": "Mapa",
   "@mapTab": {

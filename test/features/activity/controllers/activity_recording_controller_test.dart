@@ -1,13 +1,18 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:endurain/core/services/location_platform_adapter.dart';
 import 'package:endurain/core/services/location_service.dart';
 import 'package:endurain/features/activity/controllers/activity_recording_controller.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
+import 'package:endurain/features/activity/models/activity_upload_state.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
+import 'package:endurain/features/activity/services/activity_gpx_file_writer.dart';
 import 'package:endurain/features/activity/services/activity_recording_service.dart';
+import 'package:endurain/features/activity/services/activity_upload_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart' hide ActivityType;
+import 'package:http/http.dart' as http;
 
 void main() {
   group('ActivityRecordingController', () {
@@ -96,7 +101,106 @@ void main() {
       expect(controller.state.status, ActivityRecordingStatus.failed);
       expect(controller.completedGpx, isNull);
     });
+
+    test('fails upload without a temp file when config is missing', () async {
+      final adapter = _FakeLocationPlatformAdapter();
+      final tempDirectory = await Directory.systemTemp.createTemp(
+        'endurain_upload_missing_',
+      );
+      addTearDown(() => tempDirectory.deleteSync(recursive: true));
+      final service = ActivityRecordingService(
+        locationService: LocationService(platformAdapter: adapter),
+      );
+      final controller = ActivityRecordingController(
+        recordingService: service,
+        gpxFileWriter: ActivityGpxFileWriter(
+          temporaryDirectoryProvider: () async => tempDirectory,
+          uniqueSuffixProvider: () => 'missing',
+        ),
+      );
+      addTearDown(controller.dispose);
+
+      await controller.start(ActivityType.run);
+      adapter.addPosition(_position());
+      await pumpEventQueue();
+      await controller.stop();
+      await controller.uploadCompletedGpx();
+
+      expect(controller.uploadStatus, ActivityUploadStatus.failed);
+      expect(tempDirectory.listSync(), isEmpty);
+    });
+
+    test('deletes temporary GPX after successful upload', () async {
+      final adapter = _FakeLocationPlatformAdapter();
+      final tempDirectory = await Directory.systemTemp.createTemp(
+        'endurain_upload_success_',
+      );
+      addTearDown(() => tempDirectory.deleteSync(recursive: true));
+      final service = ActivityRecordingService(
+        locationService: LocationService(platformAdapter: adapter),
+      );
+      final controller = ActivityRecordingController(
+        recordingService: service,
+        gpxFileWriter: ActivityGpxFileWriter(
+          temporaryDirectoryProvider: () async => tempDirectory,
+          uniqueSuffixProvider: () => 'success',
+        ),
+        uploadService: _uploadServiceReturning(201),
+      );
+      addTearDown(controller.dispose);
+
+      await controller.start(ActivityType.run);
+      adapter.addPosition(_position());
+      await pumpEventQueue();
+      await controller.stop();
+      await controller.uploadCompletedGpx();
+
+      expect(controller.uploadStatus, ActivityUploadStatus.uploaded);
+      expect(tempDirectory.listSync(), isEmpty);
+    });
+
+    test('keeps failed upload file until discard', () async {
+      final adapter = _FakeLocationPlatformAdapter();
+      final tempDirectory = await Directory.systemTemp.createTemp(
+        'endurain_upload_failed_',
+      );
+      addTearDown(() => tempDirectory.deleteSync(recursive: true));
+      final service = ActivityRecordingService(
+        locationService: LocationService(platformAdapter: adapter),
+      );
+      final controller = ActivityRecordingController(
+        recordingService: service,
+        gpxFileWriter: ActivityGpxFileWriter(
+          temporaryDirectoryProvider: () async => tempDirectory,
+          uniqueSuffixProvider: () => 'failed',
+        ),
+        uploadService: _uploadServiceReturning(500),
+      );
+      addTearDown(controller.dispose);
+
+      await controller.start(ActivityType.run);
+      adapter.addPosition(_position());
+      await pumpEventQueue();
+      await controller.stop();
+      await pumpEventQueue();
+
+      expect(controller.uploadStatus, ActivityUploadStatus.failed);
+      expect(tempDirectory.listSync(), isNotEmpty);
+
+      await controller.discard();
+
+      expect(tempDirectory.listSync(), isEmpty);
+    });
   });
+}
+
+ActivityUploadService _uploadServiceReturning(int statusCode) {
+  return ActivityUploadService(
+    config: const ActivityUploadConfig(endpoint: '/upload', fieldName: 'file'),
+    uploadFile: (_, _, _) async {
+      return http.StreamedResponse(const Stream<List<int>>.empty(), statusCode);
+    },
+  );
 }
 
 class _FakeLocationPlatformAdapter implements LocationPlatformAdapter {

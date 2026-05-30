@@ -596,6 +596,36 @@ abstract class AppLocalizations {
   /// **'Walk'**
   String get activityTypeWalk;
 
+  /// Retry activity upload button label - Used in: activity_upload_status_panel.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Retry upload'**
+  String get activityRetryUpload;
+
+  /// Activity upload failed status label - Used in: activity_upload_status_panel.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Upload failed'**
+  String get activityUploadFailed;
+
+  /// Activity upload pending status label - Used in: activity_upload_status_panel.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to upload'**
+  String get activityUploadReady;
+
+  /// Activity uploaded status label - Used in: activity_upload_status_panel.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Uploaded'**
+  String get activityUploaded;
+
+  /// Activity uploading status label - Used in: activity_upload_status_panel.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading'**
+  String get activityUploading;
+
   /// Map tab label - Used in: app_bottom_nav.dart
   ///
   /// In en, this message translates to:

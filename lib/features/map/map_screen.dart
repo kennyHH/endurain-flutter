@@ -10,6 +10,7 @@ import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/map_constants.dart';
 import 'package:endurain/features/activity/controllers/activity_recording_controller.dart';
 import 'package:endurain/features/activity/services/activity_recording_service.dart';
+import 'package:endurain/features/activity/services/activity_upload_service.dart';
 import 'package:endurain/features/activity/widgets/activity_recording_controls.dart';
 import 'package:endurain/features/activity/widgets/activity_stop_confirmation_dialog.dart';
 import 'package:endurain/features/map/map_settings_repository.dart';
@@ -73,6 +74,7 @@ class _MapScreenState extends State<MapScreen> {
       recordingService: ActivityRecordingService(
         locationService: widget.locationService ?? services.location,
       ),
+      uploadService: ActivityUploadService(apiClient: services.apiClient),
     );
   }
 
@@ -231,6 +233,10 @@ class _MapScreenState extends State<MapScreen> {
             onPause: _activityController.pause,
             onResume: _activityController.resume,
             onStop: _confirmStopActivity,
+            uploadStatus: _activityController.uploadStatus,
+            uploadError: _activityController.uploadError,
+            onRetryUpload: _activityController.uploadCompletedGpx,
+            onDiscard: _activityController.discard,
           ),
         ],
       ),

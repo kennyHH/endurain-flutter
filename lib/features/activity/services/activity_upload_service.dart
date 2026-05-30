@@ -41,6 +41,8 @@ class ActivityUploadService {
   final ActivityUploadConfig? _config;
   final ActivityFileUploader _uploadFile;
 
+  bool get isConfigured => _config?.isConfigured ?? false;
+
   Future<void> uploadGpx(ActivityUploadRequest request) async {
     final config = _config;
     if (config == null || !config.isConfigured) {

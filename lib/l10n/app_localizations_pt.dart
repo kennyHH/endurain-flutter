@@ -302,6 +302,21 @@ class AppLocalizationsPt extends AppLocalizations {
   String get activityTypeWalk => 'Passeio';
 
   @override
+  String get activityRetryUpload => 'Tentar envio novamente';
+
+  @override
+  String get activityUploadFailed => 'Falha no envio';
+
+  @override
+  String get activityUploadReady => 'Pronto para enviar';
+
+  @override
+  String get activityUploaded => 'Enviado';
+
+  @override
+  String get activityUploading => 'A enviar';
+
+  @override
   String get mapTab => 'Mapa';
 
   @override

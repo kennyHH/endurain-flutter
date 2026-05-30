@@ -1,19 +1,27 @@
 import 'dart:async';
 
+import 'package:endurain/core/models/app_exception.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
+import 'package:endurain/features/activity/models/activity_upload_state.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
 import 'package:endurain/features/activity/services/activity_gpx_builder.dart';
+import 'package:endurain/features/activity/services/activity_gpx_file_writer.dart';
 import 'package:endurain/features/activity/services/activity_recording_service.dart';
+import 'package:endurain/features/activity/services/activity_upload_service.dart';
 import 'package:flutter/foundation.dart';
 
 class ActivityRecordingController extends ChangeNotifier {
   ActivityRecordingController({
     ActivityRecordingService? recordingService,
     ActivityGpxBuilder gpxBuilder = const ActivityGpxBuilder(),
+    ActivityGpxFileWriter? gpxFileWriter,
+    ActivityUploadService? uploadService,
     bool ownsService = true,
   })
     : _recordingService = recordingService ?? ActivityRecordingService(),
       _gpxBuilder = gpxBuilder,
+      _gpxFileWriter = gpxFileWriter ?? ActivityGpxFileWriter(),
+      _uploadService = uploadService ?? ActivityUploadService(),
       _ownsService = ownsService {
     _stateSubscription = _recordingService.stateStream.listen((state) {
       _setState(state);
@@ -22,6 +30,8 @@ class ActivityRecordingController extends ChangeNotifier {
 
   final ActivityRecordingService _recordingService;
   final ActivityGpxBuilder _gpxBuilder;
+  final ActivityGpxFileWriter _gpxFileWriter;
+  final ActivityUploadService _uploadService;
   final bool _ownsService;
   late final StreamSubscription<ActivityRecordingState> _stateSubscription;
   bool _isDisposed = false;
@@ -29,12 +39,20 @@ class ActivityRecordingController extends ChangeNotifier {
   ActivityRecordingState _state = ActivityRecordingState();
   ActivityType _selectedActivityType = ActivityType.run;
   String? _completedGpx;
+  String? _temporaryGpxPath;
+  ActivityUploadStatus _uploadStatus = ActivityUploadStatus.idle;
+  Object? _uploadError;
+  Future<void>? _activeUpload;
 
   ActivityRecordingState get state => _state;
 
   ActivityType get selectedActivityType => _selectedActivityType;
 
   String? get completedGpx => _completedGpx;
+
+  ActivityUploadStatus get uploadStatus => _uploadStatus;
+
+  Object? get uploadError => _uploadError;
 
   void selectActivityType(ActivityType type) {
     if (_state.isActive || _state.status == ActivityRecordingStatus.stopping) {
@@ -48,7 +66,9 @@ class ActivityRecordingController extends ChangeNotifier {
   }
 
   Future<void> start(ActivityType type) async {
+    await _deleteTemporaryGpx();
     _completedGpx = null;
+    _setUploadState(ActivityUploadStatus.idle);
     selectActivityType(type);
     await _recordingService.start(activityType: _selectedActivityType);
     _setState(_recordingService.state);
@@ -70,6 +90,7 @@ class ActivityRecordingController extends ChangeNotifier {
     if (completedState.status == ActivityRecordingStatus.completed) {
       _completedGpx = _gpxBuilder.build(completedState);
       _setState(completedState);
+      unawaited(uploadCompletedGpx());
       return;
     }
     _completedGpx = null;
@@ -78,13 +99,79 @@ class ActivityRecordingController extends ChangeNotifier {
 
   Future<void> discard() async {
     _completedGpx = null;
+    await _deleteTemporaryGpx();
+    _setUploadState(ActivityUploadStatus.idle);
     await _recordingService.discard();
     _setState(_recordingService.state);
+  }
+
+  Future<void> uploadCompletedGpx() {
+    if (_uploadStatus == ActivityUploadStatus.uploading) {
+      return _activeUpload ?? Future<void>.value();
+    }
+    if (_completedGpx == null ||
+        _state.status != ActivityRecordingStatus.completed) {
+      return Future<void>.value();
+    }
+
+    final upload = _uploadCompletedGpx();
+    _activeUpload = upload.whenComplete(() => _activeUpload = null);
+    return _activeUpload!;
+  }
+
+  Future<void> _uploadCompletedGpx() async {
+    _setUploadState(ActivityUploadStatus.uploading);
+    try {
+      if (!_uploadService.isConfigured) {
+        throw const AppException(AppErrorCode.activityUploadNotConfigured);
+      }
+      final filePath = await _ensureTemporaryGpxFile();
+      await _uploadService.uploadGpx(
+        ActivityUploadRequest(
+          filePath: filePath,
+          activityType: _state.activityType ?? _selectedActivityType,
+        ),
+      );
+      await _deleteTemporaryGpx();
+      _setUploadState(ActivityUploadStatus.uploaded);
+    } catch (error) {
+      _uploadError = error;
+      _setUploadState(ActivityUploadStatus.failed, error: error);
+    }
   }
 
   void _setState(ActivityRecordingState state) {
     _state = state;
     _notifyListeners();
+  }
+
+  void _setUploadState(ActivityUploadStatus status, {Object? error}) {
+    _uploadStatus = status;
+    _uploadError = error;
+    _notifyListeners();
+  }
+
+  Future<String> _ensureTemporaryGpxFile() async {
+    final existingPath = _temporaryGpxPath;
+    if (existingPath != null) {
+      return existingPath;
+    }
+    final gpx = _completedGpx;
+    if (gpx == null) {
+      throw StateError('No completed GPX is available.');
+    }
+    final file = await _gpxFileWriter.writeGpx(gpx);
+    _temporaryGpxPath = file.path;
+    return file.path;
+  }
+
+  Future<void> _deleteTemporaryGpx() async {
+    final filePath = _temporaryGpxPath;
+    if (filePath == null) {
+      return;
+    }
+    await _gpxFileWriter.delete(filePath);
+    _temporaryGpxPath = null;
   }
 
   void _notifyListeners() {

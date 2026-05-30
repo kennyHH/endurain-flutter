@@ -295,6 +295,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityTypeWalk => 'Walk';
 
   @override
+  String get activityRetryUpload => 'Retry upload';
+
+  @override
+  String get activityUploadFailed => 'Upload failed';
+
+  @override
+  String get activityUploadReady => 'Ready to upload';
+
+  @override
+  String get activityUploaded => 'Uploaded';
+
+  @override
+  String get activityUploading => 'Uploading';
+
+  @override
   String get mapTab => 'Map';
 
   @override

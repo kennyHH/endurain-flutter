@@ -1,8 +1,10 @@
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
+import 'package:endurain/features/activity/models/activity_upload_state.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
 import 'package:endurain/features/activity/services/activity_recording_service.dart';
 import 'package:endurain/features/activity/widgets/activity_stats_display.dart';
 import 'package:endurain/features/activity/widgets/activity_type_picker.dart';
+import 'package:endurain/features/activity/widgets/activity_upload_status_panel.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/shared/adaptive/adaptive.dart';
 import 'package:flutter/cupertino.dart';
@@ -18,6 +20,10 @@ class ActivityRecordingControls extends StatelessWidget {
     required this.onPause,
     required this.onResume,
     required this.onStop,
+    this.uploadStatus = ActivityUploadStatus.idle,
+    this.uploadError,
+    this.onRetryUpload,
+    this.onDiscard,
   });
 
   final ActivityRecordingState state;
@@ -27,6 +33,10 @@ class ActivityRecordingControls extends StatelessWidget {
   final VoidCallback? onPause;
   final VoidCallback? onResume;
   final VoidCallback? onStop;
+  final ActivityUploadStatus uploadStatus;
+  final Object? uploadError;
+  final VoidCallback? onRetryUpload;
+  final VoidCallback? onDiscard;
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +78,15 @@ class ActivityRecordingControls extends StatelessWidget {
                     state.status == ActivityRecordingStatus.stopping ||
                     state.status == ActivityRecordingStatus.completed)
                   const SizedBox(height: 8),
+                if (state.status == ActivityRecordingStatus.completed) ...[
+                  ActivityUploadStatusPanel(
+                    status: uploadStatus,
+                    error: uploadError,
+                    onRetry: onRetryUpload,
+                    onDiscard: onDiscard,
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 Wrap(
                   alignment: WrapAlignment.center,
                   runAlignment: WrapAlignment.center,
@@ -129,7 +148,6 @@ class ActivityRecordingControls extends StatelessWidget {
           ),
         ];
       case ActivityRecordingStatus.idle:
-      case ActivityRecordingStatus.completed:
       case ActivityRecordingStatus.failed:
         return [
           SizedBox(
@@ -148,6 +166,8 @@ class ActivityRecordingControls extends StatelessWidget {
                 : () => onStart!(selectedActivityType),
           ),
         ];
+      case ActivityRecordingStatus.completed:
+        return [];
     }
   }
 

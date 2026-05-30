@@ -415,6 +415,26 @@
   "@activityTypeWalk": {
     "description": "Activity type label for walking - Used in: activity_type_picker.dart"
   },
+  "activityRetryUpload": "Retry upload",
+  "@activityRetryUpload": {
+    "description": "Retry activity upload button label - Used in: activity_upload_status_panel.dart"
+  },
+  "activityUploadFailed": "Upload failed",
+  "@activityUploadFailed": {
+    "description": "Activity upload failed status label - Used in: activity_upload_status_panel.dart"
+  },
+  "activityUploadReady": "Ready to upload",
+  "@activityUploadReady": {
+    "description": "Activity upload pending status label - Used in: activity_upload_status_panel.dart"
+  },
+  "activityUploaded": "Uploaded",
+  "@activityUploaded": {
+    "description": "Activity uploaded status label - Used in: activity_upload_status_panel.dart"
+  },
+  "activityUploading": "Uploading",
+  "@activityUploading": {
+    "description": "Activity uploading status label - Used in: activity_upload_status_panel.dart"
+  },
   "@sectionMap": "=== MAP (features/map/map_screen.dart) ===",
   "mapTab": "Map",
   "@mapTab": {
