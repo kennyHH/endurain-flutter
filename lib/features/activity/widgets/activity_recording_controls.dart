@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:endurain/core/constants/ui_constants.dart';
+import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_upload_state.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
@@ -14,6 +15,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ActivityRecordingControls extends StatelessWidget {
+  static const double _idleControlHeight = 56;
+
   static const double _bottomOverlaySpacing =
       UIConstants.tabBarHeight +
       UIConstants.paddingLarge +
@@ -204,20 +207,13 @@ class ActivityRecordingControls extends StatelessWidget {
       case ActivityRecordingStatus.idle:
       case ActivityRecordingStatus.failed:
         return [
-          SizedBox(
-            width: 160,
-            child: ActivityTypePicker(
-              selectedType: selectedActivityType,
-              onChanged: onActivityTypeChanged,
-            ),
-          ),
-          _controlButton(
-            label: l10n.activityStart,
-            materialIcon: Icons.play_arrow,
-            cupertinoIcon: CupertinoIcons.play_arrow,
-            onPressed: onStart == null
+          _IdleStartControls(
+            selectedActivityType: selectedActivityType,
+            onActivityTypeChanged: onActivityTypeChanged,
+            onStart: onStart == null
                 ? null
                 : () => onStart!(selectedActivityType),
+            l10n: l10n,
           ),
         ];
       case ActivityRecordingStatus.completed:
@@ -263,6 +259,97 @@ class ActivityRecordingControls extends StatelessWidget {
           materialIcon: materialIcon,
           cupertinoIcon: cupertinoIcon,
           size: 20,
+        ),
+      ),
+    );
+  }
+}
+
+class _IdleStartControls extends StatelessWidget {
+  const _IdleStartControls({
+    required this.selectedActivityType,
+    required this.onActivityTypeChanged,
+    required this.onStart,
+    required this.l10n,
+  });
+
+  final ActivityType selectedActivityType;
+  final ValueChanged<ActivityType>? onActivityTypeChanged;
+  final VoidCallback? onStart;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: ActivityRecordingControls._idleControlHeight,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: ActivityTypePicker(
+              selectedType: selectedActivityType,
+              onChanged: onActivityTypeChanged,
+            ),
+          ),
+          const SizedBox(width: 8),
+          _StartActivityIconButton(
+            onPressed: onStart,
+            label: l10n.activityStart,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StartActivityIconButton extends StatelessWidget {
+  const _StartActivityIconButton({
+    required this.onPressed,
+    required this.label,
+  });
+
+  final VoidCallback? onPressed;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final button = PlatformUtils.isApplePlatform
+        ? CupertinoButton(
+            key: const ValueKey('activityStartButton'),
+            padding: EdgeInsets.zero,
+            borderRadius: BorderRadius.circular(8),
+            color: CupertinoTheme.of(context).primaryColor,
+            disabledColor: CupertinoColors.quaternarySystemFill,
+            onPressed: onPressed,
+            child: const Icon(CupertinoIcons.play_arrow, size: 26),
+          )
+        : FilledButton(
+            key: const ValueKey('activityStartButton'),
+            onPressed: onPressed,
+            style: FilledButton.styleFrom(
+              fixedSize: const Size.square(
+                ActivityRecordingControls._idleControlHeight,
+              ),
+              minimumSize: const Size.square(
+                ActivityRecordingControls._idleControlHeight,
+              ),
+              padding: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Icon(Icons.play_arrow, size: 28),
+          );
+
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        button: true,
+        label: label,
+        child: SizedBox.square(
+          dimension: ActivityRecordingControls._idleControlHeight,
+          child: button,
         ),
       ),
     );

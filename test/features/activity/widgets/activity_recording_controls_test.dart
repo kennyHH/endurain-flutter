@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_upload_state.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
@@ -13,6 +12,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('ActivityRecordingControls', () {
+    setUp(() {
+      PlatformUtils.debugIsApplePlatformOverride = false;
+    });
+
+    tearDown(PlatformUtils.debugResetOverrides);
+
     testWidgets('shows start action when idle', (tester) async {
       ActivityType? startedType;
 
@@ -30,11 +35,47 @@ void main() {
         ),
       );
 
-      expect(find.text(AppLocalizationsEn().activityStart), findsOneWidget);
+      expect(
+        find.byTooltip(AppLocalizationsEn().activityStart),
+        findsOneWidget,
+      );
 
-      await tester.tap(find.text(AppLocalizationsEn().activityStart));
+      await tester.tap(find.byTooltip(AppLocalizationsEn().activityStart));
 
       expect(startedType, ActivityType.run);
+    });
+
+    testWidgets('places start action beside picker with matching height', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _TestApp(
+          child: SizedBox(
+            width: 390,
+            height: 600,
+            child: ActivityRecordingControls(
+              state: ActivityRecordingState(),
+              selectedActivityType: ActivityType.run,
+              onActivityTypeChanged: (_) {},
+              onStart: (_) {},
+              onPause: null,
+              onResume: null,
+              onStop: null,
+            ),
+          ),
+        ),
+      );
+
+      final pickerRect = tester.getRect(
+        find.byType(DropdownButtonFormField<ActivityType>),
+      );
+      final startRect = tester.getRect(
+        find.byKey(const ValueKey('activityStartButton')),
+      );
+
+      expect(startRect.left, greaterThan(pickerRect.right));
+      expect(startRect.width, startRect.height);
+      expect(startRect.height, pickerRect.height);
     });
 
     testWidgets('shows activity type picker before start', (tester) async {
@@ -65,34 +106,37 @@ void main() {
       expect(selectedType, ActivityType.ride);
     });
 
-    testWidgets(
-      'builds in a Cupertino app without a Material ancestor',
-      (tester) async {
-        await tester.pumpWidget(
-          CupertinoApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: SizedBox(
-              width: 390,
-              height: 600,
-              child: ActivityRecordingControls(
-                state: ActivityRecordingState(),
-                selectedActivityType: ActivityType.run,
-                onActivityTypeChanged: (_) {},
-                onStart: (_) {},
-                onPause: null,
-                onResume: null,
-                onStop: null,
-              ),
+    testWidgets('builds in a Cupertino app without a Material ancestor', (
+      tester,
+    ) async {
+      PlatformUtils.debugIsApplePlatformOverride = true;
+
+      await tester.pumpWidget(
+        CupertinoApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: SizedBox(
+            width: 390,
+            height: 600,
+            child: ActivityRecordingControls(
+              state: ActivityRecordingState(),
+              selectedActivityType: ActivityType.run,
+              onActivityTypeChanged: (_) {},
+              onStart: (_) {},
+              onPause: null,
+              onResume: null,
+              onStop: null,
             ),
           ),
-        );
+        ),
+      );
 
-        expect(tester.takeException(), isNull);
-        expect(find.text(AppLocalizationsEn().activityStart), findsOneWidget);
-      },
-      skip: !Platform.isMacOS && !Platform.isIOS,
-    );
+      expect(tester.takeException(), isNull);
+      expect(
+        find.byTooltip(AppLocalizationsEn().activityStart),
+        findsOneWidget,
+      );
+    });
 
     testWidgets('reserves trailing space for map floating controls', (
       tester,
