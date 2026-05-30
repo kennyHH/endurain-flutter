@@ -304,6 +304,27 @@
   "@verify": {
     "description": "Rótulo do botão de verificação MFA"
   },
+  "@sectionActivity": "=== ATIVIDADE (features/activity/) ===",
+  "activityTypeHike": "Caminhada",
+  "@activityTypeHike": {
+    "description": "Rótulo do tipo de atividade para trilhos/caminhadas - Usado em: activity_type_picker.dart"
+  },
+  "activityTypeOther": "Outra",
+  "@activityTypeOther": {
+    "description": "Rótulo do tipo de atividade para atividades sem categoria - Usado em: activity_type_picker.dart"
+  },
+  "activityTypeRide": "Ciclismo",
+  "@activityTypeRide": {
+    "description": "Rótulo do tipo de atividade para bicicleta - Usado em: activity_type_picker.dart"
+  },
+  "activityTypeRun": "Corrida",
+  "@activityTypeRun": {
+    "description": "Rótulo do tipo de atividade para corrida - Usado em: activity_type_picker.dart"
+  },
+  "activityTypeWalk": "Passeio",
+  "@activityTypeWalk": {
+    "description": "Rótulo do tipo de atividade para caminhada urbana - Usado em: activity_type_picker.dart"
+  },
   "@sectionMap": "=== MAPA (features/map/map_screen.dart) ===",
   "mapTab": "Mapa",
   "@mapTab": {

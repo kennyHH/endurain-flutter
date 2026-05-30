@@ -30,12 +30,17 @@ Used by: `core/models/app_exception.dart`, `core/utils/error_localizations.dart`
 - User-facing translations for service-layer failures
 - Optional `{details}` variants for server-provided or technical context
 
-### 4. **MAP**
+### 4. **ACTIVITY**
+Used by: `features/activity/`
+- Activity type labels
+- Recording controls and status text
+
+### 5. **MAP**
 Used by: `features/map/map_screen.dart`
 - Map tab label
 - Location control tooltips
 
-### 5. **SETTINGS**
+### 6. **SETTINGS**
 Used by: `features/settings/settings_screen.dart`, `features/settings/server_settings_screen.dart`
 - Settings navigation (settingsTab, settingsScreen)
 - Server configuration (serverUrl, tileServerUrl, loggedIn)
@@ -73,6 +78,7 @@ Text(l10n.login);  // "Login" (en) or "Entrar" (pt)
 | Common | error, ok, cancel, save, back, requiredField, invalidUrl |
 | Auth | loginTitle, login, logout, username, password, mfaTitle, mfaCode, verify |
 | Errors | errorServerUrlNotConfigured, errorNotAuthenticated, errorSessionExpired, errorLoginFailed, errorTokenExchangeFailed |
+| Activity | activityTypeRun, activityTypeRide, activityTypeWalk, activityTypeHike, activityTypeOther |
 | Map | mapTab, myLocation |
 | Settings | settingsTab, settingsScreen, serverSettings, serverUrl, tileServerUrl, notConfigured, notLoggedIn, savedSuccessfully |
 

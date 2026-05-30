@@ -304,6 +304,27 @@
   "@verify": {
     "description": "MFA verification button label"
   },
+  "@sectionActivity": "=== ACTIVITY (features/activity/) ===",
+  "activityTypeHike": "Hike",
+  "@activityTypeHike": {
+    "description": "Activity type label for hiking - Used in: activity_type_picker.dart"
+  },
+  "activityTypeOther": "Other",
+  "@activityTypeOther": {
+    "description": "Activity type label for uncategorized activities - Used in: activity_type_picker.dart"
+  },
+  "activityTypeRide": "Ride",
+  "@activityTypeRide": {
+    "description": "Activity type label for cycling - Used in: activity_type_picker.dart"
+  },
+  "activityTypeRun": "Run",
+  "@activityTypeRun": {
+    "description": "Activity type label for running - Used in: activity_type_picker.dart"
+  },
+  "activityTypeWalk": "Walk",
+  "@activityTypeWalk": {
+    "description": "Activity type label for walking - Used in: activity_type_picker.dart"
+  },
   "@sectionMap": "=== MAP (features/map/map_screen.dart) ===",
   "mapTab": "Map",
   "@mapTab": {

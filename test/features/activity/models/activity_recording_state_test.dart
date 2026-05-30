@@ -1,5 +1,6 @@
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_track_point.dart';
+import 'package:endurain/features/activity/models/activity_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -8,14 +9,14 @@ void main() {
       final startedAt = DateTime.utc(2026, 5, 30, 10);
       final state = ActivityRecordingState(
         status: ActivityRecordingStatus.recording,
-        activityType: 'run',
+        activityType: ActivityType.run,
         startedAt: startedAt,
       );
 
       final updated = state.copyWith(status: ActivityRecordingStatus.paused);
 
       expect(updated.status, ActivityRecordingStatus.paused);
-      expect(updated.activityType, 'run');
+      expect(updated.activityType, ActivityType.run);
       expect(updated.startedAt, startedAt);
       expect(updated.endedAt, isNull);
       expect(updated.points, isEmpty);
@@ -23,7 +24,7 @@ void main() {
 
     test('copyWith can clear nullable fields', () {
       final state = ActivityRecordingState(
-        activityType: 'ride',
+        activityType: ActivityType.ride,
         startedAt: DateTime.utc(2026),
         endedAt: DateTime.utc(2026, 5, 30),
         lastErrorKey: 'activityRecordingFailed',

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:endurain/core/services/location_service.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_track_point.dart';
+import 'package:endurain/features/activity/models/activity_type.dart';
 import 'package:geolocator/geolocator.dart';
 
 class ActivityRecordingErrorKeys {
@@ -32,7 +33,7 @@ class ActivityRecordingService {
 
   Stream<ActivityRecordingState> get stateStream => _stateController.stream;
 
-  Future<void> start({required String activityType}) async {
+  Future<void> start({required ActivityType activityType}) async {
     _ensureNotDisposed();
     if (_state.isActive || _state.status == ActivityRecordingStatus.stopping) {
       return;

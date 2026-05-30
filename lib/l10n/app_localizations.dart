@@ -440,6 +440,36 @@ abstract class AppLocalizations {
   /// **'Verify'**
   String get verify;
 
+  /// Activity type label for hiking - Used in: activity_type_picker.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Hike'**
+  String get activityTypeHike;
+
+  /// Activity type label for uncategorized activities - Used in: activity_type_picker.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get activityTypeOther;
+
+  /// Activity type label for cycling - Used in: activity_type_picker.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Ride'**
+  String get activityTypeRide;
+
+  /// Activity type label for running - Used in: activity_type_picker.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Run'**
+  String get activityTypeRun;
+
+  /// Activity type label for walking - Used in: activity_type_picker.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Walk'**
+  String get activityTypeWalk;
+
   /// Map tab label - Used in: app_bottom_nav.dart
   ///
   /// In en, this message translates to:

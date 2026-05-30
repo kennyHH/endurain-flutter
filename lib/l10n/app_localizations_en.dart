@@ -211,6 +211,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get verify => 'Verify';
 
   @override
+  String get activityTypeHike => 'Hike';
+
+  @override
+  String get activityTypeOther => 'Other';
+
+  @override
+  String get activityTypeRide => 'Ride';
+
+  @override
+  String get activityTypeRun => 'Run';
+
+  @override
+  String get activityTypeWalk => 'Walk';
+
+  @override
   String get mapTab => 'Map';
 
   @override

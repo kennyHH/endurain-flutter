@@ -218,6 +218,21 @@ class AppLocalizationsPt extends AppLocalizations {
   String get verify => 'Verificar';
 
   @override
+  String get activityTypeHike => 'Caminhada';
+
+  @override
+  String get activityTypeOther => 'Outra';
+
+  @override
+  String get activityTypeRide => 'Ciclismo';
+
+  @override
+  String get activityTypeRun => 'Corrida';
+
+  @override
+  String get activityTypeWalk => 'Passeio';
+
+  @override
   String get mapTab => 'Mapa';
 
   @override

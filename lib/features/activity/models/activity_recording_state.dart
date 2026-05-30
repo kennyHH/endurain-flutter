@@ -1,6 +1,7 @@
 import 'dart:collection';
 
 import 'package:endurain/features/activity/models/activity_track_point.dart';
+import 'package:endurain/features/activity/models/activity_type.dart';
 
 enum ActivityRecordingStatus { idle, recording, paused, stopping, completed, failed }
 
@@ -15,7 +16,7 @@ class ActivityRecordingState {
   }) : _points = List<ActivityTrackPoint>.unmodifiable(points);
 
   final ActivityRecordingStatus status;
-  final String? activityType;
+  final ActivityType? activityType;
   final DateTime? startedAt;
   final DateTime? endedAt;
   final String? lastErrorKey;
@@ -40,7 +41,7 @@ class ActivityRecordingState {
       status: status ?? this.status,
       activityType: identical(activityType, _unset)
           ? this.activityType
-          : activityType as String?,
+          : activityType as ActivityType?,
       startedAt: identical(startedAt, _unset)
           ? this.startedAt
           : startedAt as DateTime?,
