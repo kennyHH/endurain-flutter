@@ -20,7 +20,7 @@ class ActivityTypePicker extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return DropdownButtonFormField<ActivityType>(
-      value: selectedType,
+      initialValue: selectedType,
       isExpanded: true,
       decoration: InputDecoration(
         labelText: l10n.activityTypeLabel,

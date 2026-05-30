@@ -32,7 +32,7 @@ class ActivityRecordingControls extends StatelessWidget {
     final controls = _buildControls(l10n);
 
     return SafeArea(
-      minimum: const EdgeInsets.all(12),
+      minimum: const EdgeInsets.fromLTRB(12, 12, 12, 88),
       child: Align(
         alignment: Alignment.bottomCenter,
         child: DecoratedBox(

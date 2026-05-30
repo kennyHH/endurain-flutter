@@ -8,6 +8,9 @@ import 'package:endurain/core/services/app_scope.dart';
 import 'package:endurain/core/services/location_service.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/map_constants.dart';
+import 'package:endurain/features/activity/controllers/activity_recording_controller.dart';
+import 'package:endurain/features/activity/services/activity_recording_service.dart';
+import 'package:endurain/features/activity/widgets/activity_recording_controls.dart';
 import 'package:endurain/features/map/map_settings_repository.dart';
 import 'package:endurain/features/map/map_state_controller.dart';
 import 'package:endurain/l10n/app_localizations.dart';
@@ -17,11 +20,13 @@ class MapScreen extends StatefulWidget {
   const MapScreen({
     super.key,
     this.controller,
+    this.activityController,
     this.locationService,
     this.storage,
   });
 
   final MapStateController? controller;
+  final ActivityRecordingController? activityController;
   final LocationService? locationService;
   final SecureStorageService? storage;
 
@@ -32,7 +37,9 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
   late final MapStateController _controller;
+  late final ActivityRecordingController _activityController;
   late final bool _ownsController;
+  late final bool _ownsActivityController;
   LatLng? _lastFollowedLocation;
   bool _centeredInitialLocation = false;
 
@@ -40,8 +47,11 @@ class _MapScreenState extends State<MapScreen> {
   void initState() {
     super.initState();
     _ownsController = widget.controller == null;
+    _ownsActivityController = widget.activityController == null;
     _controller = widget.controller ?? _createController();
+    _activityController = widget.activityController ?? _createActivityController();
     _controller.addListener(_handleControllerChanged);
+    _activityController.addListener(_handleControllerChanged);
     _controller.initialize();
   }
 
@@ -55,11 +65,24 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  ActivityRecordingController _createActivityController() {
+    final services = AppScope.servicesOf(context, listen: false);
+    return ActivityRecordingController(
+      recordingService: ActivityRecordingService(
+        locationService: widget.locationService ?? services.location,
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _controller.removeListener(_handleControllerChanged);
+    _activityController.removeListener(_handleControllerChanged);
     if (_ownsController) {
       _controller.dispose();
+    }
+    if (_ownsActivityController) {
+      _activityController.dispose();
     }
     super.dispose();
   }
@@ -175,6 +198,15 @@ class _MapScreenState extends State<MapScreen> {
           ),
           if (_controller.isLoadingLocation)
             const Center(child: AdaptiveLoadingIndicator()),
+          ActivityRecordingControls(
+            state: _activityController.state,
+            selectedActivityType: _activityController.selectedActivityType,
+            onActivityTypeChanged: _activityController.selectActivityType,
+            onStart: _activityController.start,
+            onPause: _activityController.pause,
+            onResume: _activityController.resume,
+            onStop: _activityController.stop,
+          ),
         ],
       ),
       floatingActionButton: AdaptiveFloatingActionButton(

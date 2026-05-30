@@ -4,7 +4,7 @@ import 'package:endurain/core/services/location_service.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_track_point.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:geolocator/geolocator.dart' hide ActivityType;
 
 class ActivityRecordingErrorKeys {
   const ActivityRecordingErrorKeys._();
@@ -99,13 +99,14 @@ class ActivityRecordingService {
     _emit(ActivityRecordingState());
   }
 
-  Future<void> dispose() async {
+  void dispose() {
     if (_isDisposed) {
       return;
     }
     _isDisposed = true;
-    await _cancelPositionSubscription();
-    await _stateController.close();
+    _positionSubscription?.cancel();
+    _positionSubscription = null;
+    _stateController.close();
   }
 
   void _startLocationStream() {
