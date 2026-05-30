@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:endurain/l10n/app_localizations.dart';
-import 'package:endurain/core/services/app_services.dart';
+import 'package:endurain/core/services/app_scope.dart';
 import 'package:endurain/core/services/package_info_service.dart';
 import 'package:endurain/features/settings/server_settings_screen.dart';
 import 'package:endurain/core/constants/ui_constants.dart';
@@ -25,7 +25,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _packageInfoService =
-        widget.packageInfoService ?? AppServices.instance.packageInfo;
+        widget.packageInfoService ??
+        AppScope.servicesOf(context, listen: false).packageInfo;
     _loadVersion();
   }
 

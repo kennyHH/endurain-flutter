@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:endurain/l10n/app_localizations.dart';
+import 'package:endurain/core/services/app_scope.dart';
 import 'package:endurain/core/services/app_services.dart';
 import 'package:endurain/core/services/app_links_service.dart';
 import 'package:endurain/core/services/auth_service.dart';
@@ -60,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   LoginController _createController() {
-    final services = AppServices.instance;
+    final services = AppScope.servicesOf(context, listen: false);
     return LoginController(
       authRepository: AuthRepository(
         authService: widget.authService ?? services.auth,

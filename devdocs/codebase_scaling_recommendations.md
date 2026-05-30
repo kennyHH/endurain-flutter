@@ -295,7 +295,7 @@ Recommended changes:
 - Add widget tests for key adaptive screens in Material and Cupertino modes
   where practical.
 
-### 17. Introduce an app-level session and dependency scope when navigation grows
+### 17. Introduce an app-level session and dependency scope when navigation grows - Done
 
 `AppServices` is a useful lightweight composition root, but several screens
 still fall back to `AppServices.instance` internally and `App` owns only a small

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:endurain/core/services/app_services.dart';
+import 'package:endurain/core/services/app_scope.dart';
 import 'package:endurain/core/services/location_service.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/map_constants.dart';
@@ -46,7 +46,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   MapStateController _createController() {
-    final services = AppServices.instance;
+    final services = AppScope.servicesOf(context, listen: false);
     return MapStateController(
       locationService: widget.locationService ?? services.location,
       mapSettingsRepository: MapSettingsRepository(

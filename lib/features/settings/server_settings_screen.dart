@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:endurain/l10n/app_localizations.dart';
-import 'package:endurain/core/services/app_services.dart';
+import 'package:endurain/core/services/app_scope.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/services/auth_service.dart';
 import 'package:endurain/core/utils/validators.dart';
@@ -45,7 +45,7 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
   }
 
   ServerSettingsRepository _createRepository() {
-    final services = AppServices.instance;
+    final services = AppScope.servicesOf(context, listen: false);
     final storage = widget.storage ?? services.secureStorage;
     return ServerSettingsRepository(
       storage: storage,
