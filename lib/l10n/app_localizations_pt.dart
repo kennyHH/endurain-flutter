@@ -250,6 +250,21 @@ class AppLocalizationsPt extends AppLocalizations {
       'As atualizações de localização pararam inesperadamente.';
 
   @override
+  String get activityLocationPermissionDenied =>
+      'É necessária permissão de localização para gravar uma atividade.';
+
+  @override
+  String get activityLocationPermissionDeniedForever =>
+      'A permissão de localização está bloqueada. Abra as definições para permitir o acesso à localização.';
+
+  @override
+  String get activityLocationServiceDisabled =>
+      'Os serviços de localização estão desativados.';
+
+  @override
+  String get activityOpenSettings => 'Abrir definições';
+
+  @override
   String get activityRecordingEmpty => 'Não foram gravados pontos GPS.';
 
   @override

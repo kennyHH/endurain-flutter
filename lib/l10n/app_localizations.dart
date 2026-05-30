@@ -494,6 +494,30 @@ abstract class AppLocalizations {
   /// **'Location updates stopped unexpectedly.'**
   String get activityLocationStreamFailed;
 
+  /// Recording error shown when location permission is denied - Used in: activity_recording_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is required to record an activity.'**
+  String get activityLocationPermissionDenied;
+
+  /// Recording error shown when location permission is permanently denied - Used in: activity_recording_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is blocked. Open settings to allow location access.'**
+  String get activityLocationPermissionDeniedForever;
+
+  /// Recording error shown when device location services are disabled - Used in: activity_recording_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Location services are disabled.'**
+  String get activityLocationServiceDisabled;
+
+  /// Button label to open app settings for location permission - Used in: activity_recording_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get activityOpenSettings;
+
   /// Recording error shown when stopping without GPS points - Used in: activity_recording_controls.dart
   ///
   /// In en, this message translates to:

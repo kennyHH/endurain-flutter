@@ -119,6 +119,10 @@ class ActivityRecordingController extends ChangeNotifier {
     return _activeUpload!;
   }
 
+  Future<bool> openLocationSettings() {
+    return _recordingService.openAppSettings();
+  }
+
   Future<void> _uploadCompletedGpx() async {
     _setUploadState(ActivityUploadStatus.uploading);
     try {

@@ -24,6 +24,7 @@ class ActivityRecordingControls extends StatelessWidget {
     this.uploadError,
     this.onRetryUpload,
     this.onDiscard,
+    this.onOpenLocationSettings,
   });
 
   final ActivityRecordingState state;
@@ -37,6 +38,7 @@ class ActivityRecordingControls extends StatelessWidget {
   final Object? uploadError;
   final VoidCallback? onRetryUpload;
   final VoidCallback? onDiscard;
+  final VoidCallback? onOpenLocationSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +73,21 @@ class ActivityRecordingControls extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodySmall,
                     textAlign: TextAlign.center,
                   ),
+                  if (state.lastErrorKey ==
+                      ActivityRecordingErrorKeys
+                          .locationPermissionDeniedForever) ...[
+                    const SizedBox(height: 8),
+                    AdaptiveButton(
+                      label: l10n.activityOpenSettings,
+                      onPressed: onOpenLocationSettings,
+                      variant: AdaptiveButtonVariant.secondary,
+                      icon: const AdaptiveIcon(
+                        materialIcon: Icons.settings,
+                        cupertinoIcon: CupertinoIcons.settings,
+                        size: 20,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 8),
                 ],
                 ActivityStatsDisplay(state: state),
@@ -178,6 +195,12 @@ class ActivityRecordingControls extends StatelessWidget {
 
     return switch (state.lastErrorKey) {
       ActivityRecordingErrorKeys.emptyRecording => l10n.activityRecordingEmpty,
+      ActivityRecordingErrorKeys.locationPermissionDenied =>
+        l10n.activityLocationPermissionDenied,
+      ActivityRecordingErrorKeys.locationPermissionDeniedForever =>
+        l10n.activityLocationPermissionDeniedForever,
+      ActivityRecordingErrorKeys.locationServiceDisabled =>
+        l10n.activityLocationServiceDisabled,
       ActivityRecordingErrorKeys.locationStreamFailed =>
         l10n.activityLocationStreamFailed,
       _ => l10n.activityRecordingFailed,

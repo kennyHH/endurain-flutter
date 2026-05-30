@@ -28,6 +28,63 @@ void main() {
       expect(adapter.listenCount, 1);
     });
 
+    test('does not start when location services are disabled', () async {
+      final adapter = _FakeLocationPlatformAdapter(serviceEnabled: false);
+      final service = ActivityRecordingService(
+        locationService: LocationService(platformAdapter: adapter),
+      );
+      addTearDown(service.dispose);
+
+      await service.start(activityType: ActivityType.run);
+
+      expect(service.state.status, ActivityRecordingStatus.failed);
+      expect(
+        service.state.lastErrorKey,
+        ActivityRecordingErrorKeys.locationServiceDisabled,
+      );
+      expect(adapter.listenCount, 0);
+    });
+
+    test('does not start when permission is denied', () async {
+      final adapter = _FakeLocationPlatformAdapter(
+        permission: LocationPermission.denied,
+        requestedPermission: LocationPermission.denied,
+      );
+      final service = ActivityRecordingService(
+        locationService: LocationService(platformAdapter: adapter),
+      );
+      addTearDown(service.dispose);
+
+      await service.start(activityType: ActivityType.run);
+
+      expect(service.state.status, ActivityRecordingStatus.failed);
+      expect(
+        service.state.lastErrorKey,
+        ActivityRecordingErrorKeys.locationPermissionDenied,
+      );
+      expect(adapter.requestPermissionCalled, isTrue);
+      expect(adapter.listenCount, 0);
+    });
+
+    test('does not start when permission is denied forever', () async {
+      final adapter = _FakeLocationPlatformAdapter(
+        permission: LocationPermission.deniedForever,
+      );
+      final service = ActivityRecordingService(
+        locationService: LocationService(platformAdapter: adapter),
+      );
+      addTearDown(service.dispose);
+
+      await service.start(activityType: ActivityType.run);
+
+      expect(service.state.status, ActivityRecordingStatus.failed);
+      expect(
+        service.state.lastErrorKey,
+        ActivityRecordingErrorKeys.locationPermissionDeniedForever,
+      );
+      expect(adapter.listenCount, 0);
+    });
+
     test('records position updates as track points', () async {
       final adapter = _FakeLocationPlatformAdapter();
       final service = ActivityRecordingService(
@@ -178,9 +235,19 @@ void main() {
 }
 
 class _FakeLocationPlatformAdapter implements LocationPlatformAdapter {
+  _FakeLocationPlatformAdapter({
+    this.serviceEnabled = true,
+    this.permission = LocationPermission.whileInUse,
+    this.requestedPermission = LocationPermission.whileInUse,
+  });
+
   final List<StreamController<Position>> _controllers = [];
+  final bool serviceEnabled;
+  LocationPermission permission;
+  final LocationPermission requestedPermission;
   int listenCount = 0;
   int cancelCount = 0;
+  bool requestPermissionCalled = false;
 
   void addPosition(Position position) {
     _controllers.last.add(position);
@@ -192,7 +259,7 @@ class _FakeLocationPlatformAdapter implements LocationPlatformAdapter {
 
   @override
   Future<LocationPermission> checkPermission() async {
-    return LocationPermission.whileInUse;
+    return permission;
   }
 
   @override
@@ -216,7 +283,7 @@ class _FakeLocationPlatformAdapter implements LocationPlatformAdapter {
 
   @override
   Future<bool> isLocationServiceEnabled() async {
-    return true;
+    return serviceEnabled;
   }
 
   @override
@@ -226,7 +293,9 @@ class _FakeLocationPlatformAdapter implements LocationPlatformAdapter {
 
   @override
   Future<LocationPermission> requestPermission() async {
-    return LocationPermission.whileInUse;
+    requestPermissionCalled = true;
+    permission = requestedPermission;
+    return permission;
   }
 }
 

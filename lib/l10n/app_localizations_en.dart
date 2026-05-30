@@ -243,6 +243,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Location updates stopped unexpectedly.';
 
   @override
+  String get activityLocationPermissionDenied =>
+      'Location permission is required to record an activity.';
+
+  @override
+  String get activityLocationPermissionDeniedForever =>
+      'Location permission is blocked. Open settings to allow location access.';
+
+  @override
+  String get activityLocationServiceDisabled =>
+      'Location services are disabled.';
+
+  @override
+  String get activityOpenSettings => 'Open settings';
+
+  @override
   String get activityRecordingEmpty => 'No GPS points were recorded.';
 
   @override

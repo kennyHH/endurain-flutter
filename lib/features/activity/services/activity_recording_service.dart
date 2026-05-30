@@ -12,6 +12,12 @@ class ActivityRecordingErrorKeys {
   static const String invalidTransition = 'activityRecordingInvalidTransition';
   static const String locationStreamFailed = 'activityLocationStreamFailed';
   static const String emptyRecording = 'activityRecordingEmpty';
+    static const String locationServiceDisabled =
+      'activityLocationServiceDisabled';
+    static const String locationPermissionDenied =
+      'activityLocationPermissionDenied';
+    static const String locationPermissionDeniedForever =
+      'activityLocationPermissionDeniedForever';
 }
 
 class ActivityRecordingService {
@@ -40,6 +46,18 @@ class ActivityRecordingService {
       return;
     }
 
+    final locationErrorKey = await _locationErrorKey();
+    if (locationErrorKey != null) {
+      _emit(
+        ActivityRecordingState(
+          status: ActivityRecordingStatus.failed,
+          activityType: activityType,
+          lastErrorKey: locationErrorKey,
+        ),
+      );
+      return;
+    }
+
     _emit(
       ActivityRecordingState(
         status: ActivityRecordingStatus.recording,
@@ -48,6 +66,10 @@ class ActivityRecordingService {
       ),
     );
     _startLocationStream();
+  }
+
+  Future<bool> openAppSettings() {
+    return _locationService.openAppSettings();
   }
 
   Future<void> pause() async {
@@ -151,6 +173,27 @@ class ActivityRecordingService {
 
   void _handlePositionError(Object error, StackTrace stackTrace) {
     _fail(ActivityRecordingErrorKeys.locationStreamFailed);
+  }
+
+  Future<String?> _locationErrorKey() async {
+    if (!await _locationService.isLocationServiceEnabled()) {
+      return ActivityRecordingErrorKeys.locationServiceDisabled;
+    }
+
+    var permission = await _locationService.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await _locationService.requestPermission();
+    }
+
+    return switch (permission) {
+      LocationPermission.always || LocationPermission.whileInUse => null,
+      LocationPermission.denied =>
+        ActivityRecordingErrorKeys.locationPermissionDenied,
+      LocationPermission.deniedForever =>
+        ActivityRecordingErrorKeys.locationPermissionDeniedForever,
+      LocationPermission.unableToDetermine =>
+        ActivityRecordingErrorKeys.locationPermissionDenied,
+    };
   }
 
   void _failInvalidTransition() {

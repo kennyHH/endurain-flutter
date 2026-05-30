@@ -347,6 +347,22 @@
   "@activityLocationStreamFailed": {
     "description": "Erro de gravação exibido quando o stream GPS falha - Usado em: activity_recording_controls.dart"
   },
+  "activityLocationPermissionDenied": "É necessária permissão de localização para gravar uma atividade.",
+  "@activityLocationPermissionDenied": {
+    "description": "Erro exibido quando a permissão de localização é negada - Usado em: activity_recording_controls.dart"
+  },
+  "activityLocationPermissionDeniedForever": "A permissão de localização está bloqueada. Abra as definições para permitir o acesso à localização.",
+  "@activityLocationPermissionDeniedForever": {
+    "description": "Erro exibido quando a permissão de localização foi negada permanentemente - Usado em: activity_recording_controls.dart"
+  },
+  "activityLocationServiceDisabled": "Os serviços de localização estão desativados.",
+  "@activityLocationServiceDisabled": {
+    "description": "Erro exibido quando os serviços de localização do dispositivo estão desativados - Usado em: activity_recording_controls.dart"
+  },
+  "activityOpenSettings": "Abrir definições",
+  "@activityOpenSettings": {
+    "description": "Rótulo do botão para abrir definições da app para permissão de localização - Usado em: activity_recording_controls.dart"
+  },
   "activityRecordingEmpty": "Não foram gravados pontos GPS.",
   "@activityRecordingEmpty": {
     "description": "Erro exibido ao parar sem pontos GPS - Usado em: activity_recording_controls.dart"

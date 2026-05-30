@@ -147,6 +147,38 @@ void main() {
 
       expect(find.text(AppLocalizationsEn().activityRecordingEmpty), findsOneWidget);
     });
+
+    testWidgets('shows settings action for denied forever', (tester) async {
+      var openedSettings = false;
+
+      await tester.pumpWidget(
+        _TestApp(
+          child: ActivityRecordingControls(
+            state: ActivityRecordingState(
+              status: ActivityRecordingStatus.failed,
+              lastErrorKey:
+                  ActivityRecordingErrorKeys.locationPermissionDeniedForever,
+            ),
+            selectedActivityType: ActivityType.run,
+            onActivityTypeChanged: null,
+            onStart: (_) {},
+            onPause: null,
+            onResume: null,
+            onStop: null,
+            onOpenLocationSettings: () => openedSettings = true,
+          ),
+        ),
+      );
+
+      expect(
+        find.text(AppLocalizationsEn().activityLocationPermissionDeniedForever),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text(AppLocalizationsEn().activityOpenSettings));
+
+      expect(openedSettings, isTrue);
+    });
   });
 }
 

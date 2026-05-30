@@ -237,6 +237,7 @@ class _MapScreenState extends State<MapScreen> {
             uploadError: _activityController.uploadError,
             onRetryUpload: _activityController.uploadCompletedGpx,
             onDiscard: _activityController.discard,
+            onOpenLocationSettings: _activityController.openLocationSettings,
           ),
         ],
       ),
