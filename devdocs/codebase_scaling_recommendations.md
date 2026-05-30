@@ -235,7 +235,7 @@ historical scaling checklist.
 
 ## Next Steps From Current Review
 
-### 13. Promote `ApiClient` to typed response helpers
+### 13. Promote `ApiClient` to typed response helpers - Done
 
 `ApiClient` still returns raw `http.Response` and `http.StreamedResponse` from
 its public methods. That leaves future features free to duplicate status-code

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/services/auth_service.dart';
+import 'package:endurain/core/services/api_response.dart';
 import 'package:endurain/core/constants/api_constants.dart';
 import 'package:endurain/core/models/app_exception.dart';
 
@@ -25,9 +26,29 @@ class ApiClient {
     return _makeRequest('GET', endpoint);
   }
 
+  Future<Map<String, dynamic>> getJsonObject(
+    String endpoint, {
+    required AppErrorCode failureCode,
+  }) {
+    return _makeJsonObjectRequest('GET', endpoint, failureCode: failureCode);
+  }
+
   /// Make an authenticated POST request
   Future<http.Response> post(String endpoint, {Map<String, dynamic>? body}) {
     return _makeRequest('POST', endpoint, body: body);
+  }
+
+  Future<Map<String, dynamic>> postJsonObject(
+    String endpoint, {
+    Map<String, dynamic>? body,
+    required AppErrorCode failureCode,
+  }) {
+    return _makeJsonObjectRequest(
+      'POST',
+      endpoint,
+      body: body,
+      failureCode: failureCode,
+    );
   }
 
   /// Make an authenticated PUT request
@@ -35,9 +56,42 @@ class ApiClient {
     return _makeRequest('PUT', endpoint, body: body);
   }
 
+  Future<Map<String, dynamic>> putJsonObject(
+    String endpoint, {
+    Map<String, dynamic>? body,
+    required AppErrorCode failureCode,
+  }) {
+    return _makeJsonObjectRequest(
+      'PUT',
+      endpoint,
+      body: body,
+      failureCode: failureCode,
+    );
+  }
+
   /// Make an authenticated DELETE request
   Future<http.Response> delete(String endpoint) {
     return _makeRequest('DELETE', endpoint);
+  }
+
+  Future<Map<String, dynamic>> deleteJsonObject(
+    String endpoint, {
+    required AppErrorCode failureCode,
+  }) {
+    return _makeJsonObjectRequest('DELETE', endpoint, failureCode: failureCode);
+  }
+
+  Future<Map<String, dynamic>> _makeJsonObjectRequest(
+    String method,
+    String endpoint, {
+    Map<String, dynamic>? body,
+    required AppErrorCode failureCode,
+  }) async {
+    final response = await _makeRequest(method, endpoint, body: body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiResponse.failure(response, failureCode);
+    }
+    return ApiResponse.decodeJsonObject(response);
   }
 
   /// Upload a file with multipart/form-data
