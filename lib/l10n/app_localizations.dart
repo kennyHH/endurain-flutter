@@ -446,6 +446,24 @@ abstract class AppLocalizations {
   /// **'Pause'**
   String get activityPause;
 
+  /// Discard activity button label - Used in: activity_stop_confirmation_dialog.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get activityDiscard;
+
+  /// Discard activity confirmation message - Used in: activity_stop_confirmation_dialog.dart
+  ///
+  /// In en, this message translates to:
+  /// **'This will delete the recorded points for this activity.'**
+  String get activityDiscardConfirmMessage;
+
+  /// Discard activity confirmation dialog title - Used in: activity_stop_confirmation_dialog.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Discard activity?'**
+  String get activityDiscardConfirmTitle;
+
   /// Resume recording button label and tooltip - Used in: activity_recording_controls.dart
   ///
   /// In en, this message translates to:
@@ -481,6 +499,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Stop'**
   String get activityStop;
+
+  /// Stop and keep activity button label - Used in: activity_stop_confirmation_dialog.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Stop and save'**
+  String get activityStopAndSave;
+
+  /// Stop activity confirmation message - Used in: activity_stop_confirmation_dialog.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Choose whether to keep this recording or discard it.'**
+  String get activityStopConfirmMessage;
+
+  /// Stop activity confirmation dialog title - Used in: activity_stop_confirmation_dialog.dart
+  ///
+  /// In en, this message translates to:
+  /// **'End activity?'**
+  String get activityStopConfirmTitle;
 
   /// Disabled stop button label while a recording is stopping - Used in: activity_recording_controls.dart
   ///

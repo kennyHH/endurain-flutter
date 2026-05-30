@@ -214,6 +214,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityPause => 'Pause';
 
   @override
+  String get activityDiscard => 'Discard';
+
+  @override
+  String get activityDiscardConfirmMessage =>
+      'This will delete the recorded points for this activity.';
+
+  @override
+  String get activityDiscardConfirmTitle => 'Discard activity?';
+
+  @override
   String get activityResume => 'Resume';
 
   @override
@@ -230,6 +240,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activityStop => 'Stop';
+
+  @override
+  String get activityStopAndSave => 'Stop and save';
+
+  @override
+  String get activityStopConfirmMessage =>
+      'Choose whether to keep this recording or discard it.';
+
+  @override
+  String get activityStopConfirmTitle => 'End activity?';
 
   @override
   String get activityStopping => 'Stopping';

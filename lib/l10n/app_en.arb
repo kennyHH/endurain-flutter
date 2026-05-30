@@ -309,6 +309,18 @@
   "@activityPause": {
     "description": "Pause recording button label and tooltip - Used in: activity_recording_controls.dart"
   },
+  "activityDiscard": "Discard",
+  "@activityDiscard": {
+    "description": "Discard activity button label - Used in: activity_stop_confirmation_dialog.dart"
+  },
+  "activityDiscardConfirmMessage": "This will delete the recorded points for this activity.",
+  "@activityDiscardConfirmMessage": {
+    "description": "Discard activity confirmation message - Used in: activity_stop_confirmation_dialog.dart"
+  },
+  "activityDiscardConfirmTitle": "Discard activity?",
+  "@activityDiscardConfirmTitle": {
+    "description": "Discard activity confirmation dialog title - Used in: activity_stop_confirmation_dialog.dart"
+  },
   "activityResume": "Resume",
   "@activityResume": {
     "description": "Resume recording button label and tooltip - Used in: activity_recording_controls.dart"
@@ -332,6 +344,18 @@
   "activityStop": "Stop",
   "@activityStop": {
     "description": "Stop recording button label and tooltip - Used in: activity_recording_controls.dart"
+  },
+  "activityStopAndSave": "Stop and save",
+  "@activityStopAndSave": {
+    "description": "Stop and keep activity button label - Used in: activity_stop_confirmation_dialog.dart"
+  },
+  "activityStopConfirmMessage": "Choose whether to keep this recording or discard it.",
+  "@activityStopConfirmMessage": {
+    "description": "Stop activity confirmation message - Used in: activity_stop_confirmation_dialog.dart"
+  },
+  "activityStopConfirmTitle": "End activity?",
+  "@activityStopConfirmTitle": {
+    "description": "Stop activity confirmation dialog title - Used in: activity_stop_confirmation_dialog.dart"
   },
   "activityStopping": "Stopping",
   "@activityStopping": {

@@ -309,6 +309,18 @@
   "@activityPause": {
     "description": "Rótulo e dica do botão de pausar gravação - Usado em: activity_recording_controls.dart"
   },
+  "activityDiscard": "Descartar",
+  "@activityDiscard": {
+    "description": "Rótulo do botão de descartar atividade - Usado em: activity_stop_confirmation_dialog.dart"
+  },
+  "activityDiscardConfirmMessage": "Isto irá apagar os pontos gravados para esta atividade.",
+  "@activityDiscardConfirmMessage": {
+    "description": "Mensagem de confirmação para descartar atividade - Usado em: activity_stop_confirmation_dialog.dart"
+  },
+  "activityDiscardConfirmTitle": "Descartar atividade?",
+  "@activityDiscardConfirmTitle": {
+    "description": "Título do diálogo de confirmação para descartar atividade - Usado em: activity_stop_confirmation_dialog.dart"
+  },
   "activityResume": "Retomar",
   "@activityResume": {
     "description": "Rótulo e dica do botão de retomar gravação - Usado em: activity_recording_controls.dart"
@@ -332,6 +344,18 @@
   "activityStop": "Parar",
   "@activityStop": {
     "description": "Rótulo e dica do botão de parar gravação - Usado em: activity_recording_controls.dart"
+  },
+  "activityStopAndSave": "Parar e guardar",
+  "@activityStopAndSave": {
+    "description": "Rótulo do botão de parar e manter atividade - Usado em: activity_stop_confirmation_dialog.dart"
+  },
+  "activityStopConfirmMessage": "Escolha se pretende guardar esta gravação ou descartá-la.",
+  "@activityStopConfirmMessage": {
+    "description": "Mensagem de confirmação para parar atividade - Usado em: activity_stop_confirmation_dialog.dart"
+  },
+  "activityStopConfirmTitle": "Terminar atividade?",
+  "@activityStopConfirmTitle": {
+    "description": "Título do diálogo de confirmação para parar atividade - Usado em: activity_stop_confirmation_dialog.dart"
   },
   "activityStopping": "A parar",
   "@activityStopping": {

@@ -11,6 +11,7 @@ import 'package:endurain/core/constants/map_constants.dart';
 import 'package:endurain/features/activity/controllers/activity_recording_controller.dart';
 import 'package:endurain/features/activity/services/activity_recording_service.dart';
 import 'package:endurain/features/activity/widgets/activity_recording_controls.dart';
+import 'package:endurain/features/activity/widgets/activity_stop_confirmation_dialog.dart';
 import 'package:endurain/features/map/map_settings_repository.dart';
 import 'package:endurain/features/map/map_state_controller.dart';
 import 'package:endurain/l10n/app_localizations.dart';
@@ -42,6 +43,7 @@ class _MapScreenState extends State<MapScreen> {
   late final bool _ownsActivityController;
   LatLng? _lastFollowedLocation;
   bool _centeredInitialLocation = false;
+  bool _isStopConfirmationOpen = false;
 
   @override
   void initState() {
@@ -145,6 +147,29 @@ class _MapScreenState extends State<MapScreen> {
     _controller.unlockLocation();
   }
 
+  Future<void> _confirmStopActivity() async {
+    if (_isStopConfirmationOpen || !_activityController.state.isActive) {
+      return;
+    }
+
+    _isStopConfirmationOpen = true;
+    final action = await showActivityStopConfirmationDialog(context);
+    _isStopConfirmationOpen = false;
+
+    if (!mounted) {
+      return;
+    }
+
+    switch (action) {
+      case ActivityStopAction.cancel:
+        return;
+      case ActivityStopAction.stop:
+        await _activityController.stop();
+      case ActivityStopAction.discard:
+        await _activityController.discard();
+    }
+  }
+
   /// Build map options with common configuration
   MapOptions _buildMapOptions() {
     return MapOptions(
@@ -205,7 +230,7 @@ class _MapScreenState extends State<MapScreen> {
             onStart: _activityController.start,
             onPause: _activityController.pause,
             onResume: _activityController.resume,
-            onStop: _activityController.stop,
+            onStop: _confirmStopActivity,
           ),
         ],
       ),

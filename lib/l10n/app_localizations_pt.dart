@@ -221,6 +221,16 @@ class AppLocalizationsPt extends AppLocalizations {
   String get activityPause => 'Pausar';
 
   @override
+  String get activityDiscard => 'Descartar';
+
+  @override
+  String get activityDiscardConfirmMessage =>
+      'Isto irá apagar os pontos gravados para esta atividade.';
+
+  @override
+  String get activityDiscardConfirmTitle => 'Descartar atividade?';
+
+  @override
   String get activityResume => 'Retomar';
 
   @override
@@ -237,6 +247,16 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get activityStop => 'Parar';
+
+  @override
+  String get activityStopAndSave => 'Parar e guardar';
+
+  @override
+  String get activityStopConfirmMessage =>
+      'Escolha se pretende guardar esta gravação ou descartá-la.';
+
+  @override
+  String get activityStopConfirmTitle => 'Terminar atividade?';
 
   @override
   String get activityStopping => 'A parar';
