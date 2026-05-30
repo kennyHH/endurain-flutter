@@ -460,6 +460,10 @@ Acceptance checks:
 
 Timebox: 15 minutes.
 
+Status: Blocked locally on 2026-05-30. `flutter devices` reported macOS and an
+iPhone only, and `flutter emulators` reported no emulator sources. Android
+manual review remains a follow-up when an Android device or AVD is available.
+
 Implementation:
 - Run the app on Android or an emulator.
 - Start, pause, resume, stop, discard, and retry upload if available.
