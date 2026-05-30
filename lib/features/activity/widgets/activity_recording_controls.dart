@@ -18,9 +18,7 @@ class ActivityRecordingControls extends StatelessWidget {
   static const double _idleControlHeight = 56;
 
   static const double _bottomOverlaySpacing =
-      UIConstants.tabBarHeight +
-      UIConstants.paddingLarge +
-      UIConstants.paddingSmall;
+      UIConstants.tabBarHeight + UIConstants.paddingStandard;
 
   const ActivityRecordingControls({
     super.key,

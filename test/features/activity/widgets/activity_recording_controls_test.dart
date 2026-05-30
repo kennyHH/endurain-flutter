@@ -1,3 +1,4 @@
+import 'package:endurain/core/constants/ui_constants.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_upload_state.dart';
@@ -146,6 +147,8 @@ void main() {
       tester,
     ) async {
       const floatingButtonKey = ValueKey('mapFloatingButton');
+      const floatingButtonBottom =
+          UIConstants.tabBarHeight + UIConstants.paddingStandard;
 
       await tester.pumpWidget(
         _TestApp(
@@ -166,7 +169,7 @@ void main() {
                 ),
                 const Positioned(
                   right: 0,
-                  bottom: 88,
+                  bottom: floatingButtonBottom,
                   child: SizedBox(
                     key: floatingButtonKey,
                     width: 56,
@@ -185,6 +188,7 @@ void main() {
       final floatingButtonRect = tester.getRect(find.byKey(floatingButtonKey));
 
       expect(controlsRect.right, lessThanOrEqualTo(floatingButtonRect.left));
+      expect(controlsRect.bottom, floatingButtonRect.bottom);
     });
 
     testWidgets('shows pause and stop while recording', (tester) async {
