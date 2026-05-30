@@ -11,6 +11,7 @@ class ActivityRecordingErrorKeys {
 
   static const String invalidTransition = 'activityRecordingInvalidTransition';
   static const String locationStreamFailed = 'activityLocationStreamFailed';
+  static const String emptyRecording = 'activityRecordingEmpty';
 }
 
 class ActivityRecordingService {
@@ -84,6 +85,17 @@ class ActivityRecordingService {
     }
 
     await _cancelPositionSubscription();
+    if (_state.points.isEmpty) {
+      _emit(
+        _state.copyWith(
+          status: ActivityRecordingStatus.failed,
+          endedAt: _now(),
+          lastErrorKey: ActivityRecordingErrorKeys.emptyRecording,
+        ),
+      );
+      return;
+    }
+
     _emit(_state.copyWith(status: ActivityRecordingStatus.stopping));
     _emit(
       _state.copyWith(

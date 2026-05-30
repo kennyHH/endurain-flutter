@@ -239,6 +239,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityResume => 'Resume';
 
   @override
+  String get activityLocationStreamFailed =>
+      'Location updates stopped unexpectedly.';
+
+  @override
+  String get activityRecordingEmpty => 'No GPS points were recorded.';
+
+  @override
+  String get activityRecordingFailed => 'Recording failed.';
+
+  @override
   String get activityStart => 'Start';
 
   @override

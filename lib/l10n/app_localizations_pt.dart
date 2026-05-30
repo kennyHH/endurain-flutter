@@ -246,6 +246,16 @@ class AppLocalizationsPt extends AppLocalizations {
   String get activityResume => 'Retomar';
 
   @override
+  String get activityLocationStreamFailed =>
+      'As atualizações de localização pararam inesperadamente.';
+
+  @override
+  String get activityRecordingEmpty => 'Não foram gravados pontos GPS.';
+
+  @override
+  String get activityRecordingFailed => 'A gravação falhou.';
+
+  @override
   String get activityStart => 'Iniciar';
 
   @override

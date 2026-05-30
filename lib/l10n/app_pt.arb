@@ -343,6 +343,18 @@
   "@activityResume": {
     "description": "Rótulo e dica do botão de retomar gravação - Usado em: activity_recording_controls.dart"
   },
+  "activityLocationStreamFailed": "As atualizações de localização pararam inesperadamente.",
+  "@activityLocationStreamFailed": {
+    "description": "Erro de gravação exibido quando o stream GPS falha - Usado em: activity_recording_controls.dart"
+  },
+  "activityRecordingEmpty": "Não foram gravados pontos GPS.",
+  "@activityRecordingEmpty": {
+    "description": "Erro exibido ao parar sem pontos GPS - Usado em: activity_recording_controls.dart"
+  },
+  "activityRecordingFailed": "A gravação falhou.",
+  "@activityRecordingFailed": {
+    "description": "Mensagem genérica de erro de gravação - Usado em: activity_recording_controls.dart"
+  },
   "activityStart": "Iniciar",
   "@activityStart": {
     "description": "Rótulo e dica do botão de iniciar gravação - Usado em: activity_recording_controls.dart"

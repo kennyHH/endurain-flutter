@@ -488,6 +488,24 @@ abstract class AppLocalizations {
   /// **'Resume'**
   String get activityResume;
 
+  /// Recording error shown when GPS stream fails - Used in: activity_recording_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Location updates stopped unexpectedly.'**
+  String get activityLocationStreamFailed;
+
+  /// Recording error shown when stopping without GPS points - Used in: activity_recording_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'No GPS points were recorded.'**
+  String get activityRecordingEmpty;
+
+  /// Fallback recording error message - Used in: activity_recording_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Recording failed.'**
+  String get activityRecordingFailed;
+
   /// Start recording button label and tooltip - Used in: activity_recording_controls.dart
   ///
   /// In en, this message translates to:

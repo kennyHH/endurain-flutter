@@ -41,10 +41,71 @@ void main() {
 
       expect(controller.selectedActivityType, ActivityType.run);
     });
+
+    test('generates GPX when a valid recording completes', () async {
+      final adapter = _FakeLocationPlatformAdapter();
+      final service = ActivityRecordingService(
+        locationService: LocationService(platformAdapter: adapter),
+      );
+      final controller = ActivityRecordingController(recordingService: service);
+      addTearDown(controller.dispose);
+
+      await controller.start(ActivityType.run);
+      adapter.addPosition(_position(latitude: 41.1, longitude: -8.6));
+      await pumpEventQueue();
+      await controller.stop();
+      await pumpEventQueue();
+
+      expect(controller.state.status, ActivityRecordingStatus.completed);
+      expect(controller.completedGpx, contains('<gpx'));
+      expect(
+        controller.completedGpx,
+        contains('<trkpt lat="41.1" lon="-8.6">'),
+      );
+    });
+
+    test('does not generate GPX for discarded recordings', () async {
+      final adapter = _FakeLocationPlatformAdapter();
+      final service = ActivityRecordingService(
+        locationService: LocationService(platformAdapter: adapter),
+      );
+      final controller = ActivityRecordingController(recordingService: service);
+      addTearDown(controller.dispose);
+
+      await controller.start(ActivityType.run);
+      adapter.addPosition(_position(latitude: 41.1, longitude: -8.6));
+      await pumpEventQueue();
+      await controller.discard();
+
+      expect(controller.state.status, ActivityRecordingStatus.idle);
+      expect(controller.completedGpx, isNull);
+    });
+
+    test('leaves empty recordings without GPX content', () async {
+      final adapter = _FakeLocationPlatformAdapter();
+      final service = ActivityRecordingService(
+        locationService: LocationService(platformAdapter: adapter),
+      );
+      final controller = ActivityRecordingController(recordingService: service);
+      addTearDown(controller.dispose);
+
+      await controller.start(ActivityType.run);
+      await controller.stop();
+      await pumpEventQueue();
+
+      expect(controller.state.status, ActivityRecordingStatus.failed);
+      expect(controller.completedGpx, isNull);
+    });
   });
 }
 
 class _FakeLocationPlatformAdapter implements LocationPlatformAdapter {
+  final List<StreamController<Position>> _controllers = [];
+
+  void addPosition(Position position) {
+    _controllers.last.add(position);
+  }
+
   @override
   Future<LocationPermission> checkPermission() async {
     return LocationPermission.whileInUse;
@@ -61,7 +122,9 @@ class _FakeLocationPlatformAdapter implements LocationPlatformAdapter {
   Stream<Position> getPositionStream({
     required LocationSettings locationSettings,
   }) {
-    return const Stream<Position>.empty();
+    final controller = StreamController<Position>();
+    _controllers.add(controller);
+    return controller.stream;
   }
 
   @override
@@ -80,10 +143,10 @@ class _FakeLocationPlatformAdapter implements LocationPlatformAdapter {
   }
 }
 
-Position _position() {
+Position _position({double latitude = 41, double longitude = -8}) {
   return Position(
-    latitude: 41,
-    longitude: -8,
+    latitude: latitude,
+    longitude: longitude,
     timestamp: DateTime.utc(2026),
     accuracy: 5,
     altitude: 10,

@@ -1,5 +1,6 @@
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
+import 'package:endurain/features/activity/services/activity_recording_service.dart';
 import 'package:endurain/features/activity/widgets/activity_recording_controls.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/l10n/app_localizations_en.dart';
@@ -124,6 +125,27 @@ void main() {
       await tester.tap(find.text(AppLocalizationsEn().activityStopping));
 
       expect(stopped, isFalse);
+    });
+
+    testWidgets('shows localized empty recording errors', (tester) async {
+      await tester.pumpWidget(
+        _TestApp(
+          child: ActivityRecordingControls(
+            state: ActivityRecordingState(
+              status: ActivityRecordingStatus.failed,
+              lastErrorKey: ActivityRecordingErrorKeys.emptyRecording,
+            ),
+            selectedActivityType: ActivityType.run,
+            onActivityTypeChanged: null,
+            onStart: (_) {},
+            onPause: null,
+            onResume: null,
+            onStop: null,
+          ),
+        ),
+      );
+
+      expect(find.text(AppLocalizationsEn().activityRecordingEmpty), findsOneWidget);
     });
   });
 }

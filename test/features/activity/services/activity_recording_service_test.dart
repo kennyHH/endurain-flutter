@@ -77,6 +77,8 @@ void main() {
       addTearDown(subscription.cancel);
 
       await service.start(activityType: ActivityType.walk);
+      adapter.addPosition(_position(latitude: 41.1, longitude: -8.6));
+      await pumpEventQueue();
       await service.stop();
       await pumpEventQueue();
 
@@ -84,12 +86,27 @@ void main() {
         states.map((state) => state.status),
         [
           ActivityRecordingStatus.recording,
+          ActivityRecordingStatus.recording,
           ActivityRecordingStatus.stopping,
           ActivityRecordingStatus.completed,
         ],
       );
       expect(service.state.endedAt, completedAt);
       expect(adapter.cancelCount, 1);
+    });
+
+    test('empty stop fails safely without completing', () async {
+      final adapter = _FakeLocationPlatformAdapter();
+      final service = ActivityRecordingService(
+        locationService: LocationService(platformAdapter: adapter),
+      );
+      addTearDown(service.dispose);
+
+      await service.start(activityType: ActivityType.run);
+      await service.stop();
+
+      expect(service.state.status, ActivityRecordingStatus.failed);
+      expect(service.state.lastErrorKey, ActivityRecordingErrorKeys.emptyRecording);
     });
 
     test('duplicate start keeps current recording', () async {

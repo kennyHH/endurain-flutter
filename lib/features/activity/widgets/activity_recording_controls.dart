@@ -1,5 +1,6 @@
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
+import 'package:endurain/features/activity/services/activity_recording_service.dart';
 import 'package:endurain/features/activity/widgets/activity_stats_display.dart';
 import 'package:endurain/features/activity/widgets/activity_type_picker.dart';
 import 'package:endurain/l10n/app_localizations.dart';
@@ -31,6 +32,7 @@ class ActivityRecordingControls extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final controls = _buildControls(l10n);
+    final errorMessage = _recordingErrorMessage(l10n);
 
     return SafeArea(
       minimum: const EdgeInsets.fromLTRB(12, 12, 12, 88),
@@ -53,6 +55,14 @@ class ActivityRecordingControls extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (errorMessage != null) ...[
+                  Text(
+                    errorMessage,
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 ActivityStatsDisplay(state: state),
                 if (state.isActive ||
                     state.status == ActivityRecordingStatus.stopping ||
@@ -139,6 +149,19 @@ class ActivityRecordingControls extends StatelessWidget {
           ),
         ];
     }
+  }
+
+  String? _recordingErrorMessage(AppLocalizations l10n) {
+    if (state.status != ActivityRecordingStatus.failed) {
+      return null;
+    }
+
+    return switch (state.lastErrorKey) {
+      ActivityRecordingErrorKeys.emptyRecording => l10n.activityRecordingEmpty,
+      ActivityRecordingErrorKeys.locationStreamFailed =>
+        l10n.activityLocationStreamFailed,
+      _ => l10n.activityRecordingFailed,
+    };
   }
 
   Widget _controlButton({

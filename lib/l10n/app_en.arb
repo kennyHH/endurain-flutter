@@ -343,6 +343,18 @@
   "@activityResume": {
     "description": "Resume recording button label and tooltip - Used in: activity_recording_controls.dart"
   },
+  "activityLocationStreamFailed": "Location updates stopped unexpectedly.",
+  "@activityLocationStreamFailed": {
+    "description": "Recording error shown when GPS stream fails - Used in: activity_recording_controls.dart"
+  },
+  "activityRecordingEmpty": "No GPS points were recorded.",
+  "@activityRecordingEmpty": {
+    "description": "Recording error shown when stopping without GPS points - Used in: activity_recording_controls.dart"
+  },
+  "activityRecordingFailed": "Recording failed.",
+  "@activityRecordingFailed": {
+    "description": "Fallback recording error message - Used in: activity_recording_controls.dart"
+  },
   "activityStart": "Start",
   "@activityStart": {
     "description": "Start recording button label and tooltip - Used in: activity_recording_controls.dart"
