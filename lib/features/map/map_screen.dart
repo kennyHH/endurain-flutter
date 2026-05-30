@@ -52,7 +52,8 @@ class _MapScreenState extends State<MapScreen> {
     _ownsController = widget.controller == null;
     _ownsActivityController = widget.activityController == null;
     _controller = widget.controller ?? _createController();
-    _activityController = widget.activityController ?? _createActivityController();
+    _activityController =
+        widget.activityController ?? _createActivityController();
     _controller.addListener(_handleControllerChanged);
     _activityController.addListener(_handleControllerChanged);
     _controller.initialize();

@@ -12,11 +12,11 @@ class ActivityRecordingErrorKeys {
   static const String invalidTransition = 'activityRecordingInvalidTransition';
   static const String locationStreamFailed = 'activityLocationStreamFailed';
   static const String emptyRecording = 'activityRecordingEmpty';
-    static const String locationServiceDisabled =
+  static const String locationServiceDisabled =
       'activityLocationServiceDisabled';
-    static const String locationPermissionDenied =
+  static const String locationPermissionDenied =
       'activityLocationPermissionDenied';
-    static const String locationPermissionDeniedForever =
+  static const String locationPermissionDeniedForever =
       'activityLocationPermissionDeniedForever';
 }
 

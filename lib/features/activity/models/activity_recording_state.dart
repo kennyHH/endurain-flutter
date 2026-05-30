@@ -3,7 +3,14 @@ import 'dart:collection';
 import 'package:endurain/features/activity/models/activity_track_point.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
 
-enum ActivityRecordingStatus { idle, recording, paused, stopping, completed, failed }
+enum ActivityRecordingStatus {
+  idle,
+  recording,
+  paused,
+  stopping,
+  completed,
+  failed,
+}
 
 class ActivityRecordingState {
   ActivityRecordingState({

@@ -3,11 +3,12 @@ import 'package:endurain/core/services/api_client.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
 import 'package:http/http.dart' as http;
 
-typedef ActivityFileUploader = Future<http.StreamedResponse> Function(
-  String endpoint,
-  String filePath,
-  String fieldName,
-);
+typedef ActivityFileUploader =
+    Future<http.StreamedResponse> Function(
+      String endpoint,
+      String filePath,
+      String fieldName,
+    );
 
 class ActivityUploadConfig {
   const ActivityUploadConfig({required this.endpoint, required this.fieldName});

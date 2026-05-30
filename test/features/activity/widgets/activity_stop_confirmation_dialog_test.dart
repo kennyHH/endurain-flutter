@@ -10,9 +10,7 @@ void main() {
       ActivityStopAction? selectedAction;
 
       await tester.pumpWidget(
-        _TestApp(
-          onAction: (action) => selectedAction = action,
-        ),
+        _TestApp(onAction: (action) => selectedAction = action),
       );
 
       await tester.tap(find.text('open'));
@@ -27,9 +25,7 @@ void main() {
       ActivityStopAction? selectedAction;
 
       await tester.pumpWidget(
-        _TestApp(
-          onAction: (action) => selectedAction = action,
-        ),
+        _TestApp(onAction: (action) => selectedAction = action),
       );
 
       await tester.tap(find.text('open'));
@@ -44,9 +40,7 @@ void main() {
       ActivityStopAction? selectedAction;
 
       await tester.pumpWidget(
-        _TestApp(
-          onAction: (action) => selectedAction = action,
-        ),
+        _TestApp(onAction: (action) => selectedAction = action),
       );
 
       await tester.tap(find.text('open'));

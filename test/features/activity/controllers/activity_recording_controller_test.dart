@@ -182,7 +182,7 @@ void main() {
       adapter.addPosition(_position());
       await pumpEventQueue();
       await controller.stop();
-      await pumpEventQueue();
+      await controller.uploadCompletedGpx();
 
       expect(controller.uploadStatus, ActivityUploadStatus.failed);
       expect(tempDirectory.listSync(), isNotEmpty);

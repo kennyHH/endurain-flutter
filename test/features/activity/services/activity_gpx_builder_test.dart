@@ -57,7 +57,10 @@ void main() {
         trackName: 'A&B "run" <test>',
       );
 
-      expect(gpx, contains('<name>A&amp;B &quot;run&quot; &lt;test&gt;</name>'));
+      expect(
+        gpx,
+        contains('<name>A&amp;B &quot;run&quot; &lt;test&gt;</name>'),
+      );
     });
   });
 }

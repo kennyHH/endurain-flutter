@@ -61,7 +61,10 @@ void main() {
         ),
       );
 
-      expect(find.text(AppLocalizationsEn().activityUploadFailed), findsOneWidget);
+      expect(
+        find.text(AppLocalizationsEn().activityUploadFailed),
+        findsOneWidget,
+      );
       expect(
         find.text(AppLocalizationsEn().errorActivityUploadNotConfigured),
         findsOneWidget,

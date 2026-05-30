@@ -19,7 +19,10 @@ void main() {
         ),
       );
 
-      expect(find.text(AppLocalizationsEn().activityStatDuration), findsOneWidget);
+      expect(
+        find.text(AppLocalizationsEn().activityStatDuration),
+        findsOneWidget,
+      );
       expect(find.text('0:00'), findsOneWidget);
       expect(find.text('0 m'), findsOneWidget);
       expect(find.text('-'), findsOneWidget);
@@ -50,7 +53,10 @@ void main() {
         _TestApp(child: ActivityStatsDisplay(state: ActivityRecordingState())),
       );
 
-      expect(find.text(AppLocalizationsEn().activityStatDuration), findsNothing);
+      expect(
+        find.text(AppLocalizationsEn().activityStatDuration),
+        findsNothing,
+      );
     });
   });
 }

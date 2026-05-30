@@ -18,7 +18,9 @@ Future<ActivityStopAction> showActivityStopConfirmationDialog(
   }
 
   final discardConfirmed = await _showDiscardDialog(context, l10n);
-  return discardConfirmed ? ActivityStopAction.discard : ActivityStopAction.cancel;
+  return discardConfirmed
+      ? ActivityStopAction.discard
+      : ActivityStopAction.cancel;
 }
 
 Future<ActivityStopAction> _showStopDialog(
@@ -33,16 +35,19 @@ Future<ActivityStopAction> _showStopDialog(
             content: Text(l10n.activityStopConfirmMessage),
             actions: [
               CupertinoDialogAction(
-                onPressed: () => Navigator.pop(context, ActivityStopAction.cancel),
+                onPressed: () =>
+                    Navigator.pop(context, ActivityStopAction.cancel),
                 child: Text(l10n.cancel),
               ),
               CupertinoDialogAction(
-                onPressed: () => Navigator.pop(context, ActivityStopAction.stop),
+                onPressed: () =>
+                    Navigator.pop(context, ActivityStopAction.stop),
                 child: Text(l10n.activityStopAndSave),
               ),
               CupertinoDialogAction(
                 isDestructiveAction: true,
-                onPressed: () => Navigator.pop(context, ActivityStopAction.discard),
+                onPressed: () =>
+                    Navigator.pop(context, ActivityStopAction.discard),
                 child: Text(l10n.activityDiscard),
               ),
             ],
@@ -58,11 +63,13 @@ Future<ActivityStopAction> _showStopDialog(
           content: Text(l10n.activityStopConfirmMessage),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context, ActivityStopAction.cancel),
+              onPressed: () =>
+                  Navigator.pop(context, ActivityStopAction.cancel),
               child: Text(l10n.cancel),
             ),
             TextButton(
-              onPressed: () => Navigator.pop(context, ActivityStopAction.discard),
+              onPressed: () =>
+                  Navigator.pop(context, ActivityStopAction.discard),
               child: Text(l10n.activityDiscard),
             ),
             TextButton(

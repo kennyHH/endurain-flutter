@@ -87,7 +87,9 @@ void main() {
       await tester.pumpWidget(
         _TestApp(
           child: ActivityRecordingControls(
-            state: ActivityRecordingState(status: ActivityRecordingStatus.paused),
+            state: ActivityRecordingState(
+              status: ActivityRecordingStatus.paused,
+            ),
             selectedActivityType: ActivityType.run,
             onActivityTypeChanged: null,
             onStart: null,
@@ -146,7 +148,10 @@ void main() {
         ),
       );
 
-      expect(find.text(AppLocalizationsEn().activityRecordingEmpty), findsOneWidget);
+      expect(
+        find.text(AppLocalizationsEn().activityRecordingEmpty),
+        findsOneWidget,
+      );
     });
 
     testWidgets('shows settings action for denied forever', (tester) async {
@@ -181,7 +186,9 @@ void main() {
       expect(openedSettings, isTrue);
     });
 
-    testWidgets('shows upload actions for completed recordings', (tester) async {
+    testWidgets('shows upload actions for completed recordings', (
+      tester,
+    ) async {
       var retried = false;
       var discarded = false;
 
@@ -204,7 +211,10 @@ void main() {
         ),
       );
 
-      expect(find.text(AppLocalizationsEn().activityUploadFailed), findsOneWidget);
+      expect(
+        find.text(AppLocalizationsEn().activityUploadFailed),
+        findsOneWidget,
+      );
 
       await tester.tap(find.text(AppLocalizationsEn().activityRetryUpload));
       await tester.tap(find.text(AppLocalizationsEn().activityDiscard));

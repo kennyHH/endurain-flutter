@@ -27,12 +27,14 @@ class ActivityTypePicker extends StatelessWidget {
         border: const OutlineInputBorder(),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
-      items: ActivityType.values.map((type) {
-        return DropdownMenuItem<ActivityType>(
-          value: type,
-          child: Text(type.localizedLabel(l10n)),
-        );
-      }).toList(growable: false),
+      items: ActivityType.values
+          .map((type) {
+            return DropdownMenuItem<ActivityType>(
+              value: type,
+              child: Text(type.localizedLabel(l10n)),
+            );
+          })
+          .toList(growable: false),
       onChanged: enabled && onChanged != null
           ? (value) {
               if (value != null) {

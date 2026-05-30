@@ -70,26 +70,36 @@ void main() {
       );
     });
 
-    test('maps validation failures without raw server response details', () async {
-      final service = _serviceReturningStatus(422);
+    test(
+      'maps validation failures without raw server response details',
+      () async {
+        final service = _serviceReturningStatus(422);
 
-      await expectLater(
-        service.uploadGpx(_request()),
-        throwsA(
-          isA<AppException>()
-              .having(
-                (exception) => exception.code,
-                'code',
-                AppErrorCode.activityUploadFailed,
-              )
-              .having((exception) => exception.details, 'details', 'HTTP 422'),
-        ),
-      );
-    });
+        await expectLater(
+          service.uploadGpx(_request()),
+          throwsA(
+            isA<AppException>()
+                .having(
+                  (exception) => exception.code,
+                  'code',
+                  AppErrorCode.activityUploadFailed,
+                )
+                .having(
+                  (exception) => exception.details,
+                  'details',
+                  'HTTP 422',
+                ),
+          ),
+        );
+      },
+    );
 
     test('maps network failures to upload failed', () async {
       final service = ActivityUploadService(
-        config: const ActivityUploadConfig(endpoint: '/upload', fieldName: 'file'),
+        config: const ActivityUploadConfig(
+          endpoint: '/upload',
+          fieldName: 'file',
+        ),
         uploadFile: (_, _, _) async => throw const FormatException('offline'),
       );
 

@@ -139,15 +139,12 @@ void main() {
       await service.stop();
       await pumpEventQueue();
 
-      expect(
-        states.map((state) => state.status),
-        [
-          ActivityRecordingStatus.recording,
-          ActivityRecordingStatus.recording,
-          ActivityRecordingStatus.stopping,
-          ActivityRecordingStatus.completed,
-        ],
-      );
+      expect(states.map((state) => state.status), [
+        ActivityRecordingStatus.recording,
+        ActivityRecordingStatus.recording,
+        ActivityRecordingStatus.stopping,
+        ActivityRecordingStatus.completed,
+      ]);
       expect(service.state.endedAt, completedAt);
       expect(adapter.cancelCount, 1);
     });
@@ -163,7 +160,10 @@ void main() {
       await service.stop();
 
       expect(service.state.status, ActivityRecordingStatus.failed);
-      expect(service.state.lastErrorKey, ActivityRecordingErrorKeys.emptyRecording);
+      expect(
+        service.state.lastErrorKey,
+        ActivityRecordingErrorKeys.emptyRecording,
+      );
     });
 
     test('duplicate start keeps current recording', () async {
@@ -183,18 +183,21 @@ void main() {
       expect(adapter.listenCount, 1);
     });
 
-    test('invalid pause moves to failed state without raw error details', () async {
-      final service = ActivityRecordingService();
-      addTearDown(service.dispose);
+    test(
+      'invalid pause moves to failed state without raw error details',
+      () async {
+        final service = ActivityRecordingService();
+        addTearDown(service.dispose);
 
-      await service.pause();
+        await service.pause();
 
-      expect(service.state.status, ActivityRecordingStatus.failed);
-      expect(
-        service.state.lastErrorKey,
-        ActivityRecordingErrorKeys.invalidTransition,
-      );
-    });
+        expect(service.state.status, ActivityRecordingStatus.failed);
+        expect(
+          service.state.lastErrorKey,
+          ActivityRecordingErrorKeys.invalidTransition,
+        );
+      },
+    );
 
     test('discard is idempotent and clears state', () async {
       final adapter = _FakeLocationPlatformAdapter();

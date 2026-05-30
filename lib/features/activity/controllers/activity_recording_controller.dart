@@ -17,12 +17,11 @@ class ActivityRecordingController extends ChangeNotifier {
     ActivityGpxFileWriter? gpxFileWriter,
     ActivityUploadService? uploadService,
     bool ownsService = true,
-  })
-    : _recordingService = recordingService ?? ActivityRecordingService(),
-      _gpxBuilder = gpxBuilder,
-      _gpxFileWriter = gpxFileWriter ?? ActivityGpxFileWriter(),
-      _uploadService = uploadService ?? ActivityUploadService(),
-      _ownsService = ownsService {
+  }) : _recordingService = recordingService ?? ActivityRecordingService(),
+       _gpxBuilder = gpxBuilder,
+       _gpxFileWriter = gpxFileWriter ?? ActivityGpxFileWriter(),
+       _uploadService = uploadService ?? ActivityUploadService(),
+       _ownsService = ownsService {
     _stateSubscription = _recordingService.stateStream.listen((state) {
       _setState(state);
     });

@@ -10,7 +10,10 @@ class ActivityStatsCalculator {
 
   ActivityRecordingStats calculate(List<ActivityTrackPoint> points) {
     if (points.isEmpty) {
-      return const ActivityRecordingStats(distanceMeters: 0, durationSeconds: 0);
+      return const ActivityRecordingStats(
+        distanceMeters: 0,
+        durationSeconds: 0,
+      );
     }
 
     var distanceMeters = 0.0;
@@ -33,7 +36,8 @@ class ActivityStatsCalculator {
       if (pairDurationSeconds > 0) {
         durationSeconds += pairDurationSeconds;
         if (current.speedMetersPerSecond == null) {
-          currentSpeedMetersPerSecond = pairDistanceMeters / pairDurationSeconds;
+          currentSpeedMetersPerSecond =
+              pairDistanceMeters / pairDurationSeconds;
         }
       }
     }

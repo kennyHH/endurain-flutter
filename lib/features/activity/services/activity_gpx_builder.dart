@@ -5,10 +5,7 @@ import 'package:endurain/features/activity/models/activity_track_point.dart';
 class ActivityGpxBuilder {
   const ActivityGpxBuilder();
 
-  String build(
-    ActivityRecordingState state, {
-    String? trackName,
-  }) {
+  String build(ActivityRecordingState state, {String? trackName}) {
     final name = trackName ?? _defaultTrackName(state.activityType);
     final buffer = StringBuffer()
       ..writeln('<?xml version="1.0" encoding="UTF-8"?>')
