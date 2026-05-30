@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:endurain/core/services/auth_session_store.dart';
 import 'package:endurain/core/services/api_response.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/api_constants.dart';
@@ -8,11 +9,29 @@ import 'package:endurain/core/models/app_exception.dart';
 import 'package:endurain/core/utils/pkce_utils.dart';
 
 class AuthService {
-  AuthService({SecureStorageService? storage, http.Client? httpClient})
-    : _storage = storage ?? SecureStorageService(),
-      _httpClient = httpClient ?? http.Client();
+  factory AuthService({
+    SecureStorageService? storage,
+    AuthSessionStore? sessionStore,
+    http.Client? httpClient,
+  }) {
+    final resolvedStorage = storage ?? SecureStorageService();
+    return AuthService._(
+      storage: resolvedStorage,
+      sessionStore: sessionStore ?? AuthSessionStore(storage: resolvedStorage),
+      httpClient: httpClient ?? http.Client(),
+    );
+  }
+
+  AuthService._({
+    required SecureStorageService storage,
+    required AuthSessionStore sessionStore,
+    required http.Client httpClient,
+  }) : _storage = storage,
+       _sessionStore = sessionStore,
+       _httpClient = httpClient;
 
   final SecureStorageService _storage;
+  final AuthSessionStore _sessionStore;
   final http.Client _httpClient;
 
   // Store PKCE temporarily during auth flow
@@ -64,7 +83,7 @@ class AuthService {
         // Check if MFA is required
         if (data['mfa_required'] == true) {
           // Store username for MFA verification
-          await _storage.setUsername(username);
+          await _sessionStore.saveLoginUsername(username);
 
           return AuthResult(
             success: true,
@@ -185,21 +204,13 @@ class AuthService {
         final returnedSessionId = data['session_id'] as String?;
         final expiresIn = data['expires_in'] as int?;
 
-        if (accessToken != null) {
-          await _storage.setAccessToken(accessToken);
-        }
-        if (refreshToken != null) {
-          await _storage.setRefreshToken(refreshToken);
-        }
-        if (expiresIn != null) {
-          await _storage.setAccessTokenExpiresAt(
-            DateTime.now().toUtc().add(Duration(seconds: expiresIn)),
-          );
-        }
-        await _storage.setUsername(username);
-        if (returnedSessionId != null) {
-          await _storage.setSessionId(returnedSessionId);
-        }
+        await _sessionStore.saveSession(
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          sessionId: returnedSessionId,
+          username: username,
+          expiresInSeconds: expiresIn,
+        );
 
         return AuthResult(
           success: true,
@@ -245,20 +256,12 @@ class AuthService {
         final returnedSessionId = data['session_id'] as String?;
         final expiresIn = data['expires_in'] as int?;
 
-        if (newAccessToken != null) {
-          await _storage.setAccessToken(newAccessToken);
-        }
-        if (newRefreshToken != null) {
-          await _storage.setRefreshToken(newRefreshToken);
-        }
-        if (returnedSessionId != null) {
-          await _storage.setSessionId(returnedSessionId);
-        }
-        if (expiresIn != null) {
-          await _storage.setAccessTokenExpiresAt(
-            DateTime.now().toUtc().add(Duration(seconds: expiresIn)),
-          );
-        }
+        await _sessionStore.saveSession(
+          accessToken: newAccessToken,
+          refreshToken: newRefreshToken,
+          sessionId: returnedSessionId,
+          expiresInSeconds: expiresIn,
+        );
         return true;
       }
 
@@ -295,24 +298,24 @@ class AuthService {
     }
 
     // Always clear local tokens
-    await _storage.clearAuthTokens();
+    await _sessionStore.clear();
 
     return serverLogoutSuccess;
   }
 
   /// Check if user is authenticated
   Future<bool> isAuthenticated() async {
-    final accessToken = await _storage.getAccessToken();
-    final storedRefreshToken = await _storage.getRefreshToken();
+    final accessToken = await _sessionStore.getAccessToken();
+    final storedRefreshToken = await _sessionStore.getRefreshToken();
 
     if (accessToken != null &&
         accessToken.isNotEmpty &&
-        !await _storage.isAccessTokenExpiringSoon()) {
+        !await _sessionStore.isAccessTokenExpiringSoon()) {
       return true;
     }
 
     if (storedRefreshToken == null || storedRefreshToken.isEmpty) {
-      await _storage.clearAuthTokens();
+      await _sessionStore.clear();
       return false;
     }
 
@@ -321,7 +324,7 @@ class AuthService {
       return true;
     }
 
-    await _storage.clearAuthTokens();
+    await _sessionStore.clear();
     return false;
   }
 }

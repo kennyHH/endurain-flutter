@@ -266,7 +266,7 @@ Recommended changes:
   services, or repositories.
 - Use fake adapters in controller and widget tests.
 
-### 15. Extract shared auth session persistence
+### 15. Extract shared auth session persistence - Done
 
 Token and session writes are duplicated between local login, SSO token exchange,
 and refresh flows. This increases the chance that future expiry, logout,

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:endurain/core/services/auth_session_store.dart';
 import 'package:endurain/core/models/identity_provider.dart';
 import 'package:endurain/core/models/app_exception.dart';
 import 'package:endurain/core/services/api_response.dart';
@@ -13,11 +14,29 @@ import 'package:endurain/core/services/auth_service.dart';
 class SsoService {
   static const callbackUrl = 'endurain://auth/sso/callback';
 
-  SsoService({SecureStorageService? storage, http.Client? httpClient})
-    : _storage = storage ?? SecureStorageService(),
-      _httpClient = httpClient ?? http.Client();
+  factory SsoService({
+    SecureStorageService? storage,
+    AuthSessionStore? sessionStore,
+    http.Client? httpClient,
+  }) {
+    final resolvedStorage = storage ?? SecureStorageService();
+    return SsoService._(
+      storage: resolvedStorage,
+      sessionStore: sessionStore ?? AuthSessionStore(storage: resolvedStorage),
+      httpClient: httpClient ?? http.Client(),
+    );
+  }
+
+  SsoService._({
+    required SecureStorageService storage,
+    required AuthSessionStore sessionStore,
+    required http.Client httpClient,
+  }) : _storage = storage,
+       _sessionStore = sessionStore,
+       _httpClient = httpClient;
 
   final SecureStorageService _storage;
+  final AuthSessionStore _sessionStore;
   final http.Client _httpClient;
 
   // Store PKCE temporarily during SSO flow
@@ -145,20 +164,12 @@ class SsoService {
         final returnedSessionId = data['session_id'] as String?;
         final expiresIn = data['expires_in'] as int?;
 
-        if (accessToken != null) {
-          await _storage.setAccessToken(accessToken);
-        }
-        if (refreshToken != null) {
-          await _storage.setRefreshToken(refreshToken);
-        }
-        if (expiresIn != null) {
-          await _storage.setAccessTokenExpiresAt(
-            DateTime.now().toUtc().add(Duration(seconds: expiresIn)),
-          );
-        }
-        if (returnedSessionId != null) {
-          await _storage.setSessionId(returnedSessionId);
-        }
+        await _sessionStore.saveSession(
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          sessionId: returnedSessionId,
+          expiresInSeconds: expiresIn,
+        );
 
         return AuthResult(
           success: true,
