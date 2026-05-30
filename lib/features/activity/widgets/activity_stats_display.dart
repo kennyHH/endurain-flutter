@@ -1,0 +1,90 @@
+import 'package:endurain/features/activity/models/activity_recording_state.dart';
+import 'package:endurain/features/activity/services/activity_stats_calculator.dart';
+import 'package:endurain/features/activity/services/activity_stats_formatter.dart';
+import 'package:endurain/l10n/app_localizations.dart';
+import 'package:flutter/material.dart';
+
+class ActivityStatsDisplay extends StatelessWidget {
+  ActivityStatsDisplay({
+    super.key,
+    required this.state,
+    ActivityStatsCalculator? calculator,
+    this.formatter = const ActivityStatsFormatter(),
+  }) : calculator = calculator ?? ActivityStatsCalculator();
+
+  final ActivityRecordingState state;
+  final ActivityStatsCalculator calculator;
+  final ActivityStatsFormatter formatter;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_shouldShowStats) {
+      return const SizedBox.shrink();
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+    final stats = calculator.calculate(state.points);
+
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 16,
+      runSpacing: 8,
+      children: [
+        _StatItem(
+          label: l10n.activityStatDuration,
+          value: formatter.formatDuration(stats.durationSeconds),
+        ),
+        _StatItem(
+          label: l10n.activityStatDistance,
+          value: formatter.formatDistance(stats.distanceMeters),
+        ),
+        _StatItem(
+          label: l10n.activityStatSpeed,
+          value: formatter.formatSpeed(
+            stats.currentSpeedMetersPerSecond ??
+                stats.averageSpeedMetersPerSecond,
+          ),
+        ),
+      ],
+    );
+  }
+
+  bool get _shouldShowStats {
+    return state.status == ActivityRecordingStatus.recording ||
+        state.status == ActivityRecordingStatus.paused ||
+        state.status == ActivityRecordingStatus.stopping ||
+        state.status == ActivityRecordingStatus.completed;
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  const _StatItem({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 72),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.labelSmall,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: theme.textTheme.titleSmall,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}

@@ -220,6 +220,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityStart => 'Start';
 
   @override
+  String get activityStatDistance => 'Distance';
+
+  @override
+  String get activityStatDuration => 'Time';
+
+  @override
+  String get activityStatSpeed => 'Speed';
+
+  @override
   String get activityStop => 'Stop';
 
   @override

@@ -227,6 +227,15 @@ class AppLocalizationsPt extends AppLocalizations {
   String get activityStart => 'Iniciar';
 
   @override
+  String get activityStatDistance => 'Distância';
+
+  @override
+  String get activityStatDuration => 'Tempo';
+
+  @override
+  String get activityStatSpeed => 'Velocidade';
+
+  @override
   String get activityStop => 'Parar';
 
   @override

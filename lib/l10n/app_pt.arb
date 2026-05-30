@@ -317,6 +317,18 @@
   "@activityStart": {
     "description": "Rótulo e dica do botão de iniciar gravação - Usado em: activity_recording_controls.dart"
   },
+  "activityStatDistance": "Distância",
+  "@activityStatDistance": {
+    "description": "Rótulo da distância nas estatísticas da gravação - Usado em: activity_stats_display.dart"
+  },
+  "activityStatDuration": "Tempo",
+  "@activityStatDuration": {
+    "description": "Rótulo da duração nas estatísticas da gravação - Usado em: activity_stats_display.dart"
+  },
+  "activityStatSpeed": "Velocidade",
+  "@activityStatSpeed": {
+    "description": "Rótulo da velocidade nas estatísticas da gravação - Usado em: activity_stats_display.dart"
+  },
   "activityStop": "Parar",
   "@activityStop": {
     "description": "Rótulo e dica do botão de parar gravação - Usado em: activity_recording_controls.dart"

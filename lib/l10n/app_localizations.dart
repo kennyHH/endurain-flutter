@@ -458,6 +458,24 @@ abstract class AppLocalizations {
   /// **'Start'**
   String get activityStart;
 
+  /// Recording stats distance label - Used in: activity_stats_display.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Distance'**
+  String get activityStatDistance;
+
+  /// Recording stats duration label - Used in: activity_stats_display.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get activityStatDuration;
+
+  /// Recording stats speed label - Used in: activity_stats_display.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Speed'**
+  String get activityStatSpeed;
+
   /// Stop recording button label and tooltip - Used in: activity_recording_controls.dart
   ///
   /// In en, this message translates to:

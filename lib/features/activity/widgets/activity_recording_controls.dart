@@ -1,5 +1,6 @@
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
+import 'package:endurain/features/activity/widgets/activity_stats_display.dart';
 import 'package:endurain/features/activity/widgets/activity_type_picker.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/shared/adaptive/adaptive.dart';
@@ -49,12 +50,22 @@ class ActivityRecordingControls extends StatelessWidget {
           ),
           child: Padding(
             padding: const EdgeInsets.all(8),
-            child: Wrap(
-              alignment: WrapAlignment.center,
-              runAlignment: WrapAlignment.center,
-              spacing: 8,
-              runSpacing: 8,
-              children: controls,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ActivityStatsDisplay(state: state),
+                if (state.isActive ||
+                    state.status == ActivityRecordingStatus.stopping ||
+                    state.status == ActivityRecordingStatus.completed)
+                  const SizedBox(height: 8),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  runAlignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: controls,
+                ),
+              ],
             ),
           ),
         ),

@@ -317,6 +317,18 @@
   "@activityStart": {
     "description": "Start recording button label and tooltip - Used in: activity_recording_controls.dart"
   },
+  "activityStatDistance": "Distance",
+  "@activityStatDistance": {
+    "description": "Recording stats distance label - Used in: activity_stats_display.dart"
+  },
+  "activityStatDuration": "Time",
+  "@activityStatDuration": {
+    "description": "Recording stats duration label - Used in: activity_stats_display.dart"
+  },
+  "activityStatSpeed": "Speed",
+  "@activityStatSpeed": {
+    "description": "Recording stats speed label - Used in: activity_stats_display.dart"
+  },
   "activityStop": "Stop",
   "@activityStop": {
     "description": "Stop recording button label and tooltip - Used in: activity_recording_controls.dart"
