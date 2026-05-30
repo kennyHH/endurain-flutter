@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_upload_state.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
@@ -5,6 +7,7 @@ import 'package:endurain/features/activity/services/activity_recording_service.d
 import 'package:endurain/features/activity/widgets/activity_recording_controls.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/l10n/app_localizations_en.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -61,6 +64,35 @@ void main() {
 
       expect(selectedType, ActivityType.ride);
     });
+
+    testWidgets(
+      'builds in a Cupertino app without a Material ancestor',
+      (tester) async {
+        await tester.pumpWidget(
+          CupertinoApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: SizedBox(
+              width: 390,
+              height: 600,
+              child: ActivityRecordingControls(
+                state: ActivityRecordingState(),
+                selectedActivityType: ActivityType.run,
+                onActivityTypeChanged: (_) {},
+                onStart: (_) {},
+                onPause: null,
+                onResume: null,
+                onStop: null,
+              ),
+            ),
+          ),
+        );
+
+        expect(tester.takeException(), isNull);
+        expect(find.text(AppLocalizationsEn().activityStart), findsOneWidget);
+      },
+      skip: !Platform.isMacOS && !Platform.isIOS,
+    );
 
     testWidgets('shows pause and stop while recording', (tester) async {
       await tester.pumpWidget(

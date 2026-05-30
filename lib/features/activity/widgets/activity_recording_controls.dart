@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_upload_state.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
@@ -48,73 +50,92 @@ class ActivityRecordingControls extends StatelessWidget {
 
     return SafeArea(
       minimum: const EdgeInsets.fromLTRB(12, 12, 12, 88),
-      child: Align(
-        alignment: Alignment.bottomCenter,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: const [
-              BoxShadow(
-                blurRadius: 12,
-                color: Color(0x33000000),
-                offset: Offset(0, 4),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final maxWidth = math.min(360.0, constraints.maxWidth);
+          final maxHeight = math.min(
+            360.0,
+            math.max(120.0, constraints.maxHeight),
+          );
+
+          return Align(
+            alignment: Alignment.bottomCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: maxWidth,
+                maxHeight: maxHeight,
               ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (errorMessage != null) ...[
-                  Text(
-                    errorMessage,
-                    style: Theme.of(context).textTheme.bodySmall,
-                    textAlign: TextAlign.center,
-                  ),
-                  if (state.lastErrorKey ==
-                      ActivityRecordingErrorKeys
-                          .locationPermissionDeniedForever) ...[
-                    const SizedBox(height: 8),
-                    AdaptiveButton(
-                      label: l10n.activityOpenSettings,
-                      onPressed: onOpenLocationSettings,
-                      variant: AdaptiveButtonVariant.secondary,
-                      icon: const AdaptiveIcon(
-                        materialIcon: Icons.settings,
-                        cupertinoIcon: CupertinoIcons.settings,
-                        size: 20,
-                      ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: const [
+                    BoxShadow(
+                      blurRadius: 12,
+                      color: Color(0x33000000),
+                      offset: Offset(0, 4),
                     ),
                   ],
-                  const SizedBox(height: 8),
-                ],
-                ActivityStatsDisplay(state: state),
-                if (state.isActive ||
-                    state.status == ActivityRecordingStatus.stopping ||
-                    state.status == ActivityRecordingStatus.completed)
-                  const SizedBox(height: 8),
-                if (state.status == ActivityRecordingStatus.completed) ...[
-                  ActivityUploadStatusPanel(
-                    status: uploadStatus,
-                    error: uploadError,
-                    onRetry: onRetryUpload,
-                    onDiscard: onDiscard,
-                  ),
-                  const SizedBox(height: 8),
-                ],
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  runAlignment: WrapAlignment.center,
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: controls,
                 ),
-              ],
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (errorMessage != null) ...[
+                          Text(
+                            errorMessage,
+                            style: Theme.of(context).textTheme.bodySmall,
+                            textAlign: TextAlign.center,
+                          ),
+                          if (state.lastErrorKey ==
+                              ActivityRecordingErrorKeys
+                                  .locationPermissionDeniedForever) ...[
+                            const SizedBox(height: 8),
+                            AdaptiveButton(
+                              label: l10n.activityOpenSettings,
+                              onPressed: onOpenLocationSettings,
+                              variant: AdaptiveButtonVariant.secondary,
+                              icon: const AdaptiveIcon(
+                                materialIcon: Icons.settings,
+                                cupertinoIcon: CupertinoIcons.settings,
+                                size: 20,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 8),
+                        ],
+                        ActivityStatsDisplay(state: state),
+                        if (state.isActive ||
+                            state.status == ActivityRecordingStatus.stopping ||
+                            state.status == ActivityRecordingStatus.completed)
+                          const SizedBox(height: 8),
+                        if (state.status ==
+                            ActivityRecordingStatus.completed) ...[
+                          ActivityUploadStatusPanel(
+                            status: uploadStatus,
+                            error: uploadError,
+                            onRetry: onRetryUpload,
+                            onDiscard: onDiscard,
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          runAlignment: WrapAlignment.center,
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: controls,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
