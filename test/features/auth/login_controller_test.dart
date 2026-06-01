@@ -11,7 +11,7 @@ import 'package:endurain/core/services/auth_service.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/services/server_settings_service.dart';
 import 'package:endurain/core/services/sso_service.dart';
-import 'package:endurain/features/auth/auth_repository.dart';
+import 'package:endurain/features/auth/auth_coordinator.dart';
 import 'package:endurain/features/auth/login_controller.dart';
 
 import '../../helpers/fake_app_links_service.dart';
@@ -27,7 +27,7 @@ void main() {
     test('loads server settings and SSO providers', () async {
       final storage = SecureStorageService();
       final controller = LoginController(
-        authRepository: _repository(
+        authCoordinator: _repository(
           storage: storage,
           client: MockClient((request) async {
             if (request.url.path == ApiConstants.serverSettingsEndpoint) {
@@ -61,7 +61,7 @@ void main() {
     test('shows MFA input when local login requires MFA', () async {
       final storage = SecureStorageService();
       final controller = LoginController(
-        authRepository: _repository(
+        authCoordinator: _repository(
           storage: storage,
           client: MockClient((request) async {
             expect(request.url.path, ApiConstants.tokenEndpoint);
@@ -89,7 +89,7 @@ void main() {
       final storage = SecureStorageService();
       final appLinks = FakeAppLinksService();
       final controller = LoginController(
-        authRepository: _repository(
+        authCoordinator: _repository(
           storage: storage,
           client: MockClient((request) async {
             expect(
@@ -128,7 +128,7 @@ void main() {
       final appLinks = FakeAppLinksService();
       final errors = <Object>[];
       final controller = LoginController(
-        authRepository: _repository(
+        authCoordinator: _repository(
           storage: storage,
           client: MockClient((request) async {
             fail('No HTTP request expected for callback error.');
@@ -157,7 +157,7 @@ void main() {
       final appLinks = FakeAppLinksService();
       final errors = <Object>[];
       final controller = LoginController(
-        authRepository: _repository(
+        authCoordinator: _repository(
           storage: SecureStorageService(),
           client: MockClient((request) async {
             fail('No HTTP request expected without a session id.');
@@ -188,11 +188,11 @@ void main() {
   });
 }
 
-AuthRepository _repository({
+AuthCoordinator _repository({
   required SecureStorageService storage,
   required http.Client client,
 }) {
-  return AuthRepository(
+  return AuthCoordinator(
     authService: AuthService(storage: storage, httpClient: client),
     ssoService: SsoService(storage: storage, httpClient: client),
     serverSettingsService: ServerSettingsService(

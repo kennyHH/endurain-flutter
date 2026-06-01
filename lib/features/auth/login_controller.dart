@@ -5,16 +5,16 @@ import 'package:endurain/core/models/app_exception.dart';
 import 'package:endurain/core/models/identity_provider.dart';
 import 'package:endurain/core/models/server_settings.dart';
 import 'package:endurain/core/services/app_links_service.dart';
-import 'package:endurain/features/auth/auth_repository.dart';
+import 'package:endurain/features/auth/auth_coordinator.dart';
 
 class LoginController extends ChangeNotifier {
   LoginController({
-    required AuthRepository authRepository,
+    required AuthCoordinator authCoordinator,
     AppLinksService? appLinksService,
-  }) : _authRepository = authRepository,
+  }) : _authCoordinator = authCoordinator,
        _appLinksService = appLinksService ?? DefaultAppLinksService();
 
-  final AuthRepository _authRepository;
+  final AuthCoordinator _authCoordinator;
   final AppLinksService _appLinksService;
 
   final formKey = GlobalKey<FormState>();
@@ -54,12 +54,12 @@ class LoginController extends ChangeNotifier {
 
     try {
       final serverUrl = serverUrlController.text.trim();
-      final settings = await _authRepository.getServerSettings(serverUrl);
+      final settings = await _authCoordinator.getServerSettings(serverUrl);
 
       List<IdentityProvider> providers = [];
       if (settings.ssoEnabled) {
         try {
-          providers = await _authRepository.getEnabledProviders(serverUrl);
+          providers = await _authCoordinator.getEnabledProviders(serverUrl);
         } catch (_) {
           providers = [];
         }
@@ -87,7 +87,7 @@ class LoginController extends ChangeNotifier {
     _setLoading(true);
 
     try {
-      final oauthUrl = await _authRepository.initiateSsoLogin(
+      final oauthUrl = await _authCoordinator.initiateSsoLogin(
         provider,
         serverUrl: serverUrlController.text.trim(),
       );
@@ -104,7 +104,7 @@ class LoginController extends ChangeNotifier {
     _setLoading(true);
 
     try {
-      final result = await _authRepository.login(
+      final result = await _authCoordinator.login(
         username: usernameController.text.trim(),
         password: passwordController.text,
         serverUrl: serverUrlController.text.trim(),
@@ -133,7 +133,7 @@ class LoginController extends ChangeNotifier {
     _setLoading(true);
 
     try {
-      await _authRepository.verifyMfa(
+      await _authCoordinator.verifyMfa(
         username: username,
         mfaCode: mfaCodeController.text.trim(),
       );
@@ -163,7 +163,7 @@ class LoginController extends ChangeNotifier {
   }
 
   void clearSsoPkce() {
-    _authRepository.clearSsoPkce();
+    _authCoordinator.clearSsoPkce();
   }
 
   Future<void> _handleSsoCallbackUri(Uri uri) async {
@@ -194,7 +194,7 @@ class LoginController extends ChangeNotifier {
     _setLoading(true);
 
     try {
-      await _authRepository.exchangeSsoSessionForTokens(sessionId);
+      await _authCoordinator.exchangeSsoSessionForTokens(sessionId);
       _onLoginSuccess?.call();
     } catch (error) {
       _setLoading(false);

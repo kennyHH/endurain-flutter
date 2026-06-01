@@ -5,7 +5,7 @@ import 'package:endurain/core/services/server_settings_service.dart';
 import 'package:endurain/core/services/sso_service.dart';
 import 'package:endurain/core/services/url_launcher_service.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
-import 'package:endurain/features/auth/auth_repository.dart';
+import 'package:endurain/features/auth/auth_coordinator.dart';
 import 'package:endurain/features/auth/login_controller.dart';
 import 'package:endurain/features/auth/login_screen.dart';
 import 'package:endurain/l10n/app_localizations_en.dart';
@@ -169,7 +169,7 @@ Widget _loginScreen({
 LoginController _controller({required http.Client client}) {
   final storage = SecureStorageService();
   return LoginController(
-    authRepository: AuthRepository(
+    authCoordinator: AuthCoordinator(
       authService: AuthService(storage: storage, httpClient: client),
       ssoService: SsoService(storage: storage, httpClient: client),
       serverSettingsService: ServerSettingsService(

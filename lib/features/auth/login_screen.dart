@@ -12,9 +12,10 @@ import 'package:endurain/core/models/identity_provider.dart';
 import 'package:endurain/core/utils/validators.dart';
 import 'package:endurain/core/utils/dialog_utils.dart';
 import 'package:endurain/core/constants/ui_constants.dart';
-import 'package:endurain/features/auth/auth_repository.dart';
+import 'package:endurain/features/auth/auth_coordinator.dart';
 import 'package:endurain/features/auth/login_controller.dart';
 import 'package:endurain/shared/adaptive/adaptive.dart';
+import 'package:endurain/shared/state/owned_controllers.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({
@@ -40,20 +41,21 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> with OwnedControllers {
   late final LoginController _controller;
-  late final bool _ownsController;
   late final UrlLauncherService _urlLauncherService;
 
   @override
   void initState() {
     super.initState();
-    _ownsController = widget.controller == null;
     _urlLauncherService =
         widget.urlLauncherService ??
         AppScope.servicesOf(context, listen: false).urlLauncher;
-    _controller = widget.controller ?? _createController();
-    _controller.addListener(_handleControllerChanged);
+    _controller = registerController(
+      widget.controller,
+      _createController,
+      onChanged: _handleControllerChanged,
+    );
     _controller.startSsoCallbackListener(
       onLoginSuccess: () => widget.onLoginSuccess?.call(),
       onError: _showError,
@@ -63,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
   LoginController _createController() {
     final services = AppScope.servicesOf(context, listen: false);
     return LoginController(
-      authRepository: AuthRepository(
+      authCoordinator: AuthCoordinator(
         authService: widget.authService ?? services.auth,
         ssoService: widget.ssoService ?? services.sso,
         serverSettingsService:
@@ -71,15 +73,6 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       appLinksService: widget.appLinksService ?? services.appLinks,
     );
-  }
-
-  @override
-  void dispose() {
-    _controller.removeListener(_handleControllerChanged);
-    if (_ownsController) {
-      _controller.dispose();
-    }
-    super.dispose();
   }
 
   void _handleControllerChanged() {

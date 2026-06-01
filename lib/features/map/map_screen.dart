@@ -20,6 +20,7 @@ import 'package:endurain/features/map/map_settings_repository.dart';
 import 'package:endurain/features/map/map_state_controller.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/shared/adaptive/adaptive.dart';
+import 'package:endurain/shared/state/owned_controllers.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({
@@ -39,7 +40,7 @@ class MapScreen extends StatefulWidget {
   State<MapScreen> createState() => _MapScreenState();
 }
 
-class _MapScreenState extends State<MapScreen> {
+class _MapScreenState extends State<MapScreen> with OwnedControllers {
   static const double _activityOverlayTrailingReservedWidth =
       LocationMarkerConstants.buttonSize +
       LocationMarkerConstants.buttonOuterPadding * 2;
@@ -47,8 +48,6 @@ class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
   late final MapStateController _controller;
   late final ActivityRecordingController _activityController;
-  late final bool _ownsController;
-  late final bool _ownsActivityController;
   LatLng? _lastFollowedLocation;
   bool _centeredInitialLocation = false;
   bool _isStopConfirmationOpen = false;
@@ -57,13 +56,16 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
-    _ownsController = widget.controller == null;
-    _ownsActivityController = widget.activityController == null;
-    _controller = widget.controller ?? _createController();
-    _activityController =
-        widget.activityController ?? _createActivityController();
-    _controller.addListener(_handleControllerChanged);
-    _activityController.addListener(_handleControllerChanged);
+    _controller = registerController(
+      widget.controller,
+      _createController,
+      onChanged: _handleControllerChanged,
+    );
+    _activityController = registerController(
+      widget.activityController,
+      _createActivityController,
+      onChanged: _handleControllerChanged,
+    );
     _controller.initialize();
   }
 
@@ -89,19 +91,6 @@ class _MapScreenState extends State<MapScreen> {
         config: const ActivityUploadConfig.endurain(),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _controller.removeListener(_handleControllerChanged);
-    _activityController.removeListener(_handleControllerChanged);
-    if (_ownsController) {
-      _controller.dispose();
-    }
-    if (_ownsActivityController) {
-      _activityController.dispose();
-    }
-    super.dispose();
   }
 
   void _handleControllerChanged() {

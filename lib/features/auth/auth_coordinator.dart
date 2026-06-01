@@ -4,8 +4,14 @@ import 'package:endurain/core/services/auth_service.dart';
 import 'package:endurain/core/services/server_settings_service.dart';
 import 'package:endurain/core/services/sso_service.dart';
 
-class AuthRepository {
-  const AuthRepository({
+/// Coordinates the auth-related services used by the login flow.
+///
+/// This is a thin facade over [AuthService], [SsoService], and
+/// [ServerSettingsService]. It is intentionally not a data repository: it owns
+/// no storage and performs no caching. The name reflects its role of composing
+/// several services behind a single login-facing API.
+class AuthCoordinator {
+  const AuthCoordinator({
     required AuthService authService,
     required SsoService ssoService,
     required ServerSettingsService serverSettingsService,
