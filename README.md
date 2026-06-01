@@ -151,6 +151,33 @@ flutter run -d android
 flutter run -d macos
 ```
 
+### Android Device Setup
+
+For Android development, install Android Studio and use its SDK Manager to
+install the Android SDK, Platform-Tools, Build-Tools, Command-line Tools, and the
+required Android platform packages. Then accept SDK licenses:
+
+```bash
+flutter doctor --android-licenses
+flutter doctor -v
+```
+
+To run on a physical Android device, enable Developer options and USB debugging
+on the device, connect it with a data-capable USB cable, and accept the USB
+debugging authorization prompt. Verify that Flutter sees the device before
+running the app:
+
+```bash
+flutter devices
+flutter run -d <android-device-id>
+```
+
+The Android app module has been migrated to Flutter's Built-in Kotlin Gradle
+support. Current Android builds can still show upstream plugin warnings for
+dependencies that have not completed that migration yet, such as endorsed or
+transitive platform plugins. If the debug build succeeds, track those warnings
+with dependency updates rather than editing files in the local pub cache.
+
 ## SSO/OAuth Callback
 
 SSO providers must redirect back to the app with this callback URL:
@@ -214,6 +241,17 @@ flutter build ios --release
 ```
 
 ### Android
+
+Debug builds do not require release signing credentials:
+
+```bash
+flutter build apk --debug
+```
+
+Release builds require Android signing configuration. Copy
+`android/key.properties.example` to ignored `android/key.properties` and fill it
+locally, or provide the documented `ANDROID_KEYSTORE_*` environment variables in
+CI.
 
 ```bash
 flutter build apk --release
