@@ -1,8 +1,10 @@
 import 'package:endurain/core/services/diagnostics_service.dart';
+import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/features/settings/diagnostics_screen.dart';
 import 'package:endurain/l10n/app_localizations_en.dart';
 import 'package:endurain/shared/adaptive/adaptive.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -70,6 +72,54 @@ void main() {
     expect(find.text(l10n.diagnosticsClear), findsOneWidget);
     expect(find.textContaining('"breadcrumbs"'), findsOneWidget);
   });
+
+  testWidgets(
+    'DiagnosticsScreen raw report spans the same width as other sections on '
+    'iOS',
+    (tester) async {
+      PlatformUtils.debugIsApplePlatformOverride = true;
+      addTearDown(PlatformUtils.debugResetOverrides);
+
+      final report = DiagnosticsReport.fromPayload({
+        'schemaVersion': 1,
+        'app': 'Endurain',
+        'lastUpdatedAt': '2026-06-01T12:30:00Z',
+        'breadcrumbs': [
+          {
+            'at': '2026-06-01T12:29:00Z',
+            'event': DiagnosticsEvents.activityStarted,
+          },
+        ],
+        'errors': [],
+      });
+
+      await tester.pumpWidget(
+        AdaptiveApp(
+          title: 'Test',
+          home: DiagnosticsScreen(
+            diagnostics: _FakeDiagnosticsStore(report: report),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // A full-width list tile is the reference width for a section's content.
+      final copyTileWidth = tester
+          .getRect(
+            find.ancestor(
+              of: find.text(l10n.diagnosticsCopy),
+              matching: find.byType(CupertinoListTile),
+            ),
+          )
+          .width;
+      final rawReportWidth = tester.getRect(find.byType(SelectableText)).width;
+
+      // The raw report must fill its section like the tiles, not shrink to
+      // wrap its monospace text.
+      expect(rawReportWidth, greaterThanOrEqualTo(copyTileWidth - 0.5));
+    },
+  );
 }
 
 class _FakeDiagnosticsStore implements DiagnosticsStore {

@@ -249,7 +249,10 @@ class _RawReportSection extends StatelessWidget {
       children: [
         Padding(
           padding: contentPadding,
-          child: SelectableText(report, style: textStyle),
+          child: SizedBox(
+            width: double.infinity,
+            child: SelectableText(report, style: textStyle),
+          ),
         ),
       ],
     );
