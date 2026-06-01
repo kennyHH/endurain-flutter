@@ -244,6 +244,56 @@ void main() {
         await platform.close();
       },
     );
+
+    testWidgets(
+      'bottom-aligns the activity overlay with the Android location button',
+      (tester) async {
+        debugDefaultTargetPlatformOverride = TargetPlatform.android;
+        PlatformUtils.debugIsApplePlatformOverride = false;
+        final platform = FakeLocationPlatformAdapter(
+          currentPosition: testPosition(latitude: 41.1579, longitude: -8.6291),
+        );
+        final mapController = await _mapController(platform);
+        final activityController = _activityController(platform);
+
+        await tester.pumpWidget(
+          _MapTestApp(
+            child: Builder(
+              builder: (context) => MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  viewPadding: const EdgeInsets.only(bottom: 24),
+                ),
+                child: MapScreen(
+                  controller: mapController,
+                  activityController: activityController,
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final surfaceRect = tester.getRect(
+          find.byKey(const ValueKey('activityRecordingControlsSurface')),
+        );
+        final buttonRect = tester.getRect(
+          find.byType(AdaptiveFloatingActionButton),
+        );
+
+        // The overlay and the floating location button must share the same
+        // bottom edge so the controls line up as a single row, matching iOS.
+        expect(buttonRect.bottom, greaterThan(0));
+        expect(surfaceRect.bottom, moreOrLessEquals(buttonRect.bottom));
+
+        debugDefaultTargetPlatformOverride = null;
+        PlatformUtils.debugIsApplePlatformOverride = false;
+
+        activityController.dispose();
+        mapController.dispose();
+        await platform.close();
+      },
+    );
   });
 }
 

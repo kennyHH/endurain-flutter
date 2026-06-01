@@ -1,4 +1,4 @@
-import 'package:endurain/core/constants/ui_constants.dart';
+import 'package:endurain/core/constants/map_constants.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_upload_state.dart';
@@ -147,8 +147,7 @@ void main() {
       tester,
     ) async {
       const floatingButtonKey = ValueKey('mapFloatingButton');
-      const floatingButtonBottom =
-          UIConstants.tabBarHeight + UIConstants.paddingStandard;
+      const floatingButtonBottom = LocationMarkerConstants.buttonOuterPadding;
 
       await tester.pumpWidget(
         _TestApp(

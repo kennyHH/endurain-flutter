@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:endurain/core/constants/map_constants.dart';
-import 'package:endurain/core/constants/ui_constants.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_upload_state.dart';
@@ -17,9 +16,6 @@ import 'package:flutter/material.dart';
 
 class ActivityRecordingControls extends StatelessWidget {
   static const double _idleControlHeight = 56;
-
-  static const double _defaultBottomOverlaySpacing =
-      UIConstants.tabBarHeight + UIConstants.paddingStandard;
 
   const ActivityRecordingControls({
     super.key,
@@ -168,32 +164,20 @@ class ActivityRecordingControls extends StatelessWidget {
       },
     );
 
-    // On Apple platforms the floating location button is positioned as
-    // SafeArea inset + buttonOuterPadding. Mirror that exact model here by
-    // consuming the inset with SafeArea and then adding the same padding, so
-    // the overlay's bottom edge lines up with the floating control on devices
-    // with a home indicator. SafeArea.minimum would instead apply
-    // max(inset, padding), which drifts apart once the inset exceeds the
-    // padding.
-    if (isApplePlatform) {
-      return SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(
-            LocationMarkerConstants.buttonOuterPadding,
-          ),
-          child: overlay,
-        ),
-      );
-    }
-
+    // The floating location button is positioned as SafeArea inset +
+    // buttonOuterPadding on every platform (see AdaptiveScaffold). Mirror that
+    // exact model here so the overlay's bottom edge lines up with the floating
+    // control on devices with a home indicator or gesture inset. SafeArea
+    // consumes the inset and the matching padding is added on top, instead of
+    // SafeArea.minimum which would apply max(inset, padding) and drift apart
+    // once the inset exceeds the padding.
     return SafeArea(
-      minimum: const EdgeInsets.fromLTRB(
-        12,
-        12,
-        12,
-        _defaultBottomOverlaySpacing,
+      child: Padding(
+        padding: const EdgeInsets.all(
+          LocationMarkerConstants.buttonOuterPadding,
+        ),
+        child: overlay,
       ),
-      child: overlay,
     );
   }
 

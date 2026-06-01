@@ -23,25 +23,6 @@ class AdaptiveScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     if (PlatformUtils.isApplePlatform) {
       final content = safeArea ? SafeArea(child: body) : body;
-      final stackedContent = floatingActionButton == null
-          ? content
-          : Stack(
-              children: [
-                content,
-                SafeArea(
-                  child: Align(
-                    alignment: Alignment.bottomRight,
-                    child: Padding(
-                      padding: const EdgeInsets.all(
-                        LocationMarkerConstants.buttonOuterPadding,
-                      ),
-                      child: floatingActionButton,
-                    ),
-                  ),
-                ),
-              ],
-            );
-
       return CupertinoPageScaffold(
         navigationBar: title == null && leading == null
             ? null
@@ -49,7 +30,7 @@ class AdaptiveScaffold extends StatelessWidget {
                 middle: title == null ? null : Text(title!),
                 leading: leading,
               ),
-        child: stackedContent,
+        child: _withFloatingActionButton(content),
       );
     }
 
@@ -60,8 +41,34 @@ class AdaptiveScaffold extends StatelessWidget {
               title: title == null ? null : Text(title!),
               leading: leading,
             ),
-      body: body,
-      floatingActionButton: floatingActionButton,
+      body: _withFloatingActionButton(body),
+    );
+  }
+
+  /// Stacks [floatingActionButton] over [content] at the bottom-right using the
+  /// SafeArea inset + [LocationMarkerConstants.buttonOuterPadding] model so the
+  /// button lines up identically on every platform. Returns [content] unchanged
+  /// when no floating action button is provided.
+  Widget _withFloatingActionButton(Widget content) {
+    if (floatingActionButton == null) {
+      return content;
+    }
+
+    return Stack(
+      children: [
+        content,
+        SafeArea(
+          child: Align(
+            alignment: Alignment.bottomRight,
+            child: Padding(
+              padding: const EdgeInsets.all(
+                LocationMarkerConstants.buttonOuterPadding,
+              ),
+              child: floatingActionButton,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
