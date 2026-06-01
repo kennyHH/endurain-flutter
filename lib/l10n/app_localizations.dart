@@ -542,6 +542,24 @@ abstract class AppLocalizations {
   /// **'Start'**
   String get activityStart;
 
+  /// Inline hint shown before starting a recording on non-Apple platforms - Used in: activity_recording_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Recording continues while the app is backgrounded on Android and desktop platforms.'**
+  String get activityBackgroundTrackingHint;
+
+  /// Inline hint shown before recording and after a background-permission error on Apple platforms - Used in: activity_recording_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Background tracking on iPhone and iPad needs Location set to Always. Open settings before you record if you want uninterrupted tracking.'**
+  String get activityBackgroundPermissionHint;
+
+  /// Recording error shown when Apple background permission is not strong enough for uninterrupted tracking - Used in: activity_recording_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Background tracking on iPhone and iPad needs Location set to Always.'**
+  String get activityBackgroundPermissionRequired;
+
   /// Title of the persistent notification shown while tracking continues in the background - Used in: map_screen.dart
   ///
   /// In en, this message translates to:

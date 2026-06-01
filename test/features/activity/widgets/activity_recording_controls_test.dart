@@ -315,6 +315,40 @@ void main() {
       expect(openedSettings, isTrue);
     });
 
+    testWidgets('shows settings action for background permission required', (
+      tester,
+    ) async {
+      var openedSettings = false;
+
+      await tester.pumpWidget(
+        _TestApp(
+          child: ActivityRecordingControls(
+            state: ActivityRecordingState(
+              status: ActivityRecordingStatus.failed,
+              lastErrorKey:
+                  ActivityRecordingErrorKeys.backgroundPermissionRequired,
+            ),
+            selectedActivityType: ActivityType.run,
+            onActivityTypeChanged: null,
+            onStart: (_) {},
+            onPause: null,
+            onResume: null,
+            onStop: null,
+            onOpenLocationSettings: () => openedSettings = true,
+          ),
+        ),
+      );
+
+      expect(
+        find.text(AppLocalizationsEn().activityBackgroundPermissionRequired),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text(AppLocalizationsEn().activityOpenSettings));
+
+      expect(openedSettings, isTrue);
+    });
+
     testWidgets('shows upload actions for completed recordings', (
       tester,
     ) async {

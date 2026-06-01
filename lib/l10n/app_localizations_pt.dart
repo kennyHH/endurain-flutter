@@ -277,6 +277,18 @@ class AppLocalizationsPt extends AppLocalizations {
   String get activityStart => 'Iniciar';
 
   @override
+  String get activityBackgroundTrackingHint =>
+      'A gravação continua enquanto a app fica em segundo plano no Android e em computadores.';
+
+  @override
+  String get activityBackgroundPermissionHint =>
+      'O rastreamento em segundo plano no iPhone e iPad precisa de Localização definida como Sempre. Abra as definições antes de gravar se quiser um registo sem interrupções.';
+
+  @override
+  String get activityBackgroundPermissionRequired =>
+      'O rastreamento em segundo plano no iPhone e iPad precisa de Localização definida como Sempre.';
+
+  @override
   String get activityTrackingNotificationTitle => 'A gravar atividade';
 
   @override

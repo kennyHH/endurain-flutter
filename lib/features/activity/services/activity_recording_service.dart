@@ -5,6 +5,7 @@ import 'package:endurain/core/services/location_settings_builder.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_track_point.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart' hide ActivityType;
 
 class ActivityRecordingErrorKeys {
@@ -19,6 +20,8 @@ class ActivityRecordingErrorKeys {
       'activityLocationPermissionDenied';
   static const String locationPermissionDeniedForever =
       'activityLocationPermissionDeniedForever';
+  static const String backgroundPermissionRequired =
+      'activityBackgroundPermissionRequired';
 }
 
 class ActivityRecordingService {
@@ -66,6 +69,17 @@ class ActivityRecordingService {
       return;
     }
     _backgroundConfig = backgroundConfig;
+    final backgroundErrorKey = await _backgroundTrackingErrorKey();
+    if (backgroundErrorKey != null) {
+      _emit(
+        ActivityRecordingState(
+          status: ActivityRecordingStatus.failed,
+          activityType: activityType,
+          lastErrorKey: backgroundErrorKey,
+        ),
+      );
+      return;
+    }
     final startedAt = _now();
     _recordingSegmentStartedAt = startedAt;
     _elapsedBeforeCurrentSegmentSeconds = 0;
@@ -261,6 +275,18 @@ class ActivityRecordingService {
       LocationPermission.unableToDetermine =>
         ActivityRecordingErrorKeys.locationPermissionDenied,
     };
+  }
+
+  Future<String?> _backgroundTrackingErrorKey() async {
+    if (_backgroundConfig == null ||
+        defaultTargetPlatform != TargetPlatform.iOS) {
+      return null;
+    }
+
+    final permission = await _locationService.checkPermission();
+    return permission == LocationPermission.always
+        ? null
+        : ActivityRecordingErrorKeys.backgroundPermissionRequired;
   }
 
   void _failInvalidTransition() {

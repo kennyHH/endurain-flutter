@@ -270,6 +270,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityStart => 'Start';
 
   @override
+  String get activityBackgroundTrackingHint =>
+      'Recording continues while the app is backgrounded on Android and desktop platforms.';
+
+  @override
+  String get activityBackgroundPermissionHint =>
+      'Background tracking on iPhone and iPad needs Location set to Always. Open settings before you record if you want uninterrupted tracking.';
+
+  @override
+  String get activityBackgroundPermissionRequired =>
+      'Background tracking on iPhone and iPad needs Location set to Always.';
+
+  @override
   String get activityTrackingNotificationTitle => 'Recording activity';
 
   @override

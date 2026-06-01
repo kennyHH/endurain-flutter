@@ -7,6 +7,7 @@ import 'package:endurain/features/activity/models/activity_recording_state.dart'
 import 'package:endurain/features/activity/models/activity_type.dart';
 import 'package:endurain/features/activity/services/activity_recording_service.dart';
 import 'package:fake_async/fake_async.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart' hide ActivityType;
 
@@ -31,6 +32,9 @@ void main() {
     });
 
     test('forwards background config to the location stream', () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+
       final adapter = _FakeLocationPlatformAdapter();
       final service = ActivityRecordingService(
         locationService: LocationService(platformAdapter: adapter),
@@ -46,6 +50,34 @@ void main() {
       );
 
       expect(adapter.lastPositionStreamSettings, isA<AndroidSettings>());
+    });
+
+    test('requires always permission for background tracking on iOS', () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+
+      final adapter = _FakeLocationPlatformAdapter(
+        permission: LocationPermission.whileInUse,
+      );
+      final service = ActivityRecordingService(
+        locationService: LocationService(platformAdapter: adapter),
+      );
+      addTearDown(service.dispose);
+
+      await service.start(
+        activityType: ActivityType.run,
+        backgroundConfig: const BackgroundLocationConfig(
+          notificationTitle: 'Recording activity',
+          notificationText: 'Tracking your location.',
+        ),
+      );
+
+      expect(service.state.status, ActivityRecordingStatus.failed);
+      expect(
+        service.state.lastErrorKey,
+        ActivityRecordingErrorKeys.backgroundPermissionRequired,
+      );
+      expect(adapter.listenCount, 0);
     });
     test('does not start when location services are disabled', () async {
       final adapter = _FakeLocationPlatformAdapter(serviceEnabled: false);
