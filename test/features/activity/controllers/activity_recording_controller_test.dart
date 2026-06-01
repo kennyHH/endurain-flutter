@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:endurain/core/models/app_exception.dart';
 import 'package:endurain/core/services/location_platform_adapter.dart';
 import 'package:endurain/core/services/location_service.dart';
 import 'package:endurain/features/activity/controllers/activity_recording_controller.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_upload_state.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
+import 'package:endurain/features/activity/services/activity_gpx_builder.dart';
 import 'package:endurain/features/activity/services/activity_gpx_file_writer.dart';
 import 'package:endurain/features/activity/services/activity_recording_service.dart';
 import 'package:endurain/features/activity/services/activity_upload_service.dart';
@@ -102,6 +104,31 @@ void main() {
       expect(controller.completedGpx, isNull);
     });
 
+    test('surfaces GPX generation failures as recording failures', () async {
+      final adapter = _FakeLocationPlatformAdapter();
+      final service = ActivityRecordingService(
+        locationService: LocationService(platformAdapter: adapter),
+      );
+      final controller = ActivityRecordingController(
+        recordingService: service,
+        gpxBuilder: const _ThrowingGpxBuilder(),
+      );
+      addTearDown(controller.dispose);
+
+      await controller.start(ActivityType.run);
+      adapter.addPosition(_position());
+      await pumpEventQueue();
+      await controller.stop();
+
+      expect(controller.state.status, ActivityRecordingStatus.failed);
+      expect(
+        controller.state.lastErrorKey,
+        ActivityRecordingErrorKeys.gpxGenerationFailed,
+      );
+      expect(controller.completedGpx, isNull);
+      expect(controller.uploadStatus, ActivityUploadStatus.idle);
+    });
+
     test('fails upload without a temp file when config is missing', () async {
       final adapter = _FakeLocationPlatformAdapter();
       final tempDirectory = await Directory.systemTemp.createTemp(
@@ -130,6 +157,46 @@ void main() {
       expect(tempDirectory.listSync(), isEmpty);
     });
 
+    test(
+      'maps temporary GPX write failures without exposing file paths',
+      () async {
+        final adapter = _FakeLocationPlatformAdapter();
+        final tempDirectory = await Directory.systemTemp.createTemp(
+          'endurain_upload_write_failed_',
+        );
+        addTearDown(() => tempDirectory.deleteSync(recursive: true));
+        final service = ActivityRecordingService(
+          locationService: LocationService(platformAdapter: adapter),
+        );
+        final controller = ActivityRecordingController(
+          recordingService: service,
+          gpxFileWriter: _ThrowingGpxFileWriter(
+            temporaryDirectory: tempDirectory,
+            failWrite: true,
+          ),
+          uploadService: _uploadServiceReturning(201),
+        );
+        addTearDown(controller.dispose);
+
+        await controller.start(ActivityType.run);
+        adapter.addPosition(_position());
+        await pumpEventQueue();
+        await controller.stop();
+        await controller.uploadCompletedGpx();
+
+        expect(controller.uploadStatus, ActivityUploadStatus.failed);
+        expect(
+          controller.uploadError,
+          isA<AppException>().having(
+            (exception) => exception.code,
+            'code',
+            AppErrorCode.activityGpxFileWriteFailed,
+          ),
+        );
+        expect(tempDirectory.listSync(), isEmpty);
+      },
+    );
+
     test('deletes temporary GPX after successful upload', () async {
       final adapter = _FakeLocationPlatformAdapter();
       final tempDirectory = await Directory.systemTemp.createTemp(
@@ -157,6 +224,48 @@ void main() {
 
       expect(controller.uploadStatus, ActivityUploadStatus.uploaded);
       expect(tempDirectory.listSync(), isEmpty);
+    });
+
+    test('keeps uploaded GPX explicit when cleanup fails', () async {
+      final adapter = _FakeLocationPlatformAdapter();
+      final tempDirectory = await Directory.systemTemp.createTemp(
+        'endurain_upload_cleanup_failed_',
+      );
+      addTearDown(() => tempDirectory.deleteSync(recursive: true));
+      final service = ActivityRecordingService(
+        locationService: LocationService(platformAdapter: adapter),
+      );
+      final controller = ActivityRecordingController(
+        recordingService: service,
+        gpxFileWriter: _ThrowingGpxFileWriter(
+          temporaryDirectory: tempDirectory,
+          failDelete: true,
+        ),
+        uploadService: _uploadServiceReturning(201),
+      );
+      addTearDown(controller.dispose);
+
+      await controller.start(ActivityType.run);
+      adapter.addPosition(_position());
+      await pumpEventQueue();
+      await controller.stop();
+      await controller.uploadCompletedGpx();
+
+      expect(controller.uploadStatus, ActivityUploadStatus.cleanupFailed);
+      expect(
+        controller.uploadError,
+        isA<AppException>().having(
+          (exception) => exception.code,
+          'code',
+          AppErrorCode.activityGpxCleanupFailed,
+        ),
+      );
+      expect(tempDirectory.listSync(), isNotEmpty);
+
+      await controller.discard();
+
+      expect(controller.uploadStatus, ActivityUploadStatus.cleanupFailed);
+      expect(controller.state.status, ActivityRecordingStatus.completed);
     });
 
     test('keeps failed upload file until discard', () async {
@@ -192,6 +301,45 @@ void main() {
       expect(tempDirectory.listSync(), isEmpty);
     });
   });
+}
+
+class _ThrowingGpxBuilder extends ActivityGpxBuilder {
+  const _ThrowingGpxBuilder();
+
+  @override
+  String build(ActivityRecordingState state, {String? trackName}) {
+    throw StateError('GPX generation failed');
+  }
+}
+
+class _ThrowingGpxFileWriter extends ActivityGpxFileWriter {
+  _ThrowingGpxFileWriter({
+    required Directory temporaryDirectory,
+    this.failWrite = false,
+    this.failDelete = false,
+  }) : super(
+         temporaryDirectoryProvider: () async => temporaryDirectory,
+         uniqueSuffixProvider: () => 'throwing',
+       );
+
+  final bool failWrite;
+  final bool failDelete;
+
+  @override
+  Future<File> writeGpx(String gpx) {
+    if (failWrite) {
+      throw const FileSystemException('write failed', '/tmp/private.gpx');
+    }
+    return super.writeGpx(gpx);
+  }
+
+  @override
+  Future<void> delete(String filePath) {
+    if (failDelete) {
+      throw const FileSystemException('delete failed', '/tmp/private.gpx');
+    }
+    return super.delete(filePath);
+  }
 }
 
 ActivityUploadService _uploadServiceReturning(int statusCode) {

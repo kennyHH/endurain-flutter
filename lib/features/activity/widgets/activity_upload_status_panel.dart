@@ -31,7 +31,9 @@ class ActivityUploadStatusPanel extends StatelessWidget {
           style: Theme.of(context).textTheme.bodyMedium,
           textAlign: TextAlign.center,
         ),
-        if (status == ActivityUploadStatus.failed && error != null) ...[
+        if ((status == ActivityUploadStatus.failed ||
+                status == ActivityUploadStatus.cleanupFailed) &&
+            error != null) ...[
           const SizedBox(height: 4),
           Text(
             localizedErrorMessage(error!, l10n),
@@ -40,7 +42,8 @@ class ActivityUploadStatusPanel extends StatelessWidget {
           ),
         ],
         if (status == ActivityUploadStatus.failed ||
-            status == ActivityUploadStatus.uploaded) ...[
+            status == ActivityUploadStatus.uploaded ||
+            status == ActivityUploadStatus.cleanupFailed) ...[
           const SizedBox(height: 8),
           Wrap(
             alignment: WrapAlignment.center,
@@ -81,6 +84,7 @@ class ActivityUploadStatusPanel extends StatelessWidget {
       ActivityUploadStatus.uploading => l10n.activityUploading,
       ActivityUploadStatus.uploaded => l10n.activityUploaded,
       ActivityUploadStatus.failed => l10n.activityUploadFailed,
+      ActivityUploadStatus.cleanupFailed => l10n.activityUploadCleanupFailed,
     };
   }
 }

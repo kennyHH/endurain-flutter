@@ -49,6 +49,14 @@
   "@errorActivityUploadNotConfigured": {
     "description": "Activity upload blocked because endpoint and multipart field are not configured - Used in: error_localizations.dart"
   },
+  "errorActivityGpxCleanupFailed": "Could not delete the temporary activity file",
+  "@errorActivityGpxCleanupFailed": {
+    "description": "Activity GPX temporary file cleanup error without exposing file paths - Used in: error_localizations.dart"
+  },
+  "errorActivityGpxFileWriteFailed": "Could not prepare the activity upload file",
+  "@errorActivityGpxFileWriteFailed": {
+    "description": "Activity GPX temporary file write error without exposing file paths - Used in: error_localizations.dart"
+  },
   "errorFetchIdentityProvidersFailed": "Could not load identity providers",
   "@errorFetchIdentityProvidersFailed": {
     "description": "Generic identity provider loading error - Used in: error_localizations.dart"
@@ -351,6 +359,10 @@
   "@activityLocationStreamFailed": {
     "description": "Recording error shown when GPS stream fails - Used in: activity_recording_controls.dart"
   },
+  "activityGpxGenerationFailed": "Could not create the activity GPX file.",
+  "@activityGpxGenerationFailed": {
+    "description": "Recording error shown when GPX generation fails after stopping - Used in: activity_recording_controls.dart"
+  },
   "activityOpenSettings": "Open settings",
   "@activityOpenSettings": {
     "description": "Button label to open app settings for location permission - Used in: activity_recording_controls.dart"
@@ -470,6 +482,10 @@
   "activityUploadFailed": "Upload failed",
   "@activityUploadFailed": {
     "description": "Activity upload failed status label - Used in: activity_upload_status_panel.dart"
+  },
+  "activityUploadCleanupFailed": "Uploaded, but cleanup failed",
+  "@activityUploadCleanupFailed": {
+    "description": "Activity upload status shown when the server upload succeeded but temporary GPX cleanup failed - Used in: activity_upload_status_panel.dart"
   },
   "activityUploadReady": "Ready to upload",
   "@activityUploadReady": {

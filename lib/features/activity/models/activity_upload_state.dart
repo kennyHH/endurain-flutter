@@ -1,1 +1,1 @@
-enum ActivityUploadStatus { idle, uploading, uploaded, failed }
+enum ActivityUploadStatus { idle, uploading, uploaded, failed, cleanupFailed }

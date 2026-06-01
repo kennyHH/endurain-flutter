@@ -28,6 +28,7 @@ class MapStateController extends ChangeNotifier {
   String tileServerUrl = MapConstants.defaultTileServerUrl;
   bool isLoadingLocation = false;
   bool hasLocationPermission = false;
+  bool hasLocationError = false;
   bool isLocationLocked = true;
   double heading = 0.0;
 
@@ -47,6 +48,7 @@ class MapStateController extends ChangeNotifier {
 
   Future<void> _loadUserLocation() async {
     isLoadingLocation = true;
+    hasLocationError = false;
     _notifyListeners();
 
     final position = await _locationService.getCurrentPosition();
@@ -59,6 +61,7 @@ class MapStateController extends ChangeNotifier {
       currentLocation = LatLng(position.latitude, position.longitude);
       _updateHeading(position);
       hasLocationPermission = true;
+      hasLocationError = false;
       isLoadingLocation = false;
       _notifyListeners();
       _startPositionUpdates();
@@ -72,13 +75,25 @@ class MapStateController extends ChangeNotifier {
 
   void _startPositionUpdates() {
     _positionSubscription?.cancel();
-    _positionSubscription = _locationService.getPositionStream().listen((
-      position,
-    ) {
-      currentLocation = LatLng(position.latitude, position.longitude);
-      _updateHeading(position);
-      _notifyListeners();
-    });
+    _positionSubscription = _locationService.getPositionStream().listen(
+      _handlePositionUpdate,
+      onError: _handlePositionError,
+    );
+  }
+
+  void _handlePositionUpdate(Position position) {
+    currentLocation = LatLng(position.latitude, position.longitude);
+    _updateHeading(position);
+    hasLocationPermission = true;
+    hasLocationError = false;
+    _notifyListeners();
+  }
+
+  void _handlePositionError(Object error, StackTrace stackTrace) {
+    hasLocationPermission = false;
+    hasLocationError = true;
+    isLoadingLocation = false;
+    _notifyListeners();
   }
 
   void _updateHeading(Position position) {

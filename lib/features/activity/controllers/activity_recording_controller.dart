@@ -99,7 +99,18 @@ class ActivityRecordingController extends ChangeNotifier {
     await _recordingService.stop();
     final completedState = _recordingService.state;
     if (completedState.status == ActivityRecordingStatus.completed) {
-      _completedGpx = _gpxBuilder.build(completedState);
+      try {
+        _completedGpx = _gpxBuilder.build(completedState);
+      } catch (_) {
+        _completedGpx = null;
+        _setState(
+          completedState.copyWith(
+            status: ActivityRecordingStatus.failed,
+            lastErrorKey: ActivityRecordingErrorKeys.gpxGenerationFailed,
+          ),
+        );
+        return;
+      }
       _setState(completedState);
       unawaited(uploadCompletedGpx());
       return;
@@ -109,8 +120,13 @@ class ActivityRecordingController extends ChangeNotifier {
   }
 
   Future<void> discard() async {
+    try {
+      await _deleteTemporaryGpx();
+    } on AppException catch (error) {
+      _setUploadState(ActivityUploadStatus.cleanupFailed, error: error);
+      return;
+    }
     _completedGpx = null;
-    await _deleteTemporaryGpx();
     _setUploadState(ActivityUploadStatus.idle);
     await _recordingService.discard();
     _setState(_recordingService.state);
@@ -155,7 +171,12 @@ class ActivityRecordingController extends ChangeNotifier {
           activityType: _state.activityType ?? _selectedActivityType,
         ),
       );
-      await _deleteTemporaryGpx();
+      try {
+        await _deleteTemporaryGpx();
+      } on AppException catch (error) {
+        _setUploadState(ActivityUploadStatus.cleanupFailed, error: error);
+        return;
+      }
       _setUploadState(ActivityUploadStatus.uploaded);
     } catch (error) {
       _uploadError = error;
@@ -183,9 +204,13 @@ class ActivityRecordingController extends ChangeNotifier {
     if (gpx == null) {
       throw StateError('No completed GPX is available.');
     }
-    final file = await _gpxFileWriter.writeGpx(gpx);
-    _temporaryGpxPath = file.path;
-    return file.path;
+    try {
+      final file = await _gpxFileWriter.writeGpx(gpx);
+      _temporaryGpxPath = file.path;
+      return file.path;
+    } catch (error) {
+      throw AppException(AppErrorCode.activityGpxFileWriteFailed, cause: error);
+    }
   }
 
   Future<void> _deleteTemporaryGpx() async {
@@ -193,8 +218,20 @@ class ActivityRecordingController extends ChangeNotifier {
     if (filePath == null) {
       return;
     }
-    await _gpxFileWriter.delete(filePath);
-    _temporaryGpxPath = null;
+    try {
+      await _gpxFileWriter.delete(filePath);
+      _temporaryGpxPath = null;
+    } catch (error) {
+      throw AppException(AppErrorCode.activityGpxCleanupFailed, cause: error);
+    }
+  }
+
+  Future<void> _tryDeleteTemporaryGpx() async {
+    try {
+      await _deleteTemporaryGpx();
+    } catch (_) {
+      return;
+    }
   }
 
   void _notifyListeners() {
@@ -207,6 +244,7 @@ class ActivityRecordingController extends ChangeNotifier {
   void dispose() {
     _isDisposed = true;
     unawaited(_stateSubscription.cancel());
+    unawaited(_tryDeleteTemporaryGpx());
     if (_ownsService) {
       _recordingService.dispose();
     }

@@ -69,6 +69,28 @@ void main() {
       await platform.close();
     });
 
+    test('surfaces position stream errors without throwing', () async {
+      final platform = FakeLocationPlatformAdapter(
+        currentPosition: testPosition(latitude: 41.1, longitude: -8.6),
+      );
+      final controller = MapStateController(
+        locationService: LocationService(platformAdapter: platform),
+        mapSettingsRepository: MapSettingsRepository(
+          storage: SecureStorageService(),
+        ),
+      );
+
+      await controller.initialize();
+      platform.addPositionError(StateError('stream stopped'));
+      await pumpEventQueue();
+
+      expect(controller.hasLocationError, isTrue);
+      expect(controller.hasLocationPermission, isFalse);
+      expect(controller.isLoadingLocation, isFalse);
+      controller.dispose();
+      await platform.close();
+    });
+
     test('toggles and unlocks location lock', () {
       final controller = MapStateController(
         locationService: LocationService(

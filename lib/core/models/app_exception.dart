@@ -1,4 +1,6 @@
 enum AppErrorCode {
+  activityGpxCleanupFailed,
+  activityGpxFileWriteFailed,
   activityUploadFailed,
   activityUploadNotConfigured,
   fetchIdentityProvidersFailed,

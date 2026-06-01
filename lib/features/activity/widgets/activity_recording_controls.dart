@@ -120,8 +120,8 @@ class ActivityRecordingControls extends StatelessWidget {
                           ),
                           if (state.lastErrorKey ==
                               ActivityRecordingErrorKeys
-                                  .backgroundPermissionRequired) ...[
-                          ],
+                                  .backgroundPermissionRequired)
+                            ...[],
                           if (state.lastErrorKey ==
                                   ActivityRecordingErrorKeys
                                       .locationPermissionDeniedForever ||
@@ -245,6 +245,8 @@ class ActivityRecordingControls extends StatelessWidget {
 
     return switch (state.lastErrorKey) {
       ActivityRecordingErrorKeys.emptyRecording => l10n.activityRecordingEmpty,
+      ActivityRecordingErrorKeys.gpxGenerationFailed =>
+        l10n.activityGpxGenerationFailed,
       ActivityRecordingErrorKeys.locationPermissionDenied =>
         l10n.activityLocationPermissionDenied,
       ActivityRecordingErrorKeys.locationPermissionDeniedForever =>
@@ -299,7 +301,6 @@ class _IdleStartControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return SizedBox(
       width: double.infinity,
       child: Column(

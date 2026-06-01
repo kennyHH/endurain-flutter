@@ -158,6 +158,18 @@ abstract class AppLocalizations {
   /// **'Activity upload is not configured yet'**
   String get errorActivityUploadNotConfigured;
 
+  /// Activity GPX temporary file cleanup error without exposing file paths - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete the temporary activity file'**
+  String get errorActivityGpxCleanupFailed;
+
+  /// Activity GPX temporary file write error without exposing file paths - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not prepare the activity upload file'**
+  String get errorActivityGpxFileWriteFailed;
+
   /// Generic identity provider loading error - Used in: error_localizations.dart
   ///
   /// In en, this message translates to:
@@ -500,6 +512,12 @@ abstract class AppLocalizations {
   /// **'Location updates stopped unexpectedly.'**
   String get activityLocationStreamFailed;
 
+  /// Recording error shown when GPX generation fails after stopping - Used in: activity_recording_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create the activity GPX file.'**
+  String get activityGpxGenerationFailed;
+
   /// Button label to open app settings for location permission - Used in: activity_recording_controls.dart
   ///
   /// In en, this message translates to:
@@ -679,6 +697,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Upload failed'**
   String get activityUploadFailed;
+
+  /// Activity upload status shown when the server upload succeeded but temporary GPX cleanup failed - Used in: activity_upload_status_panel.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Uploaded, but cleanup failed'**
+  String get activityUploadCleanupFailed;
 
   /// Activity upload pending status label - Used in: activity_upload_status_panel.dart
   ///

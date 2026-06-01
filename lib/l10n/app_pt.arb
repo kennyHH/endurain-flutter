@@ -49,6 +49,14 @@
   "@errorActivityUploadNotConfigured": {
     "description": "Envio de atividade bloqueado porque endpoint e campo multipart não estão configurados - Usado em: error_localizations.dart"
   },
+  "errorActivityGpxCleanupFailed": "Não foi possível apagar o ficheiro temporário da atividade",
+  "@errorActivityGpxCleanupFailed": {
+    "description": "Erro ao limpar ficheiro GPX temporário da atividade sem expor caminhos de ficheiros - Usado em: error_localizations.dart"
+  },
+  "errorActivityGpxFileWriteFailed": "Não foi possível preparar o ficheiro de envio da atividade",
+  "@errorActivityGpxFileWriteFailed": {
+    "description": "Erro ao escrever ficheiro GPX temporário da atividade sem expor caminhos de ficheiros - Usado em: error_localizations.dart"
+  },
   "errorFetchIdentityProvidersFailed": "Não foi possível carregar os provedores de identidade",
   "@errorFetchIdentityProvidersFailed": {
     "description": "Erro genérico ao carregar provedores de identidade - Usado em: error_localizations.dart"
@@ -351,6 +359,10 @@
   "@activityLocationStreamFailed": {
     "description": "Erro de gravação exibido quando o stream GPS falha - Usado em: activity_recording_controls.dart"
   },
+  "activityGpxGenerationFailed": "Não foi possível criar o ficheiro GPX da atividade.",
+  "@activityGpxGenerationFailed": {
+    "description": "Erro exibido quando a geração do GPX falha depois de parar - Usado em: activity_recording_controls.dart"
+  },
   "activityOpenSettings": "Abrir definições",
   "@activityOpenSettings": {
     "description": "Rótulo do botão para abrir definições da app para permissão de localização - Usado em: activity_recording_controls.dart"
@@ -470,6 +482,10 @@
   "activityUploadFailed": "Falha no envio",
   "@activityUploadFailed": {
     "description": "Estado de falha no envio de atividade - Usado em: activity_upload_status_panel.dart"
+  },
+  "activityUploadCleanupFailed": "Enviado, mas a limpeza falhou",
+  "@activityUploadCleanupFailed": {
+    "description": "Estado exibido quando o envio para o servidor foi concluído mas a limpeza do GPX temporário falhou - Usado em: activity_upload_status_panel.dart"
   },
   "activityUploadReady": "Pronto para enviar",
   "@activityUploadReady": {

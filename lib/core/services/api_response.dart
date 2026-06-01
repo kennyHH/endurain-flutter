@@ -29,6 +29,33 @@ class ApiResponse {
     return AppException(code, details: errorDetail(response));
   }
 
+  static String requiredString(Map<String, dynamic> data, String key) {
+    final value = data[key];
+    if (value is String && value.trim().isNotEmpty) {
+      return value;
+    }
+    throw const AppException(AppErrorCode.unexpectedResponseFormat);
+  }
+
+  static String? optionalString(Map<String, dynamic> data, String key) {
+    final value = data[key];
+    if (value == null) {
+      return null;
+    }
+    if (value is String && value.trim().isNotEmpty) {
+      return value;
+    }
+    throw const AppException(AppErrorCode.unexpectedResponseFormat);
+  }
+
+  static int requiredPositiveInt(Map<String, dynamic> data, String key) {
+    final value = data[key];
+    if (value is int && value > 0) {
+      return value;
+    }
+    throw const AppException(AppErrorCode.unexpectedResponseFormat);
+  }
+
   static String? errorDetail(http.Response response) {
     if (response.body.trim().isEmpty) {
       return null;

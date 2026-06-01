@@ -94,7 +94,7 @@ class AuthService {
         }
 
         // PKCE flow returns session_id for token exchange
-        final sessionId = data['session_id'] as String?;
+        final sessionId = ApiResponse.optionalString(data, 'session_id');
 
         if (sessionId != null) {
           // Exchange session for tokens
@@ -144,7 +144,7 @@ class AuthService {
         final data = ApiResponse.decodeJsonObject(response);
 
         // PKCE flow returns session_id for token exchange
-        final sessionId = data['session_id'] as String?;
+        final sessionId = ApiResponse.optionalString(data, 'session_id');
 
         if (sessionId != null) {
           // Exchange session for tokens
@@ -199,10 +199,13 @@ class AuthService {
         final data = ApiResponse.decodeJsonObject(response);
 
         // Store tokens
-        final accessToken = data['access_token'] as String?;
-        final refreshToken = data['refresh_token'] as String?;
-        final returnedSessionId = data['session_id'] as String?;
-        final expiresIn = data['expires_in'] as int?;
+        final accessToken = ApiResponse.requiredString(data, 'access_token');
+        final refreshToken = ApiResponse.requiredString(data, 'refresh_token');
+        final returnedSessionId = ApiResponse.requiredString(
+          data,
+          'session_id',
+        );
+        final expiresIn = ApiResponse.requiredPositiveInt(data, 'expires_in');
 
         await _sessionStore.saveSession(
           accessToken: accessToken,
@@ -251,10 +254,16 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final data = ApiResponse.decodeJsonObject(response);
-        final newAccessToken = data['access_token'] as String?;
-        final newRefreshToken = data['refresh_token'] as String?;
-        final returnedSessionId = data['session_id'] as String?;
-        final expiresIn = data['expires_in'] as int?;
+        final newAccessToken = ApiResponse.requiredString(data, 'access_token');
+        final newRefreshToken = ApiResponse.requiredString(
+          data,
+          'refresh_token',
+        );
+        final returnedSessionId = ApiResponse.requiredString(
+          data,
+          'session_id',
+        );
+        final expiresIn = ApiResponse.requiredPositiveInt(data, 'expires_in');
 
         await _sessionStore.saveSession(
           accessToken: newAccessToken,

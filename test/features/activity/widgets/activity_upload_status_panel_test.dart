@@ -76,6 +76,35 @@ void main() {
       expect(retried, isTrue);
       expect(discarded, isTrue);
     });
+
+    testWidgets('shows cleanup failure without retry action', (tester) async {
+      var discarded = false;
+
+      await tester.pumpWidget(
+        _TestApp(
+          child: ActivityUploadStatusPanel(
+            status: ActivityUploadStatus.cleanupFailed,
+            error: const AppException(AppErrorCode.activityGpxCleanupFailed),
+            onRetry: () {},
+            onDiscard: () => discarded = true,
+          ),
+        ),
+      );
+
+      expect(
+        find.text(AppLocalizationsEn().activityUploadCleanupFailed),
+        findsOneWidget,
+      );
+      expect(
+        find.text(AppLocalizationsEn().errorActivityGpxCleanupFailed),
+        findsOneWidget,
+      );
+      expect(find.text(AppLocalizationsEn().activityRetryUpload), findsNothing);
+
+      await tester.tap(find.text(AppLocalizationsEn().activityDiscard));
+
+      expect(discarded, isTrue);
+    });
   });
 }
 

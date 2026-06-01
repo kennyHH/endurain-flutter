@@ -42,6 +42,14 @@ class AppLocalizationsPt extends AppLocalizations {
       'O envio de atividades ainda não está configurado';
 
   @override
+  String get errorActivityGpxCleanupFailed =>
+      'Não foi possível apagar o ficheiro temporário da atividade';
+
+  @override
+  String get errorActivityGpxFileWriteFailed =>
+      'Não foi possível preparar o ficheiro de envio da atividade';
+
+  @override
   String get errorFetchIdentityProvidersFailed =>
       'Não foi possível carregar os provedores de identidade';
 
@@ -256,6 +264,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'As atualizações de localização pararam inesperadamente.';
 
   @override
+  String get activityGpxGenerationFailed =>
+      'Não foi possível criar o ficheiro GPX da atividade.';
+
+  @override
   String get activityOpenSettings => 'Abrir definições';
 
   @override
@@ -351,6 +363,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get activityUploadFailed => 'Falha no envio';
+
+  @override
+  String get activityUploadCleanupFailed => 'Enviado, mas a limpeza falhou';
 
   @override
   String get activityUploadReady => 'Pronto para enviar';

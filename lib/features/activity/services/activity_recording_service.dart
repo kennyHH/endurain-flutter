@@ -14,6 +14,7 @@ class ActivityRecordingErrorKeys {
   static const String invalidTransition = 'activityRecordingInvalidTransition';
   static const String locationStreamFailed = 'activityLocationStreamFailed';
   static const String emptyRecording = 'activityRecordingEmpty';
+  static const String gpxGenerationFailed = 'activityGpxGenerationFailed';
   static const String locationServiceDisabled =
       'activityLocationServiceDisabled';
   static const String locationPermissionDenied =

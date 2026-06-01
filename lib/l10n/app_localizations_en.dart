@@ -42,6 +42,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Activity upload is not configured yet';
 
   @override
+  String get errorActivityGpxCleanupFailed =>
+      'Could not delete the temporary activity file';
+
+  @override
+  String get errorActivityGpxFileWriteFailed =>
+      'Could not prepare the activity upload file';
+
+  @override
   String get errorFetchIdentityProvidersFailed =>
       'Could not load identity providers';
 
@@ -249,6 +257,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Location updates stopped unexpectedly.';
 
   @override
+  String get activityGpxGenerationFailed =>
+      'Could not create the activity GPX file.';
+
+  @override
   String get activityOpenSettings => 'Open settings';
 
   @override
@@ -343,6 +355,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activityUploadFailed => 'Upload failed';
+
+  @override
+  String get activityUploadCleanupFailed => 'Uploaded, but cleanup failed';
 
   @override
   String get activityUploadReady => 'Ready to upload';

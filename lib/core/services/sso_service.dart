@@ -159,10 +159,13 @@ class SsoService {
         final data = ApiResponse.decodeJsonObject(response);
 
         // Store tokens
-        final accessToken = data['access_token'] as String?;
-        final refreshToken = data['refresh_token'] as String?;
-        final returnedSessionId = data['session_id'] as String?;
-        final expiresIn = data['expires_in'] as int?;
+        final accessToken = ApiResponse.requiredString(data, 'access_token');
+        final refreshToken = ApiResponse.requiredString(data, 'refresh_token');
+        final returnedSessionId = ApiResponse.requiredString(
+          data,
+          'session_id',
+        );
+        final expiresIn = ApiResponse.requiredPositiveInt(data, 'expires_in');
 
         await _sessionStore.saveSession(
           accessToken: accessToken,

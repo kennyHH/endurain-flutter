@@ -19,6 +19,9 @@ String _localizedAppException(AppException error, AppLocalizations l10n) {
   final details = error.details;
 
   return switch (error.code) {
+    AppErrorCode.activityGpxCleanupFailed => l10n.errorActivityGpxCleanupFailed,
+    AppErrorCode.activityGpxFileWriteFailed =>
+      l10n.errorActivityGpxFileWriteFailed,
     AppErrorCode.activityUploadFailed =>
       details == null
           ? l10n.errorActivityUploadFailed
