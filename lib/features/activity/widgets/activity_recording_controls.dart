@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:endurain/core/constants/map_constants.dart';
 import 'package:endurain/core/constants/ui_constants.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
@@ -16,8 +17,10 @@ import 'package:flutter/material.dart';
 
 class ActivityRecordingControls extends StatelessWidget {
   static const double _idleControlHeight = 56;
+  static const double _iosBottomOverlaySpacing =
+      LocationMarkerConstants.buttonOuterPadding;
 
-  static const double _bottomOverlaySpacing =
+  static const double _defaultBottomOverlaySpacing =
       UIConstants.tabBarHeight + UIConstants.paddingStandard;
 
   const ActivityRecordingControls({
@@ -56,9 +59,18 @@ class ActivityRecordingControls extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final controls = _buildControls(l10n);
     final errorMessage = _recordingErrorMessage(l10n);
+    final bottomOverlaySpacing = PlatformUtils.isApplePlatform
+        ? _iosBottomOverlaySpacing
+        : _defaultBottomOverlaySpacing;
+    final overlayColor = PlatformUtils.isApplePlatform
+        ? CupertinoDynamicColor.resolve(
+            CupertinoTheme.of(context).barBackgroundColor,
+            context,
+          )
+        : Theme.of(context).colorScheme.surface;
 
     return SafeArea(
-      minimum: const EdgeInsets.fromLTRB(12, 12, 12, _bottomOverlaySpacing),
+      minimum: EdgeInsets.fromLTRB(12, 12, 12, bottomOverlaySpacing),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final reserveTrailingSpace =
@@ -84,7 +96,7 @@ class ActivityRecordingControls extends StatelessWidget {
               ),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
+                  color: overlayColor,
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: const [
                     BoxShadow(
