@@ -379,14 +379,6 @@
   "@activityStart": {
     "description": "Rótulo e dica do botão de iniciar gravação - Usado em: activity_recording_controls.dart"
   },
-  "activityBackgroundTrackingHint": "A gravação continua enquanto a app fica em segundo plano no Android e em computadores.",
-  "@activityBackgroundTrackingHint": {
-    "description": "Dica mostrada antes de iniciar uma gravação em plataformas não Apple - Usado em: activity_recording_controls.dart"
-  },
-  "activityBackgroundPermissionHint": "O rastreamento em segundo plano no iPhone e iPad precisa de Localização definida como Sempre. Abra as definições antes de gravar se quiser um registo sem interrupções.",
-  "@activityBackgroundPermissionHint": {
-    "description": "Dica mostrada antes de gravar e depois de um erro de permissão de segundo plano em plataformas Apple - Usado em: activity_recording_controls.dart"
-  },
   "activityBackgroundPermissionTitle": "Permitir rastreamento em segundo plano?",
   "@activityBackgroundPermissionTitle": {
     "description": "Título do diálogo que explica por que a localização em segundo plano é necessária antes da gravação - Usado em: map_screen.dart"

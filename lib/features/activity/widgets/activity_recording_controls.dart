@@ -121,12 +121,6 @@ class ActivityRecordingControls extends StatelessWidget {
                           if (state.lastErrorKey ==
                               ActivityRecordingErrorKeys
                                   .backgroundPermissionRequired) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              l10n.activityBackgroundPermissionHint,
-                              style: Theme.of(context).textTheme.bodySmall,
-                              textAlign: TextAlign.center,
-                            ),
                           ],
                           if (state.lastErrorKey ==
                                   ActivityRecordingErrorKeys
@@ -305,9 +299,6 @@ class _IdleStartControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundHint = PlatformUtils.isApplePlatform
-        ? l10n.activityBackgroundPermissionHint
-        : l10n.activityBackgroundTrackingHint;
 
     return SizedBox(
       width: double.infinity,
@@ -333,12 +324,6 @@ class _IdleStartControls extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            backgroundHint,
-            style: Theme.of(context).textTheme.bodySmall,
-            textAlign: TextAlign.center,
           ),
         ],
       ),
