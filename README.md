@@ -58,10 +58,12 @@ The app is designed with privacy in mind, connecting directly to your self-hoste
 - Start, pause, resume, stop, and discard recording controls directly on the map
 - Live activity statistics for duration, distance, and speed
 - GPS track capture with elapsed-time tracking across pauses and resumes
+- Background location tracking while a recording is active, including Android foreground-service notification support
 - Location permission and disabled-location error handling, including app settings shortcut
 - Stop confirmation flow with discard option
 - GPX 1.1 generation from completed tracks
-- Upload status UI with retry/discard actions; upload transport is implemented behind configurable endpoint metadata and is not wired to a production API endpoint yet
+- Direct GPX upload to the Endurain activity import endpoint after a recording completes
+- Upload status UI with retry/discard actions for completed recordings
 
 ✅ **Settings**
 - Server configuration management
@@ -81,8 +83,8 @@ The app is designed with privacy in mind, connecting directly to your self-hoste
 ## Roadmap
 
 🚧 **Next Activity Milestones**
-- Wire GPX upload to the finalized Endurain server activity import endpoint
 - Add activity history and details views after recorded activity sync is available
+- Improve activity import feedback once the server exposes richer post-upload status and metadata
 - Expand activity statistics as server/mobile contracts mature
 
 See the [Activity Tracking MVP Plan](devdocs/activity_tracking_mvp_plan.md) for implementation notes and remaining activity work.
