@@ -41,7 +41,8 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   static const double _activityOverlayTrailingReservedWidth =
-      56 + LocationMarkerConstants.buttonOuterPadding * 2;
+      LocationMarkerConstants.buttonSize +
+      LocationMarkerConstants.buttonOuterPadding * 2;
 
   final MapController _mapController = MapController();
   late final MapStateController _controller;

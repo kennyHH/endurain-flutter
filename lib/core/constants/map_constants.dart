@@ -34,9 +34,9 @@ class LocationMarkerConstants {
   static const int markerBlue = 0xFF4285F4; // Google Blue
   static const double coneOpacity = 0.3;
 
-  // Button padding
+  // Floating map controls
+  static const double buttonSize = 56.0;
   static const double buttonOuterPadding = 16.0;
-  static const double buttonInnerPadding = 12.0;
 }
 
 /// Activity route visual constants

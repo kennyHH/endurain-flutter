@@ -17,8 +17,6 @@ import 'package:flutter/material.dart';
 
 class ActivityRecordingControls extends StatelessWidget {
   static const double _idleControlHeight = 56;
-  static const double _iosBottomOverlaySpacing =
-      LocationMarkerConstants.buttonOuterPadding;
 
   static const double _defaultBottomOverlaySpacing =
       UIConstants.tabBarHeight + UIConstants.paddingStandard;
@@ -59,120 +57,143 @@ class ActivityRecordingControls extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final controls = _buildControls(l10n);
     final errorMessage = _recordingErrorMessage(l10n);
-    final bottomOverlaySpacing = PlatformUtils.isApplePlatform
-        ? _iosBottomOverlaySpacing
-        : _defaultBottomOverlaySpacing;
-    final overlayColor = PlatformUtils.isApplePlatform
+    final isApplePlatform = PlatformUtils.isApplePlatform;
+    final overlayColor = isApplePlatform
         ? CupertinoDynamicColor.resolve(
             CupertinoTheme.of(context).barBackgroundColor,
             context,
           )
         : Theme.of(context).colorScheme.surface;
 
-    return SafeArea(
-      minimum: EdgeInsets.fromLTRB(12, 12, 12, bottomOverlaySpacing),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final reserveTrailingSpace =
-              trailingReservedWidth > 0 && constraints.maxWidth < 480;
-          final availableWidth = reserveTrailingSpace
-              ? math.max(0.0, constraints.maxWidth - trailingReservedWidth)
-              : constraints.maxWidth;
-          final maxWidth = math.min(360.0, availableWidth);
-          final maxHeight = math.min(
-            360.0,
-            math.max(120.0, constraints.maxHeight),
-          );
+    final overlay = LayoutBuilder(
+      builder: (context, constraints) {
+        final reserveTrailingSpace =
+            trailingReservedWidth > 0 && constraints.maxWidth < 480;
+        final availableWidth = reserveTrailingSpace
+            ? math.max(0.0, constraints.maxWidth - trailingReservedWidth)
+            : constraints.maxWidth;
+        final maxWidth = math.min(360.0, availableWidth);
+        final maxHeight = math.min(
+          360.0,
+          math.max(120.0, constraints.maxHeight),
+        );
 
-          return Align(
-            alignment: reserveTrailingSpace
-                ? Alignment.bottomLeft
-                : Alignment.bottomCenter,
-            child: ConstrainedBox(
-              key: const ValueKey('activityRecordingControlsSurface'),
-              constraints: BoxConstraints(
-                maxWidth: maxWidth,
-                maxHeight: maxHeight,
+        return Align(
+          alignment: reserveTrailingSpace
+              ? Alignment.bottomLeft
+              : Alignment.bottomCenter,
+          child: ConstrainedBox(
+            key: const ValueKey('activityRecordingControlsSurface'),
+            constraints: BoxConstraints(
+              maxWidth: maxWidth,
+              maxHeight: maxHeight,
+            ),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: overlayColor,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: const [
+                  BoxShadow(
+                    blurRadius: 12,
+                    color: Color(0x33000000),
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: overlayColor,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: const [
-                    BoxShadow(
-                      blurRadius: 12,
-                      color: Color(0x33000000),
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (errorMessage != null) ...[
-                          Text(
-                            errorMessage,
-                            style: Theme.of(context).textTheme.bodySmall,
-                            textAlign: TextAlign.center,
-                          ),
-                          if (state.lastErrorKey ==
-                              ActivityRecordingErrorKeys
-                                  .backgroundPermissionRequired)
-                            ...[],
-                          if (state.lastErrorKey ==
-                                  ActivityRecordingErrorKeys
-                                      .locationPermissionDeniedForever ||
-                              state.lastErrorKey ==
-                                  ActivityRecordingErrorKeys
-                                      .backgroundPermissionRequired) ...[
-                            const SizedBox(height: 8),
-                            AdaptiveButton(
-                              label: l10n.activityOpenSettings,
-                              onPressed: onOpenLocationSettings,
-                              variant: AdaptiveButtonVariant.secondary,
-                              icon: const AdaptiveIcon(
-                                materialIcon: Icons.settings,
-                                cupertinoIcon: CupertinoIcons.settings,
-                                size: 20,
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: 8),
-                        ],
-                        ActivityStatsDisplay(state: state),
-                        if (state.isActive ||
-                            state.status == ActivityRecordingStatus.stopping ||
-                            state.status == ActivityRecordingStatus.completed)
-                          const SizedBox(height: 8),
-                        if (state.status ==
-                            ActivityRecordingStatus.completed) ...[
-                          ActivityUploadStatusPanel(
-                            status: uploadStatus,
-                            error: uploadError,
-                            onRetry: onRetryUpload,
-                            onDiscard: onDiscard,
-                          ),
-                          const SizedBox(height: 8),
-                        ],
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          runAlignment: WrapAlignment.center,
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: controls,
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (errorMessage != null) ...[
+                        Text(
+                          errorMessage,
+                          style: Theme.of(context).textTheme.bodySmall,
+                          textAlign: TextAlign.center,
                         ),
+                        if (state.lastErrorKey ==
+                            ActivityRecordingErrorKeys
+                                .backgroundPermissionRequired)
+                          ...[],
+                        if (state.lastErrorKey ==
+                                ActivityRecordingErrorKeys
+                                    .locationPermissionDeniedForever ||
+                            state.lastErrorKey ==
+                                ActivityRecordingErrorKeys
+                                    .backgroundPermissionRequired) ...[
+                          const SizedBox(height: 8),
+                          AdaptiveButton(
+                            label: l10n.activityOpenSettings,
+                            onPressed: onOpenLocationSettings,
+                            variant: AdaptiveButtonVariant.secondary,
+                            icon: const AdaptiveIcon(
+                              materialIcon: Icons.settings,
+                              cupertinoIcon: CupertinoIcons.settings,
+                              size: 20,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 8),
                       ],
-                    ),
+                      ActivityStatsDisplay(state: state),
+                      if (state.isActive ||
+                          state.status == ActivityRecordingStatus.stopping ||
+                          state.status == ActivityRecordingStatus.completed)
+                        const SizedBox(height: 8),
+                      if (state.status ==
+                          ActivityRecordingStatus.completed) ...[
+                        ActivityUploadStatusPanel(
+                          status: uploadStatus,
+                          error: uploadError,
+                          onRetry: onRetryUpload,
+                          onDiscard: onDiscard,
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        runAlignment: WrapAlignment.center,
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: controls,
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-          );
-        },
+          ),
+        );
+      },
+    );
+
+    // On Apple platforms the floating location button is positioned as
+    // SafeArea inset + buttonOuterPadding. Mirror that exact model here by
+    // consuming the inset with SafeArea and then adding the same padding, so
+    // the overlay's bottom edge lines up with the floating control on devices
+    // with a home indicator. SafeArea.minimum would instead apply
+    // max(inset, padding), which drifts apart once the inset exceeds the
+    // padding.
+    if (isApplePlatform) {
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(
+            LocationMarkerConstants.buttonOuterPadding,
+          ),
+          child: overlay,
+        ),
+      );
+    }
+
+    return SafeArea(
+      minimum: const EdgeInsets.fromLTRB(
+        12,
+        12,
+        12,
+        _defaultBottomOverlaySpacing,
       ),
+      child: overlay,
     );
   }
 

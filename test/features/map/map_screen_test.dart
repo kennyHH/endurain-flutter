@@ -10,6 +10,7 @@ import 'package:endurain/features/map/map_screen.dart';
 import 'package:endurain/features/map/map_settings_repository.dart';
 import 'package:endurain/features/map/map_state_controller.dart';
 import 'package:endurain/l10n/app_localizations_en.dart';
+import 'package:endurain/shared/adaptive/adaptive_floating_action_button.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -192,6 +193,57 @@ void main() {
       mapController.dispose();
       await platform.close();
     });
+
+    testWidgets(
+      'bottom-aligns the activity overlay with the iOS location button',
+      (tester) async {
+        debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+        PlatformUtils.debugIsApplePlatformOverride = true;
+        final platform = FakeLocationPlatformAdapter(
+          currentPosition: testPosition(latitude: 41.1579, longitude: -8.6291),
+        );
+        final mapController = await _mapController(platform);
+        final activityController = _activityController(platform);
+
+        await tester.pumpWidget(
+          _MapTestApp(
+            child: Builder(
+              builder: (context) => MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  padding: const EdgeInsets.only(bottom: 34),
+                  viewPadding: const EdgeInsets.only(bottom: 34),
+                ),
+                child: MapScreen(
+                  controller: mapController,
+                  activityController: activityController,
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final surfaceRect = tester.getRect(
+          find.byKey(const ValueKey('activityRecordingControlsSurface')),
+        );
+        final buttonRect = tester.getRect(
+          find.byType(AdaptiveFloatingActionButton),
+        );
+
+        // With a home-indicator inset the overlay and the floating control must
+        // share the same bottom edge instead of only matching when the inset is
+        // zero.
+        expect(buttonRect.bottom, greaterThan(0));
+        expect(surfaceRect.bottom, moreOrLessEquals(buttonRect.bottom));
+
+        debugDefaultTargetPlatformOverride = null;
+        PlatformUtils.debugIsApplePlatformOverride = false;
+
+        activityController.dispose();
+        mapController.dispose();
+        await platform.close();
+      },
+    );
   });
 }
 

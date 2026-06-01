@@ -20,12 +20,13 @@ class AdaptiveFloatingActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (PlatformUtils.isApplePlatform) {
-      return CupertinoButton.filled(
-        padding: const EdgeInsets.all(
-          LocationMarkerConstants.buttonInnerPadding,
+      return SizedBox.square(
+        dimension: LocationMarkerConstants.buttonSize,
+        child: CupertinoButton.filled(
+          padding: EdgeInsets.zero,
+          onPressed: onPressed,
+          child: Icon(cupertinoIcon, color: CupertinoColors.white, size: 28),
         ),
-        onPressed: onPressed,
-        child: Icon(cupertinoIcon, color: CupertinoColors.white),
       );
     }
 
