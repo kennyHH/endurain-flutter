@@ -270,6 +270,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityStart => 'Start';
 
   @override
+  String get activityTrackingNotificationTitle => 'Recording activity';
+
+  @override
+  String get activityTrackingNotificationText =>
+      'Endurain is tracking your location to record this activity.';
+
+  @override
   String get activityStatDistance => 'Distance';
 
   @override

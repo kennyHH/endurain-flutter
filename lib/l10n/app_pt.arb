@@ -379,6 +379,14 @@
   "@activityStart": {
     "description": "Rótulo e dica do botão de iniciar gravação - Usado em: activity_recording_controls.dart"
   },
+  "activityTrackingNotificationTitle": "A gravar atividade",
+  "@activityTrackingNotificationTitle": {
+    "description": "Título da notificação persistente exibida enquanto o rastreamento continua em segundo plano - Usado em: map_screen.dart"
+  },
+  "activityTrackingNotificationText": "O Endurain está a registar a sua localização para gravar esta atividade.",
+  "@activityTrackingNotificationText": {
+    "description": "Corpo da notificação persistente exibida enquanto o rastreamento continua em segundo plano - Usado em: map_screen.dart"
+  },
   "activityStatDistance": "Distância",
   "@activityStatDistance": {
     "description": "Rótulo da distância nas estatísticas da gravação - Usado em: activity_stats_display.dart"

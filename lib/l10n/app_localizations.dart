@@ -542,6 +542,18 @@ abstract class AppLocalizations {
   /// **'Start'**
   String get activityStart;
 
+  /// Title of the persistent notification shown while tracking continues in the background - Used in: map_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Recording activity'**
+  String get activityTrackingNotificationTitle;
+
+  /// Body of the persistent notification shown while tracking continues in the background - Used in: map_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Endurain is tracking your location to record this activity.'**
+  String get activityTrackingNotificationText;
+
   /// Recording stats distance label - Used in: activity_stats_display.dart
   ///
   /// In en, this message translates to:

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:endurain/core/models/app_exception.dart';
+import 'package:endurain/core/services/location_settings_builder.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_upload_state.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
@@ -42,6 +43,7 @@ class ActivityRecordingController extends ChangeNotifier {
   ActivityUploadStatus _uploadStatus = ActivityUploadStatus.idle;
   Object? _uploadError;
   Future<void>? _activeUpload;
+  BackgroundLocationConfig? _backgroundConfig;
 
   ActivityRecordingState get state => _state;
 
@@ -52,6 +54,12 @@ class ActivityRecordingController extends ChangeNotifier {
   ActivityUploadStatus get uploadStatus => _uploadStatus;
 
   Object? get uploadError => _uploadError;
+
+  /// Supplies the localized notification text used to keep location tracking
+  /// alive while the app is backgrounded during a recording.
+  void configureBackgroundTracking(BackgroundLocationConfig config) {
+    _backgroundConfig = config;
+  }
 
   void selectActivityType(ActivityType type) {
     if (_state.isActive || _state.status == ActivityRecordingStatus.stopping) {
@@ -69,7 +77,10 @@ class ActivityRecordingController extends ChangeNotifier {
     _completedGpx = null;
     _setUploadState(ActivityUploadStatus.idle);
     selectActivityType(type);
-    await _recordingService.start(activityType: _selectedActivityType);
+    await _recordingService.start(
+      activityType: _selectedActivityType,
+      backgroundConfig: _backgroundConfig,
+    );
     _setState(_recordingService.state);
   }
 

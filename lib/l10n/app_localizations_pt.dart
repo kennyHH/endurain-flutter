@@ -277,6 +277,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get activityStart => 'Iniciar';
 
   @override
+  String get activityTrackingNotificationTitle => 'A gravar atividade';
+
+  @override
+  String get activityTrackingNotificationText =>
+      'O Endurain está a registar a sua localização para gravar esta atividade.';
+
+  @override
   String get activityStatDistance => 'Distância';
 
   @override

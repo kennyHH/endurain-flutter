@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:endurain/core/services/location_platform_adapter.dart';
 import 'package:endurain/core/services/location_service.dart';
+import 'package:endurain/core/services/location_settings_builder.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
 import 'package:endurain/features/activity/services/activity_recording_service.dart';
@@ -29,6 +30,23 @@ void main() {
       expect(adapter.listenCount, 1);
     });
 
+    test('forwards background config to the location stream', () async {
+      final adapter = _FakeLocationPlatformAdapter();
+      final service = ActivityRecordingService(
+        locationService: LocationService(platformAdapter: adapter),
+      );
+      addTearDown(service.dispose);
+
+      await service.start(
+        activityType: ActivityType.run,
+        backgroundConfig: const BackgroundLocationConfig(
+          notificationTitle: 'Recording activity',
+          notificationText: 'Tracking your location.',
+        ),
+      );
+
+      expect(adapter.lastPositionStreamSettings, isA<AndroidSettings>());
+    });
     test('does not start when location services are disabled', () async {
       final adapter = _FakeLocationPlatformAdapter(serviceEnabled: false);
       final service = ActivityRecordingService(
@@ -312,6 +330,7 @@ class _FakeLocationPlatformAdapter implements LocationPlatformAdapter {
   int listenCount = 0;
   int cancelCount = 0;
   bool requestPermissionCalled = false;
+  LocationSettings? lastPositionStreamSettings;
 
   void addPosition(Position position) {
     _controllers.last.add(position);
@@ -337,6 +356,7 @@ class _FakeLocationPlatformAdapter implements LocationPlatformAdapter {
   Stream<Position> getPositionStream({
     required LocationSettings locationSettings,
   }) {
+    lastPositionStreamSettings = locationSettings;
     final controller = StreamController<Position>(
       onListen: () => listenCount += 1,
       onCancel: () => cancelCount += 1,

@@ -379,6 +379,14 @@
   "@activityStart": {
     "description": "Start recording button label and tooltip - Used in: activity_recording_controls.dart"
   },
+  "activityTrackingNotificationTitle": "Recording activity",
+  "@activityTrackingNotificationTitle": {
+    "description": "Title of the persistent notification shown while tracking continues in the background - Used in: map_screen.dart"
+  },
+  "activityTrackingNotificationText": "Endurain is tracking your location to record this activity.",
+  "@activityTrackingNotificationText": {
+    "description": "Body of the persistent notification shown while tracking continues in the background - Used in: map_screen.dart"
+  },
   "activityStatDistance": "Distance",
   "@activityStatDistance": {
     "description": "Recording stats distance label - Used in: activity_stats_display.dart"

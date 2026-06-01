@@ -41,6 +41,10 @@
 	<string>This app uses location to show your position on the map and record activities while you are using the app.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app uses location to show your position on the map and record activities while you are using the app.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

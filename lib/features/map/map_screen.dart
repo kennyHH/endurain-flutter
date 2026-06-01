@@ -6,6 +6,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:endurain/core/services/app_scope.dart';
 import 'package:endurain/core/services/location_service.dart';
+import 'package:endurain/core/services/location_settings_builder.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/map_constants.dart';
 import 'package:endurain/features/activity/controllers/activity_recording_controller.dart';
@@ -220,6 +221,12 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    _activityController.configureBackgroundTracking(
+      BackgroundLocationConfig(
+        notificationTitle: l10n.activityTrackingNotificationTitle,
+        notificationText: l10n.activityTrackingNotificationText,
+      ),
+    );
 
     return AdaptiveScaffold(
       safeArea: false,

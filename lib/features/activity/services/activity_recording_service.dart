@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:endurain/core/services/location_service.dart';
+import 'package:endurain/core/services/location_settings_builder.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_track_point.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
@@ -38,12 +39,16 @@ class ActivityRecordingService {
   DateTime? _recordingSegmentStartedAt;
   int _elapsedBeforeCurrentSegmentSeconds = 0;
   bool _isDisposed = false;
+  BackgroundLocationConfig? _backgroundConfig;
 
   ActivityRecordingState get state => _state;
 
   Stream<ActivityRecordingState> get stateStream => _stateController.stream;
 
-  Future<void> start({required ActivityType activityType}) async {
+  Future<void> start({
+    required ActivityType activityType,
+    BackgroundLocationConfig? backgroundConfig,
+  }) async {
     _ensureNotDisposed();
     if (_state.isActive || _state.status == ActivityRecordingStatus.stopping) {
       return;
@@ -60,7 +65,7 @@ class ActivityRecordingService {
       );
       return;
     }
-
+    _backgroundConfig = backgroundConfig;
     final startedAt = _now();
     _recordingSegmentStartedAt = startedAt;
     _elapsedBeforeCurrentSegmentSeconds = 0;
@@ -161,6 +166,7 @@ class ActivityRecordingService {
     _cancelElapsedTimer();
     _recordingSegmentStartedAt = null;
     _elapsedBeforeCurrentSegmentSeconds = 0;
+    _backgroundConfig = null;
     await _cancelPositionSubscription();
     _emit(ActivityRecordingState());
   }
@@ -211,10 +217,9 @@ class ActivityRecordingService {
     }
 
     try {
-      _positionSubscription = _locationService.getPositionStream().listen(
-        _recordPosition,
-        onError: _handlePositionError,
-      );
+      _positionSubscription = _locationService
+          .getPositionStream(background: _backgroundConfig)
+          .listen(_recordPosition, onError: _handlePositionError);
     } catch (_) {
       _fail(ActivityRecordingErrorKeys.locationStreamFailed);
     }

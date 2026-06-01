@@ -1,5 +1,6 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:endurain/core/services/location_platform_adapter.dart';
+import 'package:endurain/core/services/location_settings_builder.dart';
 
 class LocationService {
   LocationService({LocationPlatformAdapter? platformAdapter})
@@ -59,12 +60,13 @@ class LocationService {
   }
 
   /// Get position stream for continuous tracking
-  Stream<Position> getPositionStream() {
+  ///
+  /// Pass [background] to keep receiving updates while the app is backgrounded
+  /// (e.g. during an activity recording). When omitted, foreground-only
+  /// settings are used.
+  Stream<Position> getPositionStream({BackgroundLocationConfig? background}) {
     return _platformAdapter.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
-      ),
+      locationSettings: buildLocationSettings(background: background),
     );
   }
 
