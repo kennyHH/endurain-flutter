@@ -240,12 +240,15 @@ class _RawReportSection extends StatelessWidget {
       fontFamily: 'monospace',
       fontSize: 12,
     );
+    final contentPadding = PlatformUtils.isApplePlatform
+        ? const EdgeInsets.symmetric(vertical: UIConstants.paddingStandard)
+        : const EdgeInsets.all(UIConstants.paddingStandard);
 
     return AdaptiveListSection(
       header: l10n.diagnosticsRawReport,
       children: [
         Padding(
-          padding: const EdgeInsets.all(UIConstants.paddingStandard),
+          padding: contentPadding,
           child: SelectableText(report, style: textStyle),
         ),
       ],

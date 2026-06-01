@@ -23,6 +23,7 @@
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
 - [SSO/OAuth Callback](#ssooauth-callback)
+- [Local Diagnostics](#local-diagnostics)
 - [Development Workflow](#development-workflow)
 - [Building from Source](#building-from-source)
 - [Project Structure](#project-structure)
@@ -69,6 +70,7 @@ The app is designed with privacy in mind, connecting directly to your self-hoste
 - Server configuration management
 - Map tile server customization
 - Logged-in server and username summary
+- Local diagnostics view with privacy-filtered crash context, recording breadcrumbs, copy, and clear actions
 - Session management with server-side logout attempt and secure local cleanup
 - App version display
 
@@ -102,6 +104,7 @@ See the [Activity Tracking MVP Plan](devdocs/activity_tracking_mvp_plan.md) for 
 - **HTTP Client:** `http` package for Endurain API communication and multipart uploads
 - **SSO/OAuth:** `app_links` for deep-link callbacks, `url_launcher` for system browser OAuth flow, `flutter_svg` for provider icons
 - **App Metadata:** `package_info_plus`
+- **Local App Files:** `path_provider` for private app-support diagnostics storage
 - **Security:** `crypto` package for PKCE challenge generation
 - **Localization:** Flutter gen-l10n from ARB files with English and Portuguese locales
 - **Quality:** `flutter_lints` with strict casts, strict inference, strict raw types, and additional lint rules
@@ -163,6 +166,14 @@ endurain://auth/sso/callback?session_id=...
 ```
 
 Register this callback URL in the Endurain server or identity provider configuration used for mobile SSO.
+
+## Local Diagnostics
+
+The app keeps a local diagnostics report to help investigate field issues when a tethered Flutter or Xcode console is not available. Open **Settings > Diagnostics** after relaunching the app to review recent events, captured Flutter/Dart errors, and the raw privacy-filtered report.
+
+Diagnostics are stored only in the app's private support directory and are never uploaded automatically. The report keeps high-level lifecycle context such as app startup, activity recording start/pause/resume/stop, failure reasons, point-count milestones, and catchable Flutter/Dart errors. It intentionally avoids raw GPS coordinates and sanitizes token-like values, home/container paths, and coordinate-looking strings before saving.
+
+iOS `.ips` crash reports remain separate system-generated native crash reports. The local diagnostics report complements them by preserving app-side context from before the crash.
 
 ## Development Workflow
 
