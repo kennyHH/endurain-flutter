@@ -48,6 +48,10 @@ class ActivityRecordingService {
 
   Stream<ActivityRecordingState> get stateStream => _stateController.stream;
 
+  void configureBackgroundTracking(BackgroundLocationConfig config) {
+    _backgroundConfig = config;
+  }
+
   Future<void> start({
     required ActivityType activityType,
     BackgroundLocationConfig? backgroundConfig,
@@ -96,6 +100,24 @@ class ActivityRecordingService {
 
   Future<bool> openAppSettings() {
     return _locationService.openAppSettings();
+  }
+
+  Future<bool> isBackgroundTrackingReady() async {
+    return await _backgroundTrackingErrorKey() == null;
+  }
+
+  Future<bool> requestBackgroundTrackingPermission() async {
+    if (!_requiresAppleBackgroundPermission) {
+      return true;
+    }
+
+    var permission = await _locationService.checkPermission();
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.unableToDetermine) {
+      permission = await _locationService.requestPermission();
+    }
+
+    return permission == LocationPermission.always;
   }
 
   Future<void> pause() async {
@@ -278,8 +300,7 @@ class ActivityRecordingService {
   }
 
   Future<String?> _backgroundTrackingErrorKey() async {
-    if (_backgroundConfig == null ||
-        defaultTargetPlatform != TargetPlatform.iOS) {
+    if (!_requiresAppleBackgroundPermission) {
       return null;
     }
 
@@ -287,6 +308,11 @@ class ActivityRecordingService {
     return permission == LocationPermission.always
         ? null
         : ActivityRecordingErrorKeys.backgroundPermissionRequired;
+  }
+
+  bool get _requiresAppleBackgroundPermission {
+    return _backgroundConfig != null &&
+        defaultTargetPlatform == TargetPlatform.iOS;
   }
 
   void _failInvalidTransition() {

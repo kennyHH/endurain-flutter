@@ -2,15 +2,18 @@ import 'package:endurain/core/services/location_service.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/features/activity/controllers/activity_recording_controller.dart';
+import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/services/activity_recording_service.dart';
 import 'package:endurain/features/activity/services/activity_upload_service.dart';
 import 'package:endurain/features/map/map_screen.dart';
 import 'package:endurain/features/map/map_settings_repository.dart';
 import 'package:endurain/features/map/map_state_controller.dart';
 import 'package:endurain/l10n/app_localizations_en.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../helpers/fake_location_platform_adapter.dart';
 import '../../helpers/widget_test_app.dart';
@@ -21,11 +24,15 @@ void main() {
   final l10n = AppLocalizationsEn();
 
   setUp(() {
+    debugDefaultTargetPlatformOverride = null;
     PlatformUtils.debugIsApplePlatformOverride = false;
     FlutterSecureStorage.setMockInitialValues(<String, String>{});
   });
 
-  tearDown(PlatformUtils.debugResetOverrides);
+  tearDown(() {
+    debugDefaultTargetPlatformOverride = null;
+    PlatformUtils.debugResetOverrides();
+  });
 
   group('MapScreen', () {
     testWidgets('renders map controls and toggles location lock', (
@@ -93,6 +100,56 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(CircularProgressIndicator), findsNothing);
+
+      activityController.dispose();
+      mapController.dispose();
+      await platform.close();
+    });
+
+    testWidgets('explains iOS background permission before recording', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      PlatformUtils.debugIsApplePlatformOverride = true;
+      final platform = FakeLocationPlatformAdapter(
+        currentPosition: testPosition(latitude: 41.1579, longitude: -8.6291),
+        permission: LocationPermission.whileInUse,
+      );
+      final mapController = await _mapController(platform);
+      final activityController = _activityController(platform);
+
+      await tester.pumpWidget(
+        _MapTestApp(
+          child: MapScreen(
+            controller: mapController,
+            activityController: activityController,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip(l10n.activityStart));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.activityBackgroundPermissionTitle), findsOneWidget);
+      expect(activityController.state.status, ActivityRecordingStatus.idle);
+
+      await tester.tap(find.text(l10n.activityBackgroundPermissionContinue));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(l10n.activityBackgroundPermissionSettingsTitle),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text(l10n.activityOpenSettings));
+      await tester.pumpAndSettle();
+
+      expect(platform.openAppSettingsCallCount, 1);
+      expect(activityController.state.status, ActivityRecordingStatus.idle);
+
+      debugDefaultTargetPlatformOverride = null;
+      PlatformUtils.debugIsApplePlatformOverride = false;
 
       activityController.dispose();
       mapController.dispose();

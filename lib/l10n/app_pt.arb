@@ -387,9 +387,29 @@
   "@activityBackgroundPermissionHint": {
     "description": "Dica mostrada antes de gravar e depois de um erro de permissão de segundo plano em plataformas Apple - Usado em: activity_recording_controls.dart"
   },
+  "activityBackgroundPermissionTitle": "Permitir rastreamento em segundo plano?",
+  "@activityBackgroundPermissionTitle": {
+    "description": "Título do diálogo que explica por que a localização em segundo plano é necessária antes da gravação - Usado em: map_screen.dart"
+  },
+  "activityBackgroundPermissionMessage": "O Endurain precisa da localização em segundo plano definida como Sempre para continuar a gravar quando a app fica em segundo plano, o ecrã está bloqueado ou muda para outra app.",
+  "@activityBackgroundPermissionMessage": {
+    "description": "Mensagem do diálogo que explica por que a localização em segundo plano é necessária antes da gravação - Usado em: map_screen.dart"
+  },
+  "activityBackgroundPermissionContinue": "Continuar",
+  "@activityBackgroundPermissionContinue": {
+    "description": "Ação do diálogo para continuar com o pedido de permissão de localização em segundo plano - Usado em: map_screen.dart"
+  },
   "activityBackgroundPermissionRequired": "O rastreamento em segundo plano no iPhone e iPad precisa de Localização definida como Sempre.",
   "@activityBackgroundPermissionRequired": {
     "description": "Erro mostrado quando a permissão Apple de segundo plano não é suficiente para um rastreamento contínuo - Usado em: activity_recording_controls.dart"
+  },
+  "activityBackgroundPermissionSettingsTitle": "Rastreamento em segundo plano desativado",
+  "@activityBackgroundPermissionSettingsTitle": {
+    "description": "Título do diálogo mostrado quando o utilizador precisa de abrir as definições para ativar a localização Sempre - Usado em: map_screen.dart"
+  },
+  "activityBackgroundPermissionSettingsMessage": "Para gravar de forma fiável em segundo plano ou com o ecrã bloqueado, abra as Definições e defina a Localização como Sempre para o Endurain.",
+  "@activityBackgroundPermissionSettingsMessage": {
+    "description": "Mensagem do diálogo mostrada quando o utilizador precisa de abrir as definições para ativar a localização Sempre - Usado em: map_screen.dart"
   },
   "activityTrackingNotificationTitle": "A gravar atividade",
   "@activityTrackingNotificationTitle": {

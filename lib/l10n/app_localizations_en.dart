@@ -278,8 +278,26 @@ class AppLocalizationsEn extends AppLocalizations {
       'Background tracking on iPhone and iPad needs Location set to Always. Open settings before you record if you want uninterrupted tracking.';
 
   @override
+  String get activityBackgroundPermissionTitle => 'Allow background tracking?';
+
+  @override
+  String get activityBackgroundPermissionMessage =>
+      'Endurain needs background location set to Always so recording continues when the app is in the background, the screen is locked, or you switch apps.';
+
+  @override
+  String get activityBackgroundPermissionContinue => 'Continue';
+
+  @override
   String get activityBackgroundPermissionRequired =>
       'Background tracking on iPhone and iPad needs Location set to Always.';
+
+  @override
+  String get activityBackgroundPermissionSettingsTitle =>
+      'Background tracking is off';
+
+  @override
+  String get activityBackgroundPermissionSettingsMessage =>
+      'To record reliably in the background or with the screen locked, open Settings and set Location to Always for Endurain.';
 
   @override
   String get activityTrackingNotificationTitle => 'Recording activity';

@@ -59,6 +59,7 @@ class ActivityRecordingController extends ChangeNotifier {
   /// alive while the app is backgrounded during a recording.
   void configureBackgroundTracking(BackgroundLocationConfig config) {
     _backgroundConfig = config;
+    _recordingService.configureBackgroundTracking(config);
   }
 
   void selectActivityType(ActivityType type) {
@@ -131,6 +132,14 @@ class ActivityRecordingController extends ChangeNotifier {
 
   Future<bool> openLocationSettings() {
     return _recordingService.openAppSettings();
+  }
+
+  Future<bool> isBackgroundTrackingReady() {
+    return _recordingService.isBackgroundTrackingReady();
+  }
+
+  Future<bool> requestBackgroundTrackingPermission() {
+    return _recordingService.requestBackgroundTrackingPermission();
   }
 
   Future<void> _uploadCompletedGpx() async {

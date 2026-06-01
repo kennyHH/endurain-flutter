@@ -36,6 +36,7 @@ class FakeLocationPlatformAdapter implements LocationPlatformAdapter {
   final bool serviceEnabled;
   final LocationPermission permission;
   final LocationPermission requestedPermission;
+  int openAppSettingsCallCount = 0;
   final _positionController = StreamController<Position>.broadcast();
   final _currentPositionCompleter = Completer<Position>();
 
@@ -87,6 +88,7 @@ class FakeLocationPlatformAdapter implements LocationPlatformAdapter {
 
   @override
   Future<bool> openAppSettings() async {
+    openAppSettingsCallCount += 1;
     return true;
   }
 

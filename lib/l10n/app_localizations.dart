@@ -554,11 +554,41 @@ abstract class AppLocalizations {
   /// **'Background tracking on iPhone and iPad needs Location set to Always. Open settings before you record if you want uninterrupted tracking.'**
   String get activityBackgroundPermissionHint;
 
+  /// Dialog title explaining why background location is required before recording - Used in: map_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Allow background tracking?'**
+  String get activityBackgroundPermissionTitle;
+
+  /// Dialog message explaining why background location is required before recording - Used in: map_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Endurain needs background location set to Always so recording continues when the app is in the background, the screen is locked, or you switch apps.'**
+  String get activityBackgroundPermissionMessage;
+
+  /// Dialog action to continue with the background location permission request - Used in: map_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get activityBackgroundPermissionContinue;
+
   /// Recording error shown when Apple background permission is not strong enough for uninterrupted tracking - Used in: activity_recording_controls.dart
   ///
   /// In en, this message translates to:
   /// **'Background tracking on iPhone and iPad needs Location set to Always.'**
   String get activityBackgroundPermissionRequired;
+
+  /// Dialog title shown when the user needs to open settings to enable Always location - Used in: map_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Background tracking is off'**
+  String get activityBackgroundPermissionSettingsTitle;
+
+  /// Dialog message shown when the user needs to open settings to enable Always location - Used in: map_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'To record reliably in the background or with the screen locked, open Settings and set Location to Always for Endurain.'**
+  String get activityBackgroundPermissionSettingsMessage;
 
   /// Title of the persistent notification shown while tracking continues in the background - Used in: map_screen.dart
   ///

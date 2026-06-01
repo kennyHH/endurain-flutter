@@ -387,9 +387,29 @@
   "@activityBackgroundPermissionHint": {
     "description": "Inline hint shown before recording and after a background-permission error on Apple platforms - Used in: activity_recording_controls.dart"
   },
+  "activityBackgroundPermissionTitle": "Allow background tracking?",
+  "@activityBackgroundPermissionTitle": {
+    "description": "Dialog title explaining why background location is required before recording - Used in: map_screen.dart"
+  },
+  "activityBackgroundPermissionMessage": "Endurain needs background location set to Always so recording continues when the app is in the background, the screen is locked, or you switch apps.",
+  "@activityBackgroundPermissionMessage": {
+    "description": "Dialog message explaining why background location is required before recording - Used in: map_screen.dart"
+  },
+  "activityBackgroundPermissionContinue": "Continue",
+  "@activityBackgroundPermissionContinue": {
+    "description": "Dialog action to continue with the background location permission request - Used in: map_screen.dart"
+  },
   "activityBackgroundPermissionRequired": "Background tracking on iPhone and iPad needs Location set to Always.",
   "@activityBackgroundPermissionRequired": {
     "description": "Recording error shown when Apple background permission is not strong enough for uninterrupted tracking - Used in: activity_recording_controls.dart"
+  },
+  "activityBackgroundPermissionSettingsTitle": "Background tracking is off",
+  "@activityBackgroundPermissionSettingsTitle": {
+    "description": "Dialog title shown when the user needs to open settings to enable Always location - Used in: map_screen.dart"
+  },
+  "activityBackgroundPermissionSettingsMessage": "To record reliably in the background or with the screen locked, open Settings and set Location to Always for Endurain.",
+  "@activityBackgroundPermissionSettingsMessage": {
+    "description": "Dialog message shown when the user needs to open settings to enable Always location - Used in: map_screen.dart"
   },
   "activityTrackingNotificationTitle": "Recording activity",
   "@activityTrackingNotificationTitle": {

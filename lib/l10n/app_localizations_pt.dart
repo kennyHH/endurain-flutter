@@ -285,8 +285,27 @@ class AppLocalizationsPt extends AppLocalizations {
       'O rastreamento em segundo plano no iPhone e iPad precisa de Localização definida como Sempre. Abra as definições antes de gravar se quiser um registo sem interrupções.';
 
   @override
+  String get activityBackgroundPermissionTitle =>
+      'Permitir rastreamento em segundo plano?';
+
+  @override
+  String get activityBackgroundPermissionMessage =>
+      'O Endurain precisa da localização em segundo plano definida como Sempre para continuar a gravar quando a app fica em segundo plano, o ecrã está bloqueado ou muda para outra app.';
+
+  @override
+  String get activityBackgroundPermissionContinue => 'Continuar';
+
+  @override
   String get activityBackgroundPermissionRequired =>
       'O rastreamento em segundo plano no iPhone e iPad precisa de Localização definida como Sempre.';
+
+  @override
+  String get activityBackgroundPermissionSettingsTitle =>
+      'Rastreamento em segundo plano desativado';
+
+  @override
+  String get activityBackgroundPermissionSettingsMessage =>
+      'Para gravar de forma fiável em segundo plano ou com o ecrã bloqueado, abra as Definições e defina a Localização como Sempre para o Endurain.';
 
   @override
   String get activityTrackingNotificationTitle => 'A gravar atividade';

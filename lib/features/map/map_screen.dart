@@ -9,7 +9,9 @@ import 'package:endurain/core/services/location_service.dart';
 import 'package:endurain/core/services/location_settings_builder.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/map_constants.dart';
+import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/features/activity/controllers/activity_recording_controller.dart';
+import 'package:endurain/features/activity/models/activity_type.dart';
 import 'package:endurain/features/activity/services/activity_recording_service.dart';
 import 'package:endurain/features/activity/services/activity_upload_service.dart';
 import 'package:endurain/features/activity/widgets/activity_recording_controls.dart';
@@ -49,6 +51,7 @@ class _MapScreenState extends State<MapScreen> {
   LatLng? _lastFollowedLocation;
   bool _centeredInitialLocation = false;
   bool _isStopConfirmationOpen = false;
+  bool _isBackgroundPermissionFlowOpen = false;
 
   @override
   void initState() {
@@ -180,6 +183,46 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  Future<void> _startActivity(ActivityType type) async {
+    if (_isBackgroundPermissionFlowOpen) {
+      return;
+    }
+
+    final backgroundTrackingReady = await _activityController
+        .isBackgroundTrackingReady();
+    if (!mounted) {
+      return;
+    }
+
+    if (!backgroundTrackingReady) {
+      _isBackgroundPermissionFlowOpen = true;
+      final shouldContinue = await _showBackgroundTrackingIntroDialog(context);
+      _isBackgroundPermissionFlowOpen = false;
+      if (!mounted || !shouldContinue) {
+        return;
+      }
+
+      final permissionReady = await _activityController
+          .requestBackgroundTrackingPermission();
+      if (!mounted) {
+        return;
+      }
+      if (!permissionReady) {
+        _isBackgroundPermissionFlowOpen = true;
+        final openSettings = await _showBackgroundTrackingSettingsDialog(
+          context,
+        );
+        _isBackgroundPermissionFlowOpen = false;
+        if (mounted && openSettings) {
+          await _activityController.openLocationSettings();
+        }
+        return;
+      }
+    }
+
+    await _activityController.start(type);
+  }
+
   /// Build map options with common configuration
   MapOptions _buildMapOptions() {
     return MapOptions(
@@ -244,7 +287,7 @@ class _MapScreenState extends State<MapScreen> {
             selectedActivityType: _activityController.selectedActivityType,
             trailingReservedWidth: _activityOverlayTrailingReservedWidth,
             onActivityTypeChanged: _activityController.selectActivityType,
-            onStart: _activityController.start,
+            onStart: _startActivity,
             onPause: _activityController.pause,
             onResume: _activityController.resume,
             onStop: _confirmStopActivity,
@@ -268,6 +311,92 @@ class _MapScreenState extends State<MapScreen> {
       ),
     );
   }
+}
+
+Future<bool> _showBackgroundTrackingIntroDialog(BuildContext context) async {
+  final l10n = AppLocalizations.of(context)!;
+  if (PlatformUtils.isApplePlatform) {
+    return await showCupertinoDialog<bool>(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: Text(l10n.activityBackgroundPermissionTitle),
+            content: Text(l10n.activityBackgroundPermissionMessage),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(l10n.cancel),
+              ),
+              CupertinoDialogAction(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(l10n.activityBackgroundPermissionContinue),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  return await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n.activityBackgroundPermissionTitle),
+          content: Text(l10n.activityBackgroundPermissionMessage),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l10n.activityBackgroundPermissionContinue),
+            ),
+          ],
+        ),
+      ) ??
+      false;
+}
+
+Future<bool> _showBackgroundTrackingSettingsDialog(BuildContext context) async {
+  final l10n = AppLocalizations.of(context)!;
+  if (PlatformUtils.isApplePlatform) {
+    return await showCupertinoDialog<bool>(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: Text(l10n.activityBackgroundPermissionSettingsTitle),
+            content: Text(l10n.activityBackgroundPermissionSettingsMessage),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(l10n.cancel),
+              ),
+              CupertinoDialogAction(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(l10n.activityOpenSettings),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  return await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n.activityBackgroundPermissionSettingsTitle),
+          content: Text(l10n.activityBackgroundPermissionSettingsMessage),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l10n.activityOpenSettings),
+            ),
+          ],
+        ),
+      ) ??
+      false;
 }
 
 /// Blue dot with white border and directional cone

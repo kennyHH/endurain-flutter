@@ -95,15 +95,40 @@ class ApiClient {
     }
 
     final url = Uri.parse('$serverUrl$endpoint');
-    return _uploadAdapter.uploadFile(
+    final headers = {
+      ApiConstants.authorizationHeader: 'Bearer $accessToken',
+      ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue,
+    };
+
+    http.StreamedResponse response = await _uploadAdapter.uploadFile(
       url: url,
-      headers: {
-        ApiConstants.authorizationHeader: 'Bearer $accessToken',
-        ApiConstants.clientTypeHeader: ApiConstants.clientTypeValue,
-      },
+      headers: headers,
       filePath: filePath,
       fieldName: fieldName,
     );
+
+    if (response.statusCode == 401) {
+      await response.stream.drain<void>();
+      final refreshed = await _authService.refreshToken();
+      if (!refreshed) {
+        throw const AppException(AppErrorCode.sessionExpired);
+      }
+
+      final newAccessToken = await _storage.getAccessToken();
+      if (newAccessToken == null || newAccessToken.isEmpty) {
+        throw const AppException(AppErrorCode.sessionExpired);
+      }
+
+      headers[ApiConstants.authorizationHeader] = 'Bearer $newAccessToken';
+      response = await _uploadAdapter.uploadFile(
+        url: url,
+        headers: headers,
+        filePath: filePath,
+        fieldName: fieldName,
+      );
+    }
+
+    return response;
   }
 
   /// Execute an HTTP request with the given method, URL, headers, and optional body
