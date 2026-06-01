@@ -19,11 +19,13 @@
 
 - [What is Endurain Mobile?](#what-is-endurain-mobile)
 - [Current Features](#current-features)
-- [Planned Features](#planned-features)
+- [Roadmap](#roadmap)
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
 - [SSO/OAuth Callback](#ssooauth-callback)
+- [Development Workflow](#development-workflow)
 - [Building from Source](#building-from-source)
+- [Project Structure](#project-structure)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -36,11 +38,12 @@ The app is designed with privacy in mind, connecting directly to your self-hoste
 ## Current Features
 
 ✅ **Authentication**
-- Secure login to your Endurain server
+- Secure login to your Endurain server with PKCE-backed token exchange
 - SSO/OAuth support with PKCE (Authentik, Keycloak, Authelia, PocketID, Casdoor, etc.)
 - Two-factor authentication (MFA) support
 - Auto-redirect for single SSO provider configurations
 - Server URL configuration with automatic settings detection
+- Access-token refresh and local session restoration
 
 ✅ **Map Integration**
 - Real-time location display on OpenStreetMap
@@ -50,41 +53,54 @@ The app is designed with privacy in mind, connecting directly to your self-hoste
 - Directional compass heading indicator
 - Platform-adaptive UI (Cupertino for iOS/macOS, Material for Android)
 
+✅ **Activity Recording**
+- Activity type selection for running, riding, walking, hiking, and other activities
+- Start, pause, resume, stop, and discard recording controls directly on the map
+- Live activity statistics for duration, distance, and speed
+- GPS track capture with elapsed-time tracking across pauses and resumes
+- Location permission and disabled-location error handling, including app settings shortcut
+- Stop confirmation flow with discard option
+- GPX 1.1 generation from completed tracks
+- Upload status UI with retry/discard actions; upload transport is implemented behind configurable endpoint metadata and is not wired to a production API endpoint yet
+
 ✅ **Settings**
 - Server configuration management
 - Map tile server customization
-- Session management with secure logout
+- Logged-in server and username summary
+- Session management with server-side logout attempt and secure local cleanup
+- App version display
 
 ✅ **User Experience**
 - Multi-language support (English, Portuguese)
 - Dark/light theme support
 - Secure local session storage
 - F-Droid compatible (100% FOSS dependencies)
+- Shared adaptive widget layer for Material and Cupertino controls
+- Local SSO provider icon assets with remote icon fallback
 
-## Planned Features
+## Roadmap
 
-🚧 **Activity Tracking** (Coming Soon)
-- Start/Stop button for recording activities
-- Activity type selection (running, cycling, walking, etc.)
-- Real-time GPS tracking during activities
-- Activity statistics (distance, duration, pace, elevation)
-- GPX file generation from recorded tracks
-- Automatic upload to Endurain server upon completion
-- Activity history and details view
+🚧 **Next Activity Milestones**
+- Wire GPX upload to the finalized Endurain server activity import endpoint
+- Add activity history and details views after recorded activity sync is available
+- Expand activity statistics as server/mobile contracts mature
 
-See the [Activity Tracking MVP Plan](devdocs/activity_tracking_mvp_plan.md) for the current implementation roadmap.
+See the [Activity Tracking MVP Plan](devdocs/activity_tracking_mvp_plan.md) for implementation notes and remaining activity work.
 
 ## Tech Stack
 
 - **Framework:** Flutter 3.38+ (Dart 3.10+)
 - **Platforms:** iOS, Android, macOS
-- **State Management:** setState (may evolve to Provider/Riverpod)
-- **Map Provider:** OpenStreetMap (flutter_map + latlong2)
-- **Location Services:** geolocator, including movement heading
-- **Secure Storage:** flutter_secure_storage
-- **HTTP Client:** http package for API communication
-- **SSO/OAuth:** app_links for deep-link callbacks, url_launcher for system browser OAuth flow, flutter_svg for provider icons
-- **Security:** crypto package for PKCE challenge generation
+- **State Management:** Stateful widgets plus focused `ChangeNotifier` controllers
+- **Map Provider:** OpenStreetMap with `flutter_map` 8.2.x and `latlong2`
+- **Location Services:** `geolocator` 14.x, including position streams and movement heading
+- **Secure Storage:** `flutter_secure_storage` 10.x
+- **HTTP Client:** `http` package for Endurain API communication and multipart uploads
+- **SSO/OAuth:** `app_links` for deep-link callbacks, `url_launcher` for system browser OAuth flow, `flutter_svg` for provider icons
+- **App Metadata:** `package_info_plus`
+- **Security:** `crypto` package for PKCE challenge generation
+- **Localization:** Flutter gen-l10n from ARB files with English and Portuguese locales
+- **Quality:** `flutter_lints` with strict casts, strict inference, strict raw types, and additional lint rules
 
 **All dependencies are open-source (FOSS) to ensure F-Droid compatibility.**
 
@@ -144,6 +160,36 @@ endurain://auth/sso/callback?session_id=...
 
 Register this callback URL in the Endurain server or identity provider configuration used for mobile SSO.
 
+## Development Workflow
+
+Run static analysis:
+
+```bash
+flutter analyze
+```
+
+Run tests:
+
+```bash
+flutter test
+```
+
+Collect coverage and check a minimum line coverage threshold:
+
+```bash
+flutter test --coverage
+dart run tool/check_coverage.dart --min-line-coverage 75 \
+  --exclude "lib/l10n/app_localizations*.dart"
+```
+
+Regenerate localization classes after changing ARB files:
+
+```bash
+flutter gen-l10n
+```
+
+Localization source files live in `lib/l10n/app_en.arb` and `lib/l10n/app_pt.arb`. Every ARB entry must include resource attributes because `l10n.yaml` enables `required-resource-attributes`.
+
 ## Building from Source
 
 ### iOS
@@ -173,17 +219,29 @@ lib/
 ├── main.dart                 # App entry point
 ├── app.dart                  # Root app widget
 ├── core/
-│   ├── constants/           # App-wide constants (API, UI, Map)
-│   ├── services/            # Business logic services
-│   ├── theme/               # Theme configuration
-│   └── utils/               # Utility functions (validators, dialogs, platform)
+│   ├── constants/            # App-wide constants (API, UI, map)
+│   ├── models/               # Shared app models and exception types
+│   ├── navigation/           # Route names
+│   ├── services/             # API, auth, storage, links, location, package info
+│   ├── theme/                # Theme configuration and tokens
+│   └── utils/                # Validators, dialogs, error localization, platform helpers
 ├── features/
-│   ├── auth/                # Authentication screens
-│   ├── map/                 # Map screen and location features
-│   └── settings/            # Settings screens
+│   ├── activity/             # Recording controllers, models, services, and widgets
+│   ├── auth/                 # Login, MFA, SSO, and session controllers
+│   ├── map/                  # Map screen, map settings, and location state
+│   └── settings/             # Settings and server configuration screens
 ├── shared/
-│   └── widgets/             # Shared UI components
-└── l10n/                    # Localization files (en, pt)
+│   ├── adaptive/             # Material/Cupertino adaptive components
+│   └── widgets/              # Shared app widgets
+└── l10n/                     # ARB files and generated localizations
+test/
+├── core/                     # Unit tests for services, models, and utilities
+├── features/                 # Feature unit and widget tests
+├── shared/                   # Adaptive widget tests
+├── helpers/                  # Test fakes and widget harnesses
+└── tool/                     # Tooling tests, including coverage checker tests
+tool/
+└── check_coverage.dart       # LCOV coverage threshold utility
 ```
 
 ## Contributing
