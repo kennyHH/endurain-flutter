@@ -16,7 +16,16 @@ void main() {
       expect(settings, isNot(isA<AndroidSettings>()));
       expect(settings, isNot(isA<AppleSettings>()));
       expect(settings.accuracy, LocationAccuracy.high);
-      expect(settings.distanceFilter, 10);
+      expect(settings.distanceFilter, LocationDistanceFilters.mapMeters);
+    });
+
+    test('allows callers to tune distance filter for recording', () {
+      final settings = buildLocationSettings(
+        distanceFilter: LocationDistanceFilters.recordingMeters,
+        platform: TargetPlatform.android,
+      );
+
+      expect(settings.distanceFilter, LocationDistanceFilters.recordingMeters);
     });
 
     test('builds Android foreground service settings for background', () {

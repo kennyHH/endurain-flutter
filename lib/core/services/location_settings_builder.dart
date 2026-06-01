@@ -1,6 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
+class LocationDistanceFilters {
+  const LocationDistanceFilters._();
+
+  static const int currentPositionMeters = 10;
+  static const int mapMeters = 5;
+  static const int recordingMeters = 3;
+}
+
 /// Localized text shown in the persistent notification that keeps location
 /// tracking alive while the app is backgrounded.
 ///
@@ -28,7 +36,7 @@ class BackgroundLocationConfig {
 LocationSettings buildLocationSettings({
   BackgroundLocationConfig? background,
   LocationAccuracy accuracy = LocationAccuracy.high,
-  int distanceFilter = 10,
+  int distanceFilter = LocationDistanceFilters.mapMeters,
   TargetPlatform? platform,
 }) {
   if (background == null) {

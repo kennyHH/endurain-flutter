@@ -28,7 +28,24 @@ void main() {
       expect(service.state.activityType, ActivityType.run);
       expect(service.state.startedAt, startedAt);
       expect(service.state.points, isEmpty);
+      expect(service.state.segments, hasLength(1));
+      expect(service.state.segments.single.points, isEmpty);
       expect(adapter.listenCount, 1);
+    });
+
+    test('uses responsive location updates while recording', () async {
+      final adapter = _FakeLocationPlatformAdapter();
+      final service = ActivityRecordingService(
+        locationService: LocationService(platformAdapter: adapter),
+      );
+      addTearDown(service.dispose);
+
+      await service.start(activityType: ActivityType.run);
+
+      expect(
+        adapter.lastPositionStreamSettings?.distanceFilter,
+        LocationDistanceFilters.recordingMeters,
+      );
     });
 
     test('forwards background config to the location stream', () async {
@@ -229,6 +246,27 @@ void main() {
 
       expect(service.state.status, ActivityRecordingStatus.recording);
       expect(adapter.listenCount, 2);
+    });
+
+    test('pause and resume split track points into segments', () async {
+      final adapter = _FakeLocationPlatformAdapter();
+      final service = ActivityRecordingService(
+        locationService: LocationService(platformAdapter: adapter),
+      );
+      addTearDown(service.dispose);
+
+      await service.start(activityType: ActivityType.run);
+      adapter.addPosition(_position(latitude: 41.1, longitude: -8.6));
+      await pumpEventQueue();
+      await service.pause();
+      await service.resume();
+      adapter.addPosition(_position(latitude: 41.2, longitude: -8.7));
+      await pumpEventQueue();
+
+      expect(service.state.points, hasLength(2));
+      expect(service.state.segments, hasLength(2));
+      expect(service.state.segments.first.points.single.latitude, 41.1);
+      expect(service.state.segments.last.points.single.latitude, 41.2);
     });
 
     test('stop emits stopping then completed', () async {

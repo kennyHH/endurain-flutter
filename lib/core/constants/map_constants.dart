@@ -38,3 +38,8 @@ class LocationMarkerConstants {
   static const double buttonOuterPadding = 16.0;
   static const double buttonInnerPadding = 12.0;
 }
+
+/// Activity route visual constants
+class ActivityRouteConstants {
+  static const double strokeWidth = 5.0;
+}

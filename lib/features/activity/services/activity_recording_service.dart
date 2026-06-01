@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:endurain/core/services/location_service.dart';
 import 'package:endurain/core/services/location_settings_builder.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
+import 'package:endurain/features/activity/models/activity_track_segment.dart';
 import 'package:endurain/features/activity/models/activity_track_point.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
 import 'package:flutter/foundation.dart';
@@ -93,6 +94,7 @@ class ActivityRecordingService {
         status: ActivityRecordingStatus.recording,
         activityType: activityType,
         startedAt: startedAt,
+        segments: [ActivityTrackSegment()],
       ),
     );
     _startElapsedTimer();
@@ -156,7 +158,11 @@ class ActivityRecordingService {
     }
 
     _recordingSegmentStartedAt = _now();
-    _emit(_state.copyWith(status: ActivityRecordingStatus.recording));
+    _emit(
+      _state.startNewSegment().copyWith(
+        status: ActivityRecordingStatus.recording,
+      ),
+    );
     _startElapsedTimer();
     _startLocationStream();
   }
@@ -255,7 +261,10 @@ class ActivityRecordingService {
 
     try {
       _positionSubscription = _locationService
-          .getPositionStream(background: _backgroundConfig)
+          .getPositionStream(
+            background: _backgroundConfig,
+            distanceFilter: LocationDistanceFilters.recordingMeters,
+          )
           .listen(_recordPosition, onError: _handlePositionError);
     } catch (_) {
       _fail(ActivityRecordingErrorKeys.locationStreamFailed);

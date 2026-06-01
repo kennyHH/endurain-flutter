@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:endurain/features/activity/models/activity_track_segment.dart';
 import 'package:endurain/features/activity/models/activity_track_point.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
 
@@ -21,7 +22,13 @@ class ActivityRecordingState {
     this.lastErrorKey,
     this.elapsedDurationSeconds = 0,
     List<ActivityTrackPoint> points = const [],
-  }) : _points = List<ActivityTrackPoint>.unmodifiable(points);
+    List<ActivityTrackSegment> segments = const [],
+  }) : _segments = List<ActivityTrackSegment>.unmodifiable(
+         segments.isEmpty ? _segmentsFromPoints(points) : segments,
+       ),
+       _points = List<ActivityTrackPoint>.unmodifiable(
+         segments.isEmpty ? points : _flattenSegments(segments),
+       );
 
   final ActivityRecordingStatus status;
   final ActivityType? activityType;
@@ -30,8 +37,11 @@ class ActivityRecordingState {
   final String? lastErrorKey;
   final int elapsedDurationSeconds;
   final List<ActivityTrackPoint> _points;
+  final List<ActivityTrackSegment> _segments;
 
   List<ActivityTrackPoint> get points => UnmodifiableListView(_points);
+
+  List<ActivityTrackSegment> get segments => UnmodifiableListView(_segments);
 
   bool get isActive {
     return status == ActivityRecordingStatus.recording ||
@@ -46,6 +56,7 @@ class ActivityRecordingState {
     Object? lastErrorKey = _unset,
     int? elapsedDurationSeconds,
     List<ActivityTrackPoint>? points,
+    List<ActivityTrackSegment>? segments,
   }) {
     return ActivityRecordingState(
       status: status ?? this.status,
@@ -62,12 +73,40 @@ class ActivityRecordingState {
       elapsedDurationSeconds:
           elapsedDurationSeconds ?? this.elapsedDurationSeconds,
       points: points ?? _points,
+      segments: segments ?? (points == null ? _segments : const []),
     );
   }
 
   ActivityRecordingState addPoint(ActivityTrackPoint point) {
-    return copyWith(points: [..._points, point]);
+    final updatedSegments = _segments.isEmpty
+        ? [
+            ActivityTrackSegment(points: [point]),
+          ]
+        : [
+            ..._segments.take(_segments.length - 1),
+            _segments.last.addPoint(point),
+          ];
+    return copyWith(segments: updatedSegments);
+  }
+
+  ActivityRecordingState startNewSegment() {
+    return copyWith(segments: [..._segments, ActivityTrackSegment()]);
   }
 
   static const Object _unset = Object();
+
+  static List<ActivityTrackSegment> _segmentsFromPoints(
+    List<ActivityTrackPoint> points,
+  ) {
+    if (points.isEmpty) {
+      return const [];
+    }
+    return [ActivityTrackSegment(points: points)];
+  }
+
+  static List<ActivityTrackPoint> _flattenSegments(
+    List<ActivityTrackSegment> segments,
+  ) {
+    return [for (final segment in segments) ...segment.points];
+  }
 }

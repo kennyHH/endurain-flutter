@@ -112,33 +112,29 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _syncMapToLocationState() {
-    if (!_controller.hasLocationPermission) {
+    if (!_shouldShowLocationMarker) {
       return;
     }
 
+    final displayLocation = _displayLocation;
+
     if (!_centeredInitialLocation) {
       _centeredInitialLocation = true;
-      _lastFollowedLocation = _controller.currentLocation;
+      _lastFollowedLocation = displayLocation;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _mapController.move(
-          _controller.currentLocation,
-          MapConstants.initialLoadZoom,
-        );
+        _mapController.move(displayLocation, MapConstants.initialLoadZoom);
       });
       return;
     }
 
     if (!_controller.isLocationLocked ||
-        _lastFollowedLocation == _controller.currentLocation) {
+        _lastFollowedLocation == displayLocation) {
       return;
     }
 
-    _lastFollowedLocation = _controller.currentLocation;
+    _lastFollowedLocation = displayLocation;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _mapController.move(
-        _controller.currentLocation,
-        _mapController.camera.zoom,
-      );
+      _mapController.move(displayLocation, _mapController.camera.zoom);
     });
   }
 
@@ -147,11 +143,8 @@ class _MapScreenState extends State<MapScreen> {
     _controller.toggleLocationLock();
 
     // If locking, center on current position
-    if (_controller.isLocationLocked && _controller.hasLocationPermission) {
-      _mapController.move(
-        _controller.currentLocation,
-        _mapController.camera.zoom,
-      );
+    if (_controller.isLocationLocked && _shouldShowLocationMarker) {
+      _mapController.move(_displayLocation, _mapController.camera.zoom);
     }
   }
 
@@ -240,17 +233,32 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   /// Build map layers (tile + marker)
-  List<Widget> _buildMapLayers() {
+  List<Widget> _buildMapLayers(BuildContext context) {
+    final routePolylines = _activityController.state.segments
+        .where((segment) => segment.points.length > 1)
+        .map(
+          (segment) => Polyline(
+            points: [
+              for (final point in segment.points)
+                LatLng(point.latitude, point.longitude),
+            ],
+            strokeWidth: ActivityRouteConstants.strokeWidth,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        )
+        .toList(growable: false);
+
     return [
       TileLayer(
         urlTemplate: _controller.tileServerUrl,
         userAgentPackageName: MapConstants.userAgent,
       ),
-      if (_controller.hasLocationPermission)
+      if (routePolylines.isNotEmpty) PolylineLayer(polylines: routePolylines),
+      if (_shouldShowLocationMarker)
         MarkerLayer(
           markers: [
             Marker(
-              point: _controller.currentLocation,
+              point: _displayLocation,
               width: LocationMarkerConstants.markerSize,
               height: LocationMarkerConstants.markerSize,
               alignment: Alignment.center,
@@ -259,6 +267,20 @@ class _MapScreenState extends State<MapScreen> {
           ],
         ),
     ];
+  }
+
+  bool get _shouldShowLocationMarker {
+    return _controller.hasLocationPermission ||
+        _activityController.state.points.isNotEmpty;
+  }
+
+  LatLng get _displayLocation {
+    final points = _activityController.state.points;
+    if (points.isEmpty) {
+      return _controller.currentLocation;
+    }
+    final lastPoint = points.last;
+    return LatLng(lastPoint.latitude, lastPoint.longitude);
   }
 
   @override
@@ -278,7 +300,7 @@ class _MapScreenState extends State<MapScreen> {
           FlutterMap(
             mapController: _mapController,
             options: _buildMapOptions(),
-            children: _buildMapLayers(),
+            children: _buildMapLayers(context),
           ),
           if (_controller.isLoadingLocation)
             const Center(child: AdaptiveLoadingIndicator()),

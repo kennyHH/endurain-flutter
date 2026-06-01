@@ -1,4 +1,5 @@
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
+import 'package:endurain/features/activity/models/activity_track_segment.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
 import 'package:endurain/features/activity/models/activity_track_point.dart';
 
@@ -14,15 +15,17 @@ class ActivityGpxBuilder {
         'xmlns="http://www.topografix.com/GPX/1/1">',
       )
       ..writeln('  <trk>')
-      ..writeln('    <name>${_escapeXml(name)}</name>')
-      ..writeln('    <trkseg>');
+      ..writeln('    <name>${_escapeXml(name)}</name>');
 
-    for (final point in state.points) {
-      _writeTrackPoint(buffer, point);
+    for (final segment in _segmentsForGpx(state)) {
+      buffer.writeln('    <trkseg>');
+      for (final point in segment.points) {
+        _writeTrackPoint(buffer, point);
+      }
+      buffer.writeln('    </trkseg>');
     }
 
     buffer
-      ..writeln('    </trkseg>')
       ..writeln('  </trk>')
       ..writeln('</gpx>');
 
@@ -31,6 +34,16 @@ class ActivityGpxBuilder {
 
   String _defaultTrackName(ActivityType? activityType) {
     return activityType?.apiValue ?? ActivityType.other.apiValue;
+  }
+
+  List<ActivityTrackSegment> _segmentsForGpx(ActivityRecordingState state) {
+    final segments = state.segments
+        .where((segment) => segment.points.isNotEmpty)
+        .toList(growable: false);
+    if (segments.isEmpty) {
+      return [ActivityTrackSegment()];
+    }
+    return segments;
   }
 
   void _writeTrackPoint(StringBuffer buffer, ActivityTrackPoint point) {

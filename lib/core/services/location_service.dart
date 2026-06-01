@@ -51,7 +51,7 @@ class LocationService {
       return await _platformAdapter.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
-          distanceFilter: 10,
+          distanceFilter: LocationDistanceFilters.currentPositionMeters,
         ),
       );
     } catch (e) {
@@ -64,9 +64,15 @@ class LocationService {
   /// Pass [background] to keep receiving updates while the app is backgrounded
   /// (e.g. during an activity recording). When omitted, foreground-only
   /// settings are used.
-  Stream<Position> getPositionStream({BackgroundLocationConfig? background}) {
+  Stream<Position> getPositionStream({
+    BackgroundLocationConfig? background,
+    int distanceFilter = LocationDistanceFilters.mapMeters,
+  }) {
     return _platformAdapter.getPositionStream(
-      locationSettings: buildLocationSettings(background: background),
+      locationSettings: buildLocationSettings(
+        background: background,
+        distanceFilter: distanceFilter,
+      ),
     );
   }
 

@@ -3,6 +3,7 @@ import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/features/activity/controllers/activity_recording_controller.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
+import 'package:endurain/features/activity/models/activity_type.dart';
 import 'package:endurain/features/activity/services/activity_recording_service.dart';
 import 'package:endurain/features/activity/services/activity_upload_service.dart';
 import 'package:endurain/features/map/map_screen.dart';
@@ -11,9 +12,10 @@ import 'package:endurain/features/map/map_state_controller.dart';
 import 'package:endurain/l10n/app_localizations_en.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:geolocator/geolocator.dart' hide ActivityType;
 
 import '../../helpers/fake_location_platform_adapter.dart';
 import '../../helpers/widget_test_app.dart';
@@ -67,6 +69,41 @@ void main() {
 
       expect(find.byIcon(Icons.location_searching), findsOneWidget);
       expect(mapController.isLocationLocked, isFalse);
+
+      activityController.dispose();
+      mapController.dispose();
+      await platform.close();
+    });
+
+    testWidgets('renders recorded route after two points', (tester) async {
+      final platform = FakeLocationPlatformAdapter(
+        currentPosition: testPosition(latitude: 41.1579, longitude: -8.6291),
+      );
+      final mapController = await _mapController(platform);
+      final activityController = _activityController(platform);
+
+      await tester.pumpWidget(
+        _MapTestApp(
+          child: MapScreen(
+            controller: mapController,
+            activityController: activityController,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PolylineLayer), findsNothing);
+
+      await activityController.start(ActivityType.run);
+      platform.addPosition(testPosition(latitude: 41.1, longitude: -8.6));
+      await tester.pump();
+
+      expect(find.byType(PolylineLayer), findsNothing);
+
+      platform.addPosition(testPosition(latitude: 41.2, longitude: -8.7));
+      await tester.pump();
+
+      expect(find.byType(PolylineLayer), findsOneWidget);
 
       activityController.dispose();
       mapController.dispose();

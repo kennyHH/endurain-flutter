@@ -1,4 +1,5 @@
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
+import 'package:endurain/features/activity/models/activity_track_segment.dart';
 import 'package:endurain/features/activity/models/activity_track_point.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
 import 'package:endurain/features/activity/services/activity_gpx_builder.dart';
@@ -49,6 +50,26 @@ void main() {
       expect(gpx, contains('<trkseg>'));
       expect(gpx, contains('</trkseg>'));
       expect(gpx, isNot(contains('<trkpt')));
+    });
+
+    test('preserves pause and resume boundaries as separate GPX segments', () {
+      final gpx = builder.build(
+        ActivityRecordingState(
+          status: ActivityRecordingStatus.completed,
+          segments: [
+            ActivityTrackSegment(
+              points: [_point(latitude: 41.1, longitude: -8.6)],
+            ),
+            ActivityTrackSegment(
+              points: [_point(latitude: 41.2, longitude: -8.7)],
+            ),
+          ],
+        ),
+      );
+
+      expect(RegExp('<trkseg>').allMatches(gpx), hasLength(2));
+      expect(gpx, contains('<trkpt lat="41.1" lon="-8.6">'));
+      expect(gpx, contains('<trkpt lat="41.2" lon="-8.7">'));
     });
 
     test('escapes XML metadata values', () {
