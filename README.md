@@ -58,7 +58,7 @@ The app is designed with privacy in mind, connecting directly to your self-hoste
 - Start, pause, resume, stop, and discard recording controls directly on the map
 - Live activity statistics for duration, distance, and speed
 - GPS track capture with elapsed-time tracking across pauses and resumes
-- Background location tracking while a recording is active, including Android foreground-service notification support
+- Background location tracking while a recording is active, including Android foreground-service notification support and iOS Always-location guidance
 - Location permission and disabled-location error handling, including app settings shortcut
 - Stop confirmation flow with discard option
 - GPX 1.1 generation from completed tracks
@@ -83,6 +83,8 @@ The app is designed with privacy in mind, connecting directly to your self-hoste
 ## Roadmap
 
 🚧 **Next Activity Milestones**
+- Add a richer local post-recording summary for completed activities before or after upload
+- Add durable local retry/recovery for completed GPX uploads interrupted by app restart or termination
 - Add activity history and details views after recorded activity sync is available
 - Improve activity import feedback once the server exposes richer post-upload status and metadata
 - Expand activity statistics as server/mobile contracts mature
