@@ -1,3 +1,4 @@
+import 'package:endurain/core/constants/api_constants.dart';
 import 'package:endurain/core/models/app_exception.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
 import 'package:endurain/features/activity/services/activity_upload_service.dart';
@@ -6,6 +7,14 @@ import 'package:http/http.dart' as http;
 
 void main() {
   group('ActivityUploadService', () {
+    test('default Endurain config targets the upload contract', () {
+      const config = ActivityUploadConfig.endurain();
+
+      expect(config.endpoint, ApiConstants.activityUploadEndpoint);
+      expect(config.fieldName, ApiConstants.activityUploadFieldName);
+      expect(config.isConfigured, isTrue);
+    });
+
     test('uploads GPX with configured endpoint and field', () async {
       String? endpoint;
       String? filePath;

@@ -78,7 +78,10 @@ class _MapScreenState extends State<MapScreen> {
       recordingService: ActivityRecordingService(
         locationService: widget.locationService ?? services.location,
       ),
-      uploadService: ActivityUploadService(apiClient: services.apiClient),
+      uploadService: ActivityUploadService(
+        apiClient: services.apiClient,
+        config: const ActivityUploadConfig.endurain(),
+      ),
     );
   }
 

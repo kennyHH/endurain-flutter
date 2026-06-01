@@ -1,3 +1,4 @@
+import 'package:endurain/core/constants/api_constants.dart';
 import 'package:endurain/core/models/app_exception.dart';
 import 'package:endurain/core/services/api_client.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
@@ -12,6 +13,12 @@ typedef ActivityFileUploader =
 
 class ActivityUploadConfig {
   const ActivityUploadConfig({required this.endpoint, required this.fieldName});
+
+  /// Default contract matching the Endurain server upload endpoint
+  /// (`POST /api/v1/activities/create/upload` with a `file` multipart field).
+  const ActivityUploadConfig.endurain()
+    : endpoint = ApiConstants.activityUploadEndpoint,
+      fieldName = ApiConstants.activityUploadFieldName;
 
   final String endpoint;
   final String fieldName;

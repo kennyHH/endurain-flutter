@@ -22,4 +22,9 @@ class ApiConstants {
 
   // Server settings public endpoints
   static const String serverSettingsEndpoint = '/api/v1/public/server_settings';
+
+  // Activity endpoints
+  static const String activityUploadEndpoint =
+      '/api/v1/activities/create/upload';
+  static const String activityUploadFieldName = 'file';
 }
