@@ -417,4 +417,69 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get savedSuccessfully => 'Definições guardadas com sucesso';
+
+  @override
+  String get diagnostics => 'Diagnóstico';
+
+  @override
+  String get diagnosticsSubtitle => 'Contexto local de falhas';
+
+  @override
+  String get diagnosticsTitle => 'Diagnóstico';
+
+  @override
+  String get diagnosticsEmpty => 'Ainda não foi capturado nenhum diagnóstico.';
+
+  @override
+  String get diagnosticsCopy => 'Copiar';
+
+  @override
+  String get diagnosticsCopied => 'Diagnóstico copiado';
+
+  @override
+  String get diagnosticsClear => 'Limpar';
+
+  @override
+  String get diagnosticsCleared => 'Diagnóstico limpo';
+
+  @override
+  String get diagnosticsSummary => 'Resumo';
+
+  @override
+  String get diagnosticsLastUpdated => 'Última atualização';
+
+  @override
+  String diagnosticsEventsCount(int count) {
+    return 'Eventos: $count';
+  }
+
+  @override
+  String diagnosticsErrorsCount(int count) {
+    return 'Erros: $count';
+  }
+
+  @override
+  String get diagnosticsEvents => 'Eventos';
+
+  @override
+  String get diagnosticsNoEvents => 'Nenhum evento capturado';
+
+  @override
+  String diagnosticsEventTitle(String event) {
+    return 'Evento: $event';
+  }
+
+  @override
+  String get diagnosticsErrors => 'Erros';
+
+  @override
+  String diagnosticsErrorTitle(String type) {
+    return 'Erro: $type';
+  }
+
+  @override
+  String get diagnosticsActions => 'Ações';
+
+  @override
+  String get diagnosticsRawReport => 'Relatório bruto';
 }

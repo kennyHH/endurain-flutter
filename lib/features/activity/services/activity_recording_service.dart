@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:endurain/core/services/diagnostics_service.dart';
 import 'package:endurain/core/services/location_service.dart';
 import 'package:endurain/core/services/location_settings_builder.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
@@ -29,11 +30,14 @@ class ActivityRecordingErrorKeys {
 class ActivityRecordingService {
   ActivityRecordingService({
     DateTime Function()? now,
+    DiagnosticsRecorder? diagnostics,
     LocationService? locationService,
   }) : _now = now ?? DateTime.now,
+       _diagnostics = diagnostics ?? const NoopDiagnosticsRecorder(),
        _locationService = locationService ?? LocationService();
 
   final DateTime Function() _now;
+  final DiagnosticsRecorder _diagnostics;
   final LocationService _locationService;
   final StreamController<ActivityRecordingState> _stateController =
       StreamController<ActivityRecordingState>.broadcast();
@@ -43,6 +47,7 @@ class ActivityRecordingService {
   Timer? _elapsedTimer;
   DateTime? _recordingSegmentStartedAt;
   int _elapsedBeforeCurrentSegmentSeconds = 0;
+  int _lastBreadcrumbPointCount = 0;
   bool _isDisposed = false;
   BackgroundLocationConfig? _backgroundConfig;
 
@@ -63,8 +68,19 @@ class ActivityRecordingService {
       return;
     }
 
+    _recordBreadcrumb(
+      DiagnosticsEvents.activityStartRequested,
+      details: {'activityType': activityType.name},
+    );
     final locationErrorKey = await _locationErrorKey();
     if (locationErrorKey != null) {
+      _recordBreadcrumb(
+        DiagnosticsEvents.activityStartFailed,
+        details: {
+          'reason': locationErrorKey,
+          'activityType': activityType.name,
+        },
+      );
       _emit(
         ActivityRecordingState(
           status: ActivityRecordingStatus.failed,
@@ -77,6 +93,13 @@ class ActivityRecordingService {
     _backgroundConfig = backgroundConfig;
     final backgroundErrorKey = await _backgroundTrackingErrorKey();
     if (backgroundErrorKey != null) {
+      _recordBreadcrumb(
+        DiagnosticsEvents.activityStartFailed,
+        details: {
+          'reason': backgroundErrorKey,
+          'activityType': activityType.name,
+        },
+      );
       _emit(
         ActivityRecordingState(
           status: ActivityRecordingStatus.failed,
@@ -89,6 +112,7 @@ class ActivityRecordingService {
     final startedAt = _now();
     _recordingSegmentStartedAt = startedAt;
     _elapsedBeforeCurrentSegmentSeconds = 0;
+    _lastBreadcrumbPointCount = 0;
     _emit(
       ActivityRecordingState(
         status: ActivityRecordingStatus.recording,
@@ -96,6 +120,13 @@ class ActivityRecordingService {
         startedAt: startedAt,
         segments: [ActivityTrackSegment()],
       ),
+    );
+    _recordBreadcrumb(
+      DiagnosticsEvents.activityStarted,
+      details: {
+        'activityType': activityType.name,
+        'distanceFilterMeters': LocationDistanceFilters.recordingMeters,
+      },
     );
     _startElapsedTimer();
     _startLocationStream();
@@ -144,6 +175,14 @@ class ActivityRecordingService {
         elapsedDurationSeconds: elapsedDurationSeconds,
       ),
     );
+    _recordBreadcrumb(
+      DiagnosticsEvents.activityPaused,
+      details: {
+        'elapsedSeconds': elapsedDurationSeconds,
+        'pointCount': _state.points.length,
+        'segmentCount': _state.segments.length,
+      },
+    );
     await cancelPositionSubscription;
   }
 
@@ -163,6 +202,14 @@ class ActivityRecordingService {
         status: ActivityRecordingStatus.recording,
       ),
     );
+    _recordBreadcrumb(
+      DiagnosticsEvents.activityResumed,
+      details: {
+        'elapsedSeconds': _state.elapsedDurationSeconds,
+        'pointCount': _state.points.length,
+        'segmentCount': _state.segments.length,
+      },
+    );
     _startElapsedTimer();
     _startLocationStream();
   }
@@ -179,6 +226,13 @@ class ActivityRecordingService {
     _cancelElapsedTimer();
     await _cancelPositionSubscription();
     if (_state.points.isEmpty) {
+      _recordBreadcrumb(
+        DiagnosticsEvents.activityStopFailed,
+        details: {
+          'reason': ActivityRecordingErrorKeys.emptyRecording,
+          'elapsedSeconds': elapsedDurationSeconds,
+        },
+      );
       _emit(
         _state.copyWith(
           status: ActivityRecordingStatus.failed,
@@ -196,6 +250,14 @@ class ActivityRecordingService {
         elapsedDurationSeconds: elapsedDurationSeconds,
       ),
     );
+    _recordBreadcrumb(
+      DiagnosticsEvents.activityStopped,
+      details: {
+        'elapsedSeconds': elapsedDurationSeconds,
+        'pointCount': _state.points.length,
+        'segmentCount': _state.segments.length,
+      },
+    );
     _emit(
       _state.copyWith(
         status: ActivityRecordingStatus.completed,
@@ -209,9 +271,11 @@ class ActivityRecordingService {
     _cancelElapsedTimer();
     _recordingSegmentStartedAt = null;
     _elapsedBeforeCurrentSegmentSeconds = 0;
+    _lastBreadcrumbPointCount = 0;
     _backgroundConfig = null;
     await _cancelPositionSubscription();
     _emit(ActivityRecordingState());
+    _recordBreadcrumb(DiagnosticsEvents.activityDiscarded);
   }
 
   void dispose() {
@@ -266,7 +330,12 @@ class ActivityRecordingService {
             distanceFilter: LocationDistanceFilters.recordingMeters,
           )
           .listen(_recordPosition, onError: _handlePositionError);
-    } catch (_) {
+    } catch (error, stackTrace) {
+      _diagnostics.recordErrorSync(
+        error,
+        stackTrace,
+        source: DiagnosticsSources.activityLocationStream,
+      );
       _fail(ActivityRecordingErrorKeys.locationStreamFailed);
     }
   }
@@ -282,9 +351,26 @@ class ActivityRecordingService {
       return;
     }
     _emit(_state.addPoint(ActivityTrackPoint.fromPosition(position)));
+    final pointCount = _state.points.length;
+    if (pointCount == 1 || pointCount - _lastBreadcrumbPointCount >= 25) {
+      _lastBreadcrumbPointCount = pointCount;
+      _recordBreadcrumb(
+        DiagnosticsEvents.activityPointMilestone,
+        details: {
+          'pointCount': pointCount,
+          'segmentCount': _state.segments.length,
+          'elapsedSeconds': _state.elapsedDurationSeconds,
+        },
+      );
+    }
   }
 
   void _handlePositionError(Object error, StackTrace stackTrace) {
+    _diagnostics.recordErrorSync(
+      error,
+      stackTrace,
+      source: DiagnosticsSources.activityLocationStream,
+    );
     _fail(ActivityRecordingErrorKeys.locationStreamFailed);
   }
 
@@ -333,6 +419,10 @@ class ActivityRecordingService {
     _cancelElapsedTimer();
     _recordingSegmentStartedAt = null;
     unawaited(_cancelPositionSubscription());
+    _recordBreadcrumb(
+      DiagnosticsEvents.activityFailed,
+      details: {'reason': errorKey, 'pointCount': _state.points.length},
+    );
     _emit(
       _state.copyWith(
         status: ActivityRecordingStatus.failed,
@@ -344,6 +434,13 @@ class ActivityRecordingService {
   void _emit(ActivityRecordingState state) {
     _state = state;
     _stateController.add(state);
+  }
+
+  void _recordBreadcrumb(
+    String event, {
+    Map<String, Object?> details = const {},
+  }) {
+    _diagnostics.recordBreadcrumbSync(event, details: details);
   }
 
   void _ensureNotDisposed() {

@@ -556,5 +556,105 @@
   "savedSuccessfully": "Settings saved successfully",
   "@savedSuccessfully": {
     "description": "Settings save success message - Used in: server_settings_screen.dart"
+  },
+  "diagnostics": "Diagnostics",
+  "@diagnostics": {
+    "description": "Diagnostics settings navigation label - Used in: settings_screen.dart"
+  },
+  "diagnosticsSubtitle": "Local crash context",
+  "@diagnosticsSubtitle": {
+    "description": "Diagnostics settings navigation subtitle - Used in: settings_screen.dart"
+  },
+  "diagnosticsTitle": "Diagnostics",
+  "@diagnosticsTitle": {
+    "description": "Diagnostics screen title - Used in: diagnostics_screen.dart"
+  },
+  "diagnosticsEmpty": "No diagnostics have been captured yet.",
+  "@diagnosticsEmpty": {
+    "description": "Empty state for diagnostics report - Used in: diagnostics_screen.dart"
+  },
+  "diagnosticsCopy": "Copy",
+  "@diagnosticsCopy": {
+    "description": "Copy diagnostics report button label - Used in: diagnostics_screen.dart"
+  },
+  "diagnosticsCopied": "Diagnostics copied",
+  "@diagnosticsCopied": {
+    "description": "Message shown after copying diagnostics report - Used in: diagnostics_screen.dart"
+  },
+  "diagnosticsClear": "Clear",
+  "@diagnosticsClear": {
+    "description": "Clear diagnostics report button label - Used in: diagnostics_screen.dart"
+  },
+  "diagnosticsCleared": "Diagnostics cleared",
+  "@diagnosticsCleared": {
+    "description": "Message shown after clearing diagnostics report - Used in: diagnostics_screen.dart"
+  },
+  "diagnosticsSummary": "Summary",
+  "@diagnosticsSummary": {
+    "description": "Diagnostics summary section header - Used in: diagnostics_screen.dart"
+  },
+  "diagnosticsLastUpdated": "Last updated",
+  "@diagnosticsLastUpdated": {
+    "description": "Diagnostics last updated label - Used in: diagnostics_screen.dart"
+  },
+  "diagnosticsEventsCount": "Events: {count}",
+  "@diagnosticsEventsCount": {
+    "description": "Diagnostics event count label - Used in: diagnostics_screen.dart",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "diagnosticsErrorsCount": "Errors: {count}",
+  "@diagnosticsErrorsCount": {
+    "description": "Diagnostics error count label - Used in: diagnostics_screen.dart",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "diagnosticsEvents": "Events",
+  "@diagnosticsEvents": {
+    "description": "Diagnostics events section header - Used in: diagnostics_screen.dart"
+  },
+  "diagnosticsNoEvents": "No events captured",
+  "@diagnosticsNoEvents": {
+    "description": "Diagnostics empty events row - Used in: diagnostics_screen.dart"
+  },
+  "diagnosticsEventTitle": "Event: {event}",
+  "@diagnosticsEventTitle": {
+    "description": "Diagnostics event row title - Used in: diagnostics_screen.dart",
+    "placeholders": {
+      "event": {
+        "type": "String",
+        "example": "activity.started"
+      }
+    }
+  },
+  "diagnosticsErrors": "Errors",
+  "@diagnosticsErrors": {
+    "description": "Diagnostics errors section header - Used in: diagnostics_screen.dart"
+  },
+  "diagnosticsErrorTitle": "Error: {type}",
+  "@diagnosticsErrorTitle": {
+    "description": "Diagnostics error row title - Used in: diagnostics_screen.dart",
+    "placeholders": {
+      "type": {
+        "type": "String",
+        "example": "StateError"
+      }
+    }
+  },
+  "diagnosticsActions": "Actions",
+  "@diagnosticsActions": {
+    "description": "Diagnostics actions section header - Used in: diagnostics_screen.dart"
+  },
+  "diagnosticsRawReport": "Raw report",
+  "@diagnosticsRawReport": {
+    "description": "Diagnostics raw report section header - Used in: diagnostics_screen.dart"
   }
 }

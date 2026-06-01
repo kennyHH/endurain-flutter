@@ -556,5 +556,105 @@
   "savedSuccessfully": "Definições guardadas com sucesso",
   "@savedSuccessfully": {
     "description": "Mensagem de sucesso ao guardar configurações - Usado em: server_settings_screen.dart"
+  },
+  "diagnostics": "Diagnóstico",
+  "@diagnostics": {
+    "description": "Rótulo de navegação para diagnóstico - Usado em: settings_screen.dart"
+  },
+  "diagnosticsSubtitle": "Contexto local de falhas",
+  "@diagnosticsSubtitle": {
+    "description": "Subtítulo de navegação para diagnóstico - Usado em: settings_screen.dart"
+  },
+  "diagnosticsTitle": "Diagnóstico",
+  "@diagnosticsTitle": {
+    "description": "Título do ecrã de diagnóstico - Usado em: diagnostics_screen.dart"
+  },
+  "diagnosticsEmpty": "Ainda não foi capturado nenhum diagnóstico.",
+  "@diagnosticsEmpty": {
+    "description": "Estado vazio do relatório de diagnóstico - Usado em: diagnostics_screen.dart"
+  },
+  "diagnosticsCopy": "Copiar",
+  "@diagnosticsCopy": {
+    "description": "Rótulo do botão para copiar relatório de diagnóstico - Usado em: diagnostics_screen.dart"
+  },
+  "diagnosticsCopied": "Diagnóstico copiado",
+  "@diagnosticsCopied": {
+    "description": "Mensagem após copiar relatório de diagnóstico - Usado em: diagnostics_screen.dart"
+  },
+  "diagnosticsClear": "Limpar",
+  "@diagnosticsClear": {
+    "description": "Rótulo do botão para limpar relatório de diagnóstico - Usado em: diagnostics_screen.dart"
+  },
+  "diagnosticsCleared": "Diagnóstico limpo",
+  "@diagnosticsCleared": {
+    "description": "Mensagem após limpar relatório de diagnóstico - Usado em: diagnostics_screen.dart"
+  },
+  "diagnosticsSummary": "Resumo",
+  "@diagnosticsSummary": {
+    "description": "Cabeçalho da secção de resumo do diagnóstico - Usado em: diagnostics_screen.dart"
+  },
+  "diagnosticsLastUpdated": "Última atualização",
+  "@diagnosticsLastUpdated": {
+    "description": "Rótulo de última atualização do diagnóstico - Usado em: diagnostics_screen.dart"
+  },
+  "diagnosticsEventsCount": "Eventos: {count}",
+  "@diagnosticsEventsCount": {
+    "description": "Rótulo da contagem de eventos de diagnóstico - Usado em: diagnostics_screen.dart",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "diagnosticsErrorsCount": "Erros: {count}",
+  "@diagnosticsErrorsCount": {
+    "description": "Rótulo da contagem de erros de diagnóstico - Usado em: diagnostics_screen.dart",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "diagnosticsEvents": "Eventos",
+  "@diagnosticsEvents": {
+    "description": "Cabeçalho da secção de eventos de diagnóstico - Usado em: diagnostics_screen.dart"
+  },
+  "diagnosticsNoEvents": "Nenhum evento capturado",
+  "@diagnosticsNoEvents": {
+    "description": "Linha vazia de eventos de diagnóstico - Usado em: diagnostics_screen.dart"
+  },
+  "diagnosticsEventTitle": "Evento: {event}",
+  "@diagnosticsEventTitle": {
+    "description": "Título da linha de evento de diagnóstico - Usado em: diagnostics_screen.dart",
+    "placeholders": {
+      "event": {
+        "type": "String",
+        "example": "activity.started"
+      }
+    }
+  },
+  "diagnosticsErrors": "Erros",
+  "@diagnosticsErrors": {
+    "description": "Cabeçalho da secção de erros de diagnóstico - Usado em: diagnostics_screen.dart"
+  },
+  "diagnosticsErrorTitle": "Erro: {type}",
+  "@diagnosticsErrorTitle": {
+    "description": "Título da linha de erro de diagnóstico - Usado em: diagnostics_screen.dart",
+    "placeholders": {
+      "type": {
+        "type": "String",
+        "example": "StateError"
+      }
+    }
+  },
+  "diagnosticsActions": "Ações",
+  "@diagnosticsActions": {
+    "description": "Cabeçalho da secção de ações de diagnóstico - Usado em: diagnostics_screen.dart"
+  },
+  "diagnosticsRawReport": "Relatório bruto",
+  "@diagnosticsRawReport": {
+    "description": "Cabeçalho da secção do relatório bruto de diagnóstico - Usado em: diagnostics_screen.dart"
   }
 }

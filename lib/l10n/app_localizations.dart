@@ -805,6 +805,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Settings saved successfully'**
   String get savedSuccessfully;
+
+  /// Diagnostics settings navigation label - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostics'**
+  String get diagnostics;
+
+  /// Diagnostics settings navigation subtitle - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Local crash context'**
+  String get diagnosticsSubtitle;
+
+  /// Diagnostics screen title - Used in: diagnostics_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostics'**
+  String get diagnosticsTitle;
+
+  /// Empty state for diagnostics report - Used in: diagnostics_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'No diagnostics have been captured yet.'**
+  String get diagnosticsEmpty;
+
+  /// Copy diagnostics report button label - Used in: diagnostics_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get diagnosticsCopy;
+
+  /// Message shown after copying diagnostics report - Used in: diagnostics_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostics copied'**
+  String get diagnosticsCopied;
+
+  /// Clear diagnostics report button label - Used in: diagnostics_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get diagnosticsClear;
+
+  /// Message shown after clearing diagnostics report - Used in: diagnostics_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostics cleared'**
+  String get diagnosticsCleared;
+
+  /// Diagnostics summary section header - Used in: diagnostics_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get diagnosticsSummary;
+
+  /// Diagnostics last updated label - Used in: diagnostics_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Last updated'**
+  String get diagnosticsLastUpdated;
+
+  /// Diagnostics event count label - Used in: diagnostics_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Events: {count}'**
+  String diagnosticsEventsCount(int count);
+
+  /// Diagnostics error count label - Used in: diagnostics_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Errors: {count}'**
+  String diagnosticsErrorsCount(int count);
+
+  /// Diagnostics events section header - Used in: diagnostics_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Events'**
+  String get diagnosticsEvents;
+
+  /// Diagnostics empty events row - Used in: diagnostics_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'No events captured'**
+  String get diagnosticsNoEvents;
+
+  /// Diagnostics event row title - Used in: diagnostics_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Event: {event}'**
+  String diagnosticsEventTitle(String event);
+
+  /// Diagnostics errors section header - Used in: diagnostics_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Errors'**
+  String get diagnosticsErrors;
+
+  /// Diagnostics error row title - Used in: diagnostics_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {type}'**
+  String diagnosticsErrorTitle(String type);
+
+  /// Diagnostics actions section header - Used in: diagnostics_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get diagnosticsActions;
+
+  /// Diagnostics raw report section header - Used in: diagnostics_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Raw report'**
+  String get diagnosticsRawReport;
 }
 
 class _AppLocalizationsDelegate

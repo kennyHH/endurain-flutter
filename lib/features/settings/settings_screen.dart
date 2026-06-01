@@ -2,16 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/core/services/app_scope.dart';
+import 'package:endurain/core/services/diagnostics_service.dart';
 import 'package:endurain/core/services/package_info_service.dart';
+import 'package:endurain/features/settings/diagnostics_screen.dart';
 import 'package:endurain/features/settings/server_settings_screen.dart';
 import 'package:endurain/core/constants/ui_constants.dart';
 import 'package:endurain/shared/adaptive/adaptive.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key, this.onLogout, this.packageInfoService});
+  const SettingsScreen({
+    super.key,
+    this.onLogout,
+    this.packageInfoService,
+    this.diagnostics,
+  });
 
   final VoidCallback? onLogout;
   final PackageInfoService? packageInfoService;
+  final DiagnosticsStore? diagnostics;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -66,6 +74,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           context,
                           (context) =>
                               ServerSettingsScreen(onLogout: widget.onLogout),
+                        );
+                      },
+                    ),
+                    AdaptiveListTile(
+                      leading: const AdaptiveIcon(
+                        materialIcon: Icons.bug_report,
+                        cupertinoIcon: CupertinoIcons.waveform_path_ecg,
+                      ),
+                      title: l10n.diagnostics,
+                      subtitle: l10n.diagnosticsSubtitle,
+                      onTap: () {
+                        adaptivePush<void>(
+                          context,
+                          (context) => DiagnosticsScreen(
+                            diagnostics:
+                                widget.diagnostics ??
+                                AppScope.servicesOf(
+                                  context,
+                                  listen: false,
+                                ).diagnostics,
+                          ),
                         );
                       },
                     ),

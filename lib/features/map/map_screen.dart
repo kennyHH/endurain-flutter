@@ -80,6 +80,7 @@ class _MapScreenState extends State<MapScreen> {
     final services = AppScope.servicesOf(context, listen: false);
     return ActivityRecordingController(
       recordingService: ActivityRecordingService(
+        diagnostics: services.diagnostics,
         locationService: widget.locationService ?? services.location,
       ),
       uploadService: ActivityUploadService(

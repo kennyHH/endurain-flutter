@@ -409,4 +409,69 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get savedSuccessfully => 'Settings saved successfully';
+
+  @override
+  String get diagnostics => 'Diagnostics';
+
+  @override
+  String get diagnosticsSubtitle => 'Local crash context';
+
+  @override
+  String get diagnosticsTitle => 'Diagnostics';
+
+  @override
+  String get diagnosticsEmpty => 'No diagnostics have been captured yet.';
+
+  @override
+  String get diagnosticsCopy => 'Copy';
+
+  @override
+  String get diagnosticsCopied => 'Diagnostics copied';
+
+  @override
+  String get diagnosticsClear => 'Clear';
+
+  @override
+  String get diagnosticsCleared => 'Diagnostics cleared';
+
+  @override
+  String get diagnosticsSummary => 'Summary';
+
+  @override
+  String get diagnosticsLastUpdated => 'Last updated';
+
+  @override
+  String diagnosticsEventsCount(int count) {
+    return 'Events: $count';
+  }
+
+  @override
+  String diagnosticsErrorsCount(int count) {
+    return 'Errors: $count';
+  }
+
+  @override
+  String get diagnosticsEvents => 'Events';
+
+  @override
+  String get diagnosticsNoEvents => 'No events captured';
+
+  @override
+  String diagnosticsEventTitle(String event) {
+    return 'Event: $event';
+  }
+
+  @override
+  String get diagnosticsErrors => 'Errors';
+
+  @override
+  String diagnosticsErrorTitle(String type) {
+    return 'Error: $type';
+  }
+
+  @override
+  String get diagnosticsActions => 'Actions';
+
+  @override
+  String get diagnosticsRawReport => 'Raw report';
 }

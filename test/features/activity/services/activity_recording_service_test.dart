@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:endurain/core/services/diagnostics_service.dart';
 import 'package:endurain/core/services/location_platform_adapter.dart';
 import 'package:endurain/core/services/location_service.dart';
 import 'package:endurain/core/services/location_settings_builder.dart';
@@ -16,8 +17,10 @@ void main() {
     test('starts recording and emits state', () async {
       final startedAt = DateTime.utc(2026, 5, 30, 10);
       final adapter = _FakeLocationPlatformAdapter();
+      final diagnostics = _FakeDiagnosticsRecorder();
       final service = ActivityRecordingService(
         now: () => startedAt,
+        diagnostics: diagnostics,
         locationService: LocationService(platformAdapter: adapter),
       );
       addTearDown(service.dispose);
@@ -31,6 +34,13 @@ void main() {
       expect(service.state.segments, hasLength(1));
       expect(service.state.segments.single.points, isEmpty);
       expect(adapter.listenCount, 1);
+      expect(
+        diagnostics.events,
+        containsAllInOrder([
+          DiagnosticsEvents.activityStartRequested,
+          DiagnosticsEvents.activityStarted,
+        ]),
+      );
     });
 
     test('uses responsive location updates while recording', () async {
@@ -155,7 +165,9 @@ void main() {
 
     test('records position updates as track points', () async {
       final adapter = _FakeLocationPlatformAdapter();
+      final diagnostics = _FakeDiagnosticsRecorder();
       final service = ActivityRecordingService(
+        diagnostics: diagnostics,
         locationService: LocationService(platformAdapter: adapter),
       );
       addTearDown(service.dispose);
@@ -167,6 +179,10 @@ void main() {
       expect(service.state.points, hasLength(1));
       expect(service.state.points.single.latitude, 41.1);
       expect(service.state.points.single.longitude, -8.6);
+      expect(
+        diagnostics.events,
+        contains(DiagnosticsEvents.activityPointMilestone),
+      );
     });
 
     test('updates elapsed duration while recording without GPS points', () {
@@ -367,7 +383,9 @@ void main() {
 
     test('stream errors fail recording and cancel subscription', () async {
       final adapter = _FakeLocationPlatformAdapter();
+      final diagnostics = _FakeDiagnosticsRecorder();
       final service = ActivityRecordingService(
+        diagnostics: diagnostics,
         locationService: LocationService(platformAdapter: adapter),
       );
       addTearDown(service.dispose);
@@ -382,8 +400,34 @@ void main() {
         ActivityRecordingErrorKeys.locationStreamFailed,
       );
       expect(adapter.cancelCount, 1);
+      expect(
+        diagnostics.errorSources,
+        contains(DiagnosticsSources.activityLocationStream),
+      );
     });
   });
+}
+
+class _FakeDiagnosticsRecorder implements DiagnosticsRecorder {
+  final List<String> events = [];
+  final List<String> errorSources = [];
+
+  @override
+  void recordBreadcrumbSync(
+    String event, {
+    Map<String, Object?> details = const {},
+  }) {
+    events.add(event);
+  }
+
+  @override
+  void recordErrorSync(
+    Object error,
+    StackTrace stackTrace, {
+    String source = DiagnosticsSources.uncaught,
+  }) {
+    errorSources.add(source);
+  }
 }
 
 class _FakeLocationPlatformAdapter implements LocationPlatformAdapter {

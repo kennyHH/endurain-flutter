@@ -31,6 +31,7 @@ void main() {
 
     expect(find.text(l10n.settingsScreen), findsOneWidget);
     expect(find.text(l10n.serverSettings), findsOneWidget);
+    expect(find.text(l10n.diagnostics), findsOneWidget);
     expect(find.textContaining('Endurain • 1.2.3'), findsOneWidget);
   });
 }
