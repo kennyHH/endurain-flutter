@@ -29,11 +29,20 @@ class AdaptiveSwitchListTile extends StatelessWidget {
       );
     }
 
+    if (leading != null) {
+      return ListTile(
+        leading: leading,
+        title: Text(title),
+        subtitle: subtitle == null ? null : Text(subtitle!),
+        trailing: Switch(value: value, onChanged: onChanged),
+        onTap: () => onChanged(!value),
+      );
+    }
+
     return SwitchListTile(
       contentPadding: EdgeInsets.zero,
       title: Text(title),
       subtitle: subtitle == null ? null : Text(subtitle!),
-      secondary: leading,
       value: value,
       onChanged: onChanged,
     );

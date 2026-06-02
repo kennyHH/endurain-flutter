@@ -38,6 +38,10 @@ void main() {
     expect(find.text(l10n.activityHistoryTitle), findsOneWidget);
     expect(find.text(l10n.activityRetainUploadedGpx), findsOneWidget);
     expect(find.byIcon(Icons.description), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.byIcon(Icons.description)).dx,
+      tester.getTopLeft(find.byIcon(Icons.dns)).dx,
+    );
     expect(find.text(l10n.diagnostics), findsOneWidget);
     expect(find.textContaining('Endurain • 1.2.3'), findsOneWidget);
   });
