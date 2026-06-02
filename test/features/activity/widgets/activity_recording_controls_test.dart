@@ -67,7 +67,9 @@ void main() {
         ),
       );
 
-      final pickerRect = tester.getRect(find.byType(InputDecorator));
+      final pickerRect = tester.getRect(
+        find.byKey(const ValueKey('activityTypePickerMaterialField')),
+      );
       final startRect = tester.getRect(
         find.byKey(const ValueKey('activityStartButton')),
       );

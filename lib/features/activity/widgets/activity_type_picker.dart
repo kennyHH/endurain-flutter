@@ -5,8 +5,6 @@ import 'package:endurain/l10n/app_localizations.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-const double _activityTypePickerHeight = 56;
-
 class ActivityTypePicker extends StatelessWidget {
   const ActivityTypePicker({
     super.key,
@@ -32,33 +30,67 @@ class ActivityTypePicker extends StatelessWidget {
       );
     }
 
-    return DropdownButtonFormField<ActivityType>(
-      key: const ValueKey('activityTypePickerMaterialField'),
-      initialValue: selectedType,
-      isExpanded: true,
-      decoration: InputDecoration(
-        labelText: l10n.activityTypeLabel,
-        border: const OutlineInputBorder(),
-        constraints: const BoxConstraints.tightFor(
-          height: _activityTypePickerHeight,
+    final theme = Theme.of(context);
+    final disabled = !enabled || onChanged == null;
+    final borderColor = theme.colorScheme.outline;
+    final labelColor = disabled
+        ? theme.disabledColor
+        : theme.colorScheme.onSurfaceVariant;
+    final valueColor = disabled
+        ? theme.disabledColor
+        : theme.colorScheme.onSurface;
+
+    return Semantics(
+      button: true,
+      label: l10n.activityTypeLabel,
+      value: selectedType.localizedLabel(l10n),
+      child: Container(
+        key: const ValueKey('activityTypePickerMaterialField'),
+        decoration: BoxDecoration(
+          border: Border.all(color: borderColor),
+          borderRadius: BorderRadius.circular(8),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.activityTypeLabel,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(color: labelColor),
+            ),
+            DropdownButtonHideUnderline(
+              child: DropdownButton<ActivityType>(
+                value: selectedType,
+                isExpanded: true,
+                isDense: true,
+                borderRadius: BorderRadius.circular(8),
+                iconEnabledColor: valueColor,
+                iconDisabledColor: theme.disabledColor,
+                style: theme.textTheme.bodyLarge?.copyWith(color: valueColor),
+                onChanged: disabled
+                    ? null
+                    : (value) {
+                        if (value != null) {
+                          onChanged!(value);
+                        }
+                      },
+                items: ActivityType.values
+                    .map((type) {
+                      return DropdownMenuItem<ActivityType>(
+                        value: type,
+                        child: Text(type.localizedLabel(l10n)),
+                      );
+                    })
+                    .toList(growable: false),
+              ),
+            ),
+          ],
+        ),
       ),
-      items: ActivityType.values
-          .map((type) {
-            return DropdownMenuItem<ActivityType>(
-              value: type,
-              child: Text(type.localizedLabel(l10n)),
-            );
-          })
-          .toList(growable: false),
-      onChanged: enabled && onChanged != null
-          ? (value) {
-              if (value != null) {
-                onChanged!(value);
-              }
-            }
-          : null,
     );
   }
 }
