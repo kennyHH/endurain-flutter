@@ -5,7 +5,7 @@
 - **Dart**: 3.10+
 - **Platforms**: Android, iOS, macOS
 - **State Management**: setState (basic) - may evolve to Provider/Riverpod
-- **Map Provider**: OpenStreetMap (flutter_map + latlong2) - **F-Droid compatible**
+- **Map Provider**: OpenStreetMap (flutter_map + latlong2)
 - **Secure Storage**: flutter_secure_storage
 - **Location**: geolocator
 - **F-Droid Compatible**: All dependencies are open-source (FOSS)

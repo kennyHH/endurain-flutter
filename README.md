@@ -64,11 +64,14 @@ The app is designed with privacy in mind, connecting directly to your self-hoste
 - Stop confirmation flow with discard option
 - GPX 1.1 generation from completed tracks
 - Direct GPX upload to the Endurain activity import endpoint after a recording completes
-- Upload status UI with retry/discard actions for completed recordings
+- Completed activity retention in private app storage, including local summary metadata, GPX availability, and upload state
+- Non-destructive post-upload flow with `Done`, `View history`, retry, and explicit delete actions
+- Local activity history and details screens for completed recordings saved on the device
 
 ✅ **Settings**
 - Server configuration management
 - Map tile server customization
+- Local activity history entry point and uploaded-GPX retention preference
 - Logged-in server and username summary
 - Local diagnostics view with privacy-filtered crash context, recording breadcrumbs, copy, and clear actions
 - Session management with server-side logout attempt and secure local cleanup
@@ -78,7 +81,6 @@ The app is designed with privacy in mind, connecting directly to your self-hoste
 - Multi-language support (English, Portuguese)
 - Dark/light theme support
 - Secure local session storage
-- F-Droid compatible (100% FOSS dependencies)
 - Shared adaptive widget layer for Material and Cupertino controls
 - Local SSO provider icon assets with remote icon fallback
 
@@ -86,12 +88,12 @@ The app is designed with privacy in mind, connecting directly to your self-hoste
 
 🚧 **Next Activity Milestones**
 - Add a richer local post-recording summary for completed activities before or after upload
-- Add durable local retry/recovery for completed GPX uploads interrupted by app restart or termination
-- Add activity history and details views after recorded activity sync is available
+- Add manual GPX export/share
+- Add server-synced activity history and details once the server exposes stable imported activity metadata
 - Improve activity import feedback once the server exposes richer post-upload status and metadata
 - Expand activity statistics as server/mobile contracts mature
 
-See the [Activity Tracking MVP Plan](devdocs/activity_tracking_mvp_plan.md) for implementation notes and remaining activity work.
+See the [Activity Tracking MVP Plan](devdocs/activity_tracking_mvp_plan.md) and [Completed Activity Local Retention Plan](devdocs/activity_local_retention_plan.md) for implementation notes and remaining activity work.
 
 ## Tech Stack
 
@@ -104,12 +106,10 @@ See the [Activity Tracking MVP Plan](devdocs/activity_tracking_mvp_plan.md) for 
 - **HTTP Client:** `http` package for Endurain API communication and multipart uploads
 - **SSO/OAuth:** `app_links` for deep-link callbacks, `url_launcher` for system browser OAuth flow, `flutter_svg` for provider icons
 - **App Metadata:** `package_info_plus`
-- **Local App Files:** `path_provider` for private app-support diagnostics storage
+- **Local App Files:** `path_provider` for private app-support diagnostics and retained activity GPX storage
 - **Security:** `crypto` package for PKCE challenge generation
 - **Localization:** Flutter gen-l10n from ARB files with English and Portuguese locales
 - **Quality:** `flutter_lints` with strict casts, strict inference, strict raw types, and additional lint rules
-
-**All dependencies are open-source (FOSS) to ensure F-Droid compatibility.**
 
 ## Getting Started
 

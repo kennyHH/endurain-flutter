@@ -69,7 +69,7 @@ key.properties
 .env.*.local
 *.env
 
-# Firebase and Google Services (proprietary, F-Droid incompatible)
+# Firebase and Google Services
 google-services.json
 GoogleService-Info.plist
 firebase_options.dart
