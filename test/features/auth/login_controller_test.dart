@@ -185,6 +185,336 @@ void main() {
       controller.dispose();
       await appLinks.close();
     });
+
+    test('auto-redirects to a single provider when configured', () async {
+      final controller = LoginController(
+        authCoordinator: _repository(
+          storage: SecureStorageService(),
+          client: MockClient((request) async {
+            if (request.url.path == ApiConstants.serverSettingsEndpoint) {
+              return http.Response(
+                '{"sso_enabled":true,"sso_auto_redirect":true,"local_login_enabled":true}',
+                200,
+              );
+            }
+            if (request.url.path == ApiConstants.idpListEndpoint) {
+              return http.Response(
+                '[{"id":1,"slug":"keycloak","name":"Keycloak","icon":"keycloak"}]',
+                200,
+              );
+            }
+            fail('Unexpected request to ${request.url}');
+          }),
+        ),
+        appLinksService: const EmptyAppLinksService(),
+      );
+      controller.serverUrlController.text = 'https://example.test';
+
+      final provider = await controller.submitServerUrl();
+
+      expect(provider?.slug, 'keycloak');
+      controller.dispose();
+    });
+
+    test('continues without providers when IdP listing fails', () async {
+      final controller = LoginController(
+        authCoordinator: _repository(
+          storage: SecureStorageService(),
+          client: MockClient((request) async {
+            if (request.url.path == ApiConstants.serverSettingsEndpoint) {
+              return http.Response('{"sso_enabled":true}', 200);
+            }
+            return http.Response('{"detail":"boom"}', 500);
+          }),
+        ),
+        appLinksService: const EmptyAppLinksService(),
+      );
+      controller.serverUrlController.text = 'https://example.test';
+
+      final provider = await controller.submitServerUrl();
+
+      expect(provider, isNull);
+      expect(controller.isStep2, isTrue);
+      expect(controller.availableIdPs, isEmpty);
+      controller.dispose();
+    });
+
+    test('reports server settings failures', () async {
+      final errors = <Object>[];
+      final controller = LoginController(
+        authCoordinator: _repository(
+          storage: SecureStorageService(),
+          client: MockClient((request) async {
+            return http.Response('{"detail":"offline"}', 500);
+          }),
+        ),
+        appLinksService: const EmptyAppLinksService(),
+      );
+      controller.startSsoCallbackListener(
+        onLoginSuccess: () => fail('Login should not complete.'),
+        onError: errors.add,
+      );
+      controller.serverUrlController.text = 'https://example.test';
+
+      final provider = await controller.submitServerUrl();
+
+      expect(provider, isNull);
+      expect(controller.isStep2, isFalse);
+      expect(controller.isLoading, isFalse);
+      expect(errors, hasLength(1));
+      controller.dispose();
+    });
+
+    test('builds an OAuth URL with the PKCE challenge', () async {
+      final controller = LoginController(
+        authCoordinator: _repository(
+          storage: SecureStorageService(),
+          client: MockClient((request) async {
+            fail('initiateOAuth builds the URL without an HTTP call.');
+          }),
+        ),
+        appLinksService: const EmptyAppLinksService(),
+      );
+      controller.serverUrlController.text = 'https://example.test';
+
+      final oauthUrl = await controller.beginSsoLogin(
+        const IdentityProviderFixture().provider,
+      );
+
+      expect(oauthUrl, isNotNull);
+      final parsed = Uri.parse(oauthUrl!);
+      expect(parsed.path, '${ApiConstants.idpLoginEndpoint}/keycloak');
+      expect(parsed.queryParameters['code_challenge'], isNotEmpty);
+      expect(parsed.queryParameters['code_challenge_method'], 'S256');
+      expect(controller.isLoading, isFalse);
+      controller.dispose();
+    });
+
+    test('reports SSO initiation failures', () async {
+      final errors = <Object>[];
+      final controller = LoginController(
+        authCoordinator: _repository(
+          storage: SecureStorageService(),
+          client: MockClient((request) async {
+            fail('No HTTP request expected without a server URL.');
+          }),
+        ),
+        appLinksService: const EmptyAppLinksService(),
+      );
+      controller.startSsoCallbackListener(
+        onLoginSuccess: () => fail('Login should not complete.'),
+        onError: errors.add,
+      );
+      // No server URL configured, so initiateOAuth throws.
+      controller.serverUrlController.text = '';
+
+      final oauthUrl = await controller.beginSsoLogin(
+        const IdentityProviderFixture().provider,
+      );
+
+      expect(oauthUrl, isNull);
+      expect(controller.isLoading, isFalse);
+      expect(
+        errors.single,
+        isA<AppException>().having(
+          (exception) => exception.code,
+          'code',
+          AppErrorCode.serverUrlNotConfigured,
+        ),
+      );
+      controller.dispose();
+    });
+
+    test('completes login when no MFA is required', () async {
+      final storage = SecureStorageService();
+      final loginCompleted = Completer<void>();
+      final controller = LoginController(
+        authCoordinator: _repository(
+          storage: storage,
+          client: MockClient((request) async {
+            if (request.url.path == ApiConstants.tokenEndpoint) {
+              return http.Response('{"session_id":"session-1"}', 200);
+            }
+            return http.Response(
+              '{"access_token":"access-1","refresh_token":"refresh-1","session_id":"session-2","expires_in":3600}',
+              200,
+            );
+          }),
+        ),
+        appLinksService: const EmptyAppLinksService(),
+      );
+      controller.startSsoCallbackListener(
+        onLoginSuccess: loginCompleted.complete,
+        onError: (error) => fail(error.toString()),
+      );
+      controller.serverUrlController.text = 'https://example.test';
+      controller.usernameController.text = 'joao';
+      controller.passwordController.text = 'secret';
+
+      await controller.submitLogin();
+      await loginCompleted.future.timeout(const Duration(seconds: 1));
+
+      expect(await storage.getAccessToken(), 'access-1');
+      controller.dispose();
+    });
+
+    test('reports login failures', () async {
+      final errors = <Object>[];
+      final controller = LoginController(
+        authCoordinator: _repository(
+          storage: SecureStorageService(),
+          client: MockClient((request) async {
+            return http.Response('{"detail":"Bad credentials"}', 401);
+          }),
+        ),
+        appLinksService: const EmptyAppLinksService(),
+      );
+      controller.startSsoCallbackListener(
+        onLoginSuccess: () => fail('Login should not complete.'),
+        onError: errors.add,
+      );
+      controller.serverUrlController.text = 'https://example.test';
+      controller.usernameController.text = 'joao';
+      controller.passwordController.text = 'wrong';
+
+      await controller.submitLogin();
+
+      expect(controller.isLoading, isFalse);
+      expect(errors, hasLength(1));
+      controller.dispose();
+    });
+
+    test('completes MFA verification', () async {
+      final storage = SecureStorageService();
+      final loginCompleted = Completer<void>();
+      final controller = LoginController(
+        authCoordinator: _repository(
+          storage: storage,
+          client: MockClient((request) async {
+            if (request.url.path == ApiConstants.tokenEndpoint) {
+              return http.Response(
+                '{"mfa_required":true,"username":"joao"}',
+                200,
+              );
+            }
+            if (request.url.path == ApiConstants.mfaVerifyEndpoint) {
+              return http.Response('{"session_id":"session-1"}', 200);
+            }
+            return http.Response(
+              '{"access_token":"access-1","refresh_token":"refresh-1","session_id":"session-2","expires_in":3600}',
+              200,
+            );
+          }),
+        ),
+        appLinksService: const EmptyAppLinksService(),
+      );
+      controller.startSsoCallbackListener(
+        onLoginSuccess: loginCompleted.complete,
+        onError: (error) => fail(error.toString()),
+      );
+      controller.serverUrlController.text = 'https://example.test';
+      controller.usernameController.text = 'joao';
+      controller.passwordController.text = 'secret';
+
+      await controller.submitLogin();
+      expect(controller.showMfaInput, isTrue);
+
+      controller.mfaCodeController.text = '123456';
+      await controller.submitMfa();
+      await loginCompleted.future.timeout(const Duration(seconds: 1));
+
+      expect(await storage.getAccessToken(), 'access-1');
+      controller.dispose();
+    });
+
+    test('rejects MFA submission without a stored username', () async {
+      final errors = <Object>[];
+      final controller = LoginController(
+        authCoordinator: _repository(
+          storage: SecureStorageService(),
+          client: MockClient((request) async {
+            fail('No request should be made without an MFA username.');
+          }),
+        ),
+        appLinksService: const EmptyAppLinksService(),
+      );
+      controller.startSsoCallbackListener(
+        onLoginSuccess: () => fail('Login should not complete.'),
+        onError: errors.add,
+      );
+
+      await controller.submitMfa();
+
+      expect(
+        errors.single,
+        isA<AppException>().having(
+          (exception) => exception.code,
+          'code',
+          AppErrorCode.noSessionIdReceived,
+        ),
+      );
+      controller.dispose();
+    });
+
+    test('reports SSO callback exchange failures', () async {
+      final appLinks = FakeAppLinksService();
+      final errors = <Object>[];
+      final controller = LoginController(
+        authCoordinator: _repository(
+          storage: SecureStorageService(),
+          client: MockClient((request) async {
+            return http.Response('{"detail":"exchange failed"}', 400);
+          }),
+        ),
+        appLinksService: appLinks,
+      );
+      controller.startSsoCallbackListener(
+        onLoginSuccess: () => fail('Login should not complete.'),
+        onError: errors.add,
+      );
+
+      appLinks.add(
+        Uri.parse('endurain://auth/sso/callback?session_id=session-1'),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      expect(errors, hasLength(1));
+      expect(controller.isLoading, isFalse);
+      controller.dispose();
+      await appLinks.close();
+    });
+
+    test('toggles step, MFA, and password visibility state', () async {
+      final controller = LoginController(
+        authCoordinator: _repository(
+          storage: SecureStorageService(),
+          client: MockClient((request) async {
+            return http.Response('{}', 200);
+          }),
+        ),
+        appLinksService: const EmptyAppLinksService(),
+      );
+
+      controller.isStep2 = true;
+      controller.showMfaInput = true;
+      controller.mfaCodeController.text = '123456';
+
+      controller.backToServerStep();
+      expect(controller.isStep2, isFalse);
+      expect(controller.availableIdPs, isEmpty);
+      expect(controller.serverSettings, isNull);
+
+      controller.backFromMfa();
+      expect(controller.showMfaInput, isFalse);
+      expect(controller.mfaCodeController.text, isEmpty);
+
+      controller.setPasswordVisible(true);
+      expect(controller.obscurePassword, isFalse);
+      controller.setPasswordVisible(false);
+      expect(controller.obscurePassword, isTrue);
+
+      controller.dispose();
+    });
   });
 }
 

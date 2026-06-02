@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:endurain/core/models/app_exception.dart';
-import 'package:endurain/core/services/location_platform_adapter.dart';
 import 'package:endurain/core/services/location_service.dart';
 import 'package:endurain/features/activity/controllers/activity_recording_controller.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
@@ -13,13 +12,14 @@ import 'package:endurain/features/activity/services/activity_gpx_file_writer.dar
 import 'package:endurain/features/activity/services/activity_recording_service.dart';
 import 'package:endurain/features/activity/services/activity_upload_service.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:geolocator/geolocator.dart' hide ActivityType;
+
+import '../../../helpers/recording_location_platform_adapter.dart';
 import 'package:http/http.dart' as http;
 
 void main() {
   group('ActivityRecordingController', () {
     test('starts recording with selected type', () async {
-      final adapter = _FakeLocationPlatformAdapter();
+      final adapter = RecordingLocationPlatformAdapter();
       final service = ActivityRecordingService(
         locationService: LocationService(platformAdapter: adapter),
       );
@@ -35,7 +35,7 @@ void main() {
     });
 
     test('ignores type changes while active', () async {
-      final adapter = _FakeLocationPlatformAdapter();
+      final adapter = RecordingLocationPlatformAdapter();
       final service = ActivityRecordingService(
         locationService: LocationService(platformAdapter: adapter),
       );
@@ -50,7 +50,7 @@ void main() {
     });
 
     test('generates GPX when a valid recording completes', () async {
-      final adapter = _FakeLocationPlatformAdapter();
+      final adapter = RecordingLocationPlatformAdapter();
       final service = ActivityRecordingService(
         locationService: LocationService(platformAdapter: adapter),
       );
@@ -58,7 +58,7 @@ void main() {
       addTearDown(controller.dispose);
 
       await controller.start(ActivityType.run);
-      adapter.addPosition(_position(latitude: 41.1, longitude: -8.6));
+      adapter.addPosition(recordingPosition(latitude: 41.1, longitude: -8.6));
       await pumpEventQueue();
       await controller.stop();
       await pumpEventQueue();
@@ -72,7 +72,7 @@ void main() {
     });
 
     test('does not generate GPX for discarded recordings', () async {
-      final adapter = _FakeLocationPlatformAdapter();
+      final adapter = RecordingLocationPlatformAdapter();
       final service = ActivityRecordingService(
         locationService: LocationService(platformAdapter: adapter),
       );
@@ -80,7 +80,7 @@ void main() {
       addTearDown(controller.dispose);
 
       await controller.start(ActivityType.run);
-      adapter.addPosition(_position(latitude: 41.1, longitude: -8.6));
+      adapter.addPosition(recordingPosition(latitude: 41.1, longitude: -8.6));
       await pumpEventQueue();
       await controller.discard();
 
@@ -89,7 +89,7 @@ void main() {
     });
 
     test('leaves empty recordings without GPX content', () async {
-      final adapter = _FakeLocationPlatformAdapter();
+      final adapter = RecordingLocationPlatformAdapter();
       final service = ActivityRecordingService(
         locationService: LocationService(platformAdapter: adapter),
       );
@@ -105,7 +105,7 @@ void main() {
     });
 
     test('surfaces GPX generation failures as recording failures', () async {
-      final adapter = _FakeLocationPlatformAdapter();
+      final adapter = RecordingLocationPlatformAdapter();
       final service = ActivityRecordingService(
         locationService: LocationService(platformAdapter: adapter),
       );
@@ -116,7 +116,7 @@ void main() {
       addTearDown(controller.dispose);
 
       await controller.start(ActivityType.run);
-      adapter.addPosition(_position());
+      adapter.addPosition(recordingPosition());
       await pumpEventQueue();
       await controller.stop();
 
@@ -130,7 +130,7 @@ void main() {
     });
 
     test('fails upload without a temp file when config is missing', () async {
-      final adapter = _FakeLocationPlatformAdapter();
+      final adapter = RecordingLocationPlatformAdapter();
       final tempDirectory = await Directory.systemTemp.createTemp(
         'endurain_upload_missing_',
       );
@@ -148,7 +148,7 @@ void main() {
       addTearDown(controller.dispose);
 
       await controller.start(ActivityType.run);
-      adapter.addPosition(_position());
+      adapter.addPosition(recordingPosition());
       await pumpEventQueue();
       await controller.stop();
       await controller.uploadCompletedGpx();
@@ -160,7 +160,7 @@ void main() {
     test(
       'maps temporary GPX write failures without exposing file paths',
       () async {
-        final adapter = _FakeLocationPlatformAdapter();
+        final adapter = RecordingLocationPlatformAdapter();
         final tempDirectory = await Directory.systemTemp.createTemp(
           'endurain_upload_write_failed_',
         );
@@ -179,7 +179,7 @@ void main() {
         addTearDown(controller.dispose);
 
         await controller.start(ActivityType.run);
-        adapter.addPosition(_position());
+        adapter.addPosition(recordingPosition());
         await pumpEventQueue();
         await controller.stop();
         await controller.uploadCompletedGpx();
@@ -198,7 +198,7 @@ void main() {
     );
 
     test('deletes temporary GPX after successful upload', () async {
-      final adapter = _FakeLocationPlatformAdapter();
+      final adapter = RecordingLocationPlatformAdapter();
       final tempDirectory = await Directory.systemTemp.createTemp(
         'endurain_upload_success_',
       );
@@ -217,7 +217,7 @@ void main() {
       addTearDown(controller.dispose);
 
       await controller.start(ActivityType.run);
-      adapter.addPosition(_position());
+      adapter.addPosition(recordingPosition());
       await pumpEventQueue();
       await controller.stop();
       await controller.uploadCompletedGpx();
@@ -227,7 +227,7 @@ void main() {
     });
 
     test('keeps uploaded GPX explicit when cleanup fails', () async {
-      final adapter = _FakeLocationPlatformAdapter();
+      final adapter = RecordingLocationPlatformAdapter();
       final tempDirectory = await Directory.systemTemp.createTemp(
         'endurain_upload_cleanup_failed_',
       );
@@ -246,7 +246,7 @@ void main() {
       addTearDown(controller.dispose);
 
       await controller.start(ActivityType.run);
-      adapter.addPosition(_position());
+      adapter.addPosition(recordingPosition());
       await pumpEventQueue();
       await controller.stop();
       await controller.uploadCompletedGpx();
@@ -269,7 +269,7 @@ void main() {
     });
 
     test('keeps failed upload file until discard', () async {
-      final adapter = _FakeLocationPlatformAdapter();
+      final adapter = RecordingLocationPlatformAdapter();
       final tempDirectory = await Directory.systemTemp.createTemp(
         'endurain_upload_failed_',
       );
@@ -288,7 +288,7 @@ void main() {
       addTearDown(controller.dispose);
 
       await controller.start(ActivityType.run);
-      adapter.addPosition(_position());
+      adapter.addPosition(recordingPosition());
       await pumpEventQueue();
       await controller.stop();
       await controller.uploadCompletedGpx();
@@ -348,64 +348,5 @@ ActivityUploadService _uploadServiceReturning(int statusCode) {
     uploadFile: (_, _, _) async {
       return http.StreamedResponse(const Stream<List<int>>.empty(), statusCode);
     },
-  );
-}
-
-class _FakeLocationPlatformAdapter implements LocationPlatformAdapter {
-  final List<StreamController<Position>> _controllers = [];
-
-  void addPosition(Position position) {
-    _controllers.last.add(position);
-  }
-
-  @override
-  Future<LocationPermission> checkPermission() async {
-    return LocationPermission.whileInUse;
-  }
-
-  @override
-  Future<Position> getCurrentPosition({
-    required LocationSettings locationSettings,
-  }) async {
-    return _position();
-  }
-
-  @override
-  Stream<Position> getPositionStream({
-    required LocationSettings locationSettings,
-  }) {
-    final controller = StreamController<Position>();
-    _controllers.add(controller);
-    return controller.stream;
-  }
-
-  @override
-  Future<bool> isLocationServiceEnabled() async {
-    return true;
-  }
-
-  @override
-  Future<bool> openAppSettings() async {
-    return true;
-  }
-
-  @override
-  Future<LocationPermission> requestPermission() async {
-    return LocationPermission.whileInUse;
-  }
-}
-
-Position _position({double latitude = 41, double longitude = -8}) {
-  return Position(
-    latitude: latitude,
-    longitude: longitude,
-    timestamp: DateTime.utc(2026),
-    accuracy: 5,
-    altitude: 10,
-    altitudeAccuracy: 1,
-    heading: 90,
-    headingAccuracy: 1,
-    speed: 3,
-    speedAccuracy: 1,
   );
 }

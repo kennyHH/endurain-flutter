@@ -48,5 +48,21 @@ void main() {
 
       expect(file.existsSync(), isFalse);
     });
+
+    test('generates unique suffixes by default', () async {
+      final writer = ActivityGpxFileWriter(
+        temporaryDirectoryProvider: () async => tempDirectory,
+      );
+
+      final first = await writer.writeGpx('<gpx>1</gpx>');
+      final second = await writer.writeGpx('<gpx>2</gpx>');
+
+      expect(first.path, isNot(second.path));
+      for (final file in [first, second]) {
+        final name = file.uri.pathSegments.last;
+        expect(name, startsWith(ActivityGpxFileWriter.filePrefix));
+        expect(name, endsWith(ActivityGpxFileWriter.fileExtension));
+      }
+    });
   });
 }

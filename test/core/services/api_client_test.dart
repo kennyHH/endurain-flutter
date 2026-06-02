@@ -231,6 +231,249 @@ void main() {
       ]);
       expect(await storage.getAccessToken(), 'access-2');
     });
+
+    test('throws when uploading without a configured server URL', () async {
+      final storage = SecureStorageService();
+      await storage.setAccessToken('access-1');
+      final client = ApiClient(
+        storage: storage,
+        authService: AuthService(storage: storage),
+        uploadAdapter: _FakeMultipartUploadAdapter(),
+      );
+
+      await expectLater(
+        client.uploadFile('/api/files', '/tmp/activity.gpx', 'file'),
+        throwsA(
+          isA<AppException>().having(
+            (exception) => exception.code,
+            'code',
+            AppErrorCode.serverUrlNotConfigured,
+          ),
+        ),
+      );
+    });
+
+    test('throws when uploading without an access token', () async {
+      final storage = SecureStorageService();
+      await storage.setServerUrl('https://example.test');
+      final client = ApiClient(
+        storage: storage,
+        authService: AuthService(storage: storage),
+        uploadAdapter: _FakeMultipartUploadAdapter(),
+      );
+
+      await expectLater(
+        client.uploadFile('/api/files', '/tmp/activity.gpx', 'file'),
+        throwsA(
+          isA<AppException>().having(
+            (exception) => exception.code,
+            'code',
+            AppErrorCode.notAuthenticated,
+          ),
+        ),
+      );
+    });
+
+    test('throws sessionExpired when upload refresh after 401 fails', () async {
+      final storage = SecureStorageService();
+      await storage.setServerUrl('https://example.test');
+      await storage.setAccessToken('access-1');
+      await storage.setRefreshToken('refresh-1');
+      await storage.setAccessTokenExpiresAt(
+        DateTime.now().toUtc().add(const Duration(hours: 1)),
+      );
+      final authService = AuthService(
+        storage: storage,
+        httpClient: MockClient((request) async {
+          expect(request.url.path, '/api/v1/auth/refresh');
+          return http.Response('{"detail":"Expired"}', 401);
+        }),
+      );
+      final client = ApiClient(
+        storage: storage,
+        authService: authService,
+        uploadAdapter: _FakeMultipartUploadAdapter(statusCodes: [401]),
+      );
+
+      await expectLater(
+        client.uploadFile('/api/files', '/tmp/activity.gpx', 'file'),
+        throwsA(
+          isA<AppException>().having(
+            (exception) => exception.code,
+            'code',
+            AppErrorCode.sessionExpired,
+          ),
+        ),
+      );
+    });
+  });
+
+  group('ApiClient request lifecycle', () {
+    test('refreshes an expiring token before sending the request', () async {
+      final storage = SecureStorageService();
+      await storage.setServerUrl('https://example.test');
+      await storage.setAccessToken('access-1');
+      await storage.setRefreshToken('refresh-1');
+      await storage.setAccessTokenExpiresAt(
+        DateTime.now().toUtc().add(const Duration(seconds: 30)),
+      );
+      final authService = AuthService(
+        storage: storage,
+        httpClient: MockClient((request) async {
+          expect(request.url.path, '/api/v1/auth/refresh');
+          return http.Response(
+            jsonEncode({
+              'access_token': 'access-2',
+              'refresh_token': 'refresh-2',
+              'session_id': 'session-2',
+              'expires_in': 3600,
+            }),
+            200,
+          );
+        }),
+      );
+      final client = ApiClient(
+        storage: storage,
+        authService: authService,
+        httpClient: MockClient((request) async {
+          expect(request.headers['Authorization'], 'Bearer access-2');
+          return http.Response('{"ok":true}', 200);
+        }),
+      );
+
+      final data = await client.getJsonObject(
+        '/api/profile',
+        failureCode: AppErrorCode.loginFailed,
+      );
+
+      expect(data, {'ok': true});
+    });
+
+    test('refreshes and retries once after a 401 response', () async {
+      final storage = SecureStorageService();
+      await storage.setServerUrl('https://example.test');
+      await storage.setAccessToken('access-1');
+      await storage.setRefreshToken('refresh-1');
+      await storage.setAccessTokenExpiresAt(
+        DateTime.now().toUtc().add(const Duration(hours: 1)),
+      );
+      final authService = AuthService(
+        storage: storage,
+        httpClient: MockClient((request) async {
+          return http.Response(
+            jsonEncode({
+              'access_token': 'access-2',
+              'refresh_token': 'refresh-2',
+              'session_id': 'session-2',
+              'expires_in': 3600,
+            }),
+            200,
+          );
+        }),
+      );
+      var attempts = 0;
+      final client = ApiClient(
+        storage: storage,
+        authService: authService,
+        httpClient: MockClient((request) async {
+          attempts++;
+          if (attempts == 1) {
+            expect(request.headers['Authorization'], 'Bearer access-1');
+            return http.Response('{"detail":"Expired"}', 401);
+          }
+          expect(request.headers['Authorization'], 'Bearer access-2');
+          return http.Response('{"ok":true}', 200);
+        }),
+      );
+
+      final data = await client.postJsonObject(
+        '/api/profile',
+        body: {'value': 1},
+        failureCode: AppErrorCode.loginFailed,
+      );
+
+      expect(data, {'ok': true});
+      expect(attempts, 2);
+    });
+
+    test('supports PUT and DELETE JSON helpers', () async {
+      final storage = SecureStorageService();
+      await storage.setServerUrl('https://example.test');
+      await storage.setAccessToken('access-1');
+      final methods = <String>[];
+      final client = ApiClient(
+        storage: storage,
+        authService: AuthService(storage: storage),
+        httpClient: MockClient((request) async {
+          methods.add(request.method);
+          return http.Response('{"ok":true}', 200);
+        }),
+      );
+
+      await client.putJsonObject(
+        '/api/profile',
+        body: {'value': 1},
+        failureCode: AppErrorCode.loginFailed,
+      );
+      await client.deleteJsonObject(
+        '/api/profile',
+        failureCode: AppErrorCode.loginFailed,
+      );
+
+      expect(methods, ['PUT', 'DELETE']);
+    });
+
+    test('throws when no server URL is configured', () async {
+      final storage = SecureStorageService();
+      await storage.setAccessToken('access-1');
+      final client = ApiClient(
+        storage: storage,
+        authService: AuthService(storage: storage),
+        httpClient: MockClient((request) async {
+          fail('No request should be made without a server URL.');
+        }),
+      );
+
+      await expectLater(
+        client.getJsonObject(
+          '/api/profile',
+          failureCode: AppErrorCode.loginFailed,
+        ),
+        throwsA(
+          isA<AppException>().having(
+            (exception) => exception.code,
+            'code',
+            AppErrorCode.serverUrlNotConfigured,
+          ),
+        ),
+      );
+    });
+
+    test('throws when no access token is available', () async {
+      final storage = SecureStorageService();
+      await storage.setServerUrl('https://example.test');
+      final client = ApiClient(
+        storage: storage,
+        authService: AuthService(storage: storage),
+        httpClient: MockClient((request) async {
+          fail('No request should be made without an access token.');
+        }),
+      );
+
+      await expectLater(
+        client.getJsonObject(
+          '/api/profile',
+          failureCode: AppErrorCode.loginFailed,
+        ),
+        throwsA(
+          isA<AppException>().having(
+            (exception) => exception.code,
+            'code',
+            AppErrorCode.notAuthenticated,
+          ),
+        ),
+      );
+    });
   });
 }
 

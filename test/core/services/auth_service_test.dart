@@ -213,5 +213,369 @@ void main() {
       expect(await storage.getSessionId(), isNull);
       expect(await storage.getServerUrl(), 'https://example.test');
     });
+
+    test('throws when no server URL is configured for login', () async {
+      final service = AuthService(
+        storage: SecureStorageService(),
+        httpClient: MockClient((request) async {
+          fail('No request should be made without a server URL.');
+        }),
+      );
+
+      await expectLater(
+        service.login('joao', 'secret'),
+        throwsA(
+          isA<AppException>().having(
+            (exception) => exception.code,
+            'code',
+            AppErrorCode.serverUrlNotConfigured,
+          ),
+        ),
+      );
+    });
+
+    test('falls back to the stored server URL for login', () async {
+      final storage = SecureStorageService();
+      await storage.setServerUrl('https://stored.test');
+      final service = AuthService(
+        storage: storage,
+        httpClient: MockClient((request) async {
+          expect(request.url.origin, 'https://stored.test');
+          if (request.url.path == ApiConstants.tokenEndpoint) {
+            return http.Response('{"session_id":"session-1"}', 200);
+          }
+          return http.Response(
+            '{"access_token":"access-1","refresh_token":"refresh-1","session_id":"session-2","expires_in":3600}',
+            200,
+          );
+        }),
+      );
+
+      final result = await service.login('joao', 'secret');
+
+      expect(result.accessToken, 'access-1');
+    });
+
+    test('throws when login succeeds without session or MFA', () async {
+      final service = AuthService(
+        storage: SecureStorageService(),
+        httpClient: MockClient((request) async {
+          return http.Response('{"unexpected":true}', 200);
+        }),
+      );
+
+      await expectLater(
+        service.login('joao', 'secret', serverUrl: 'https://example.test'),
+        throwsA(
+          isA<AppException>().having(
+            (exception) => exception.code,
+            'code',
+            AppErrorCode.noSessionIdReceived,
+          ),
+        ),
+      );
+    });
+
+    test('wraps transport errors during login as a typed error', () async {
+      final service = AuthService(
+        storage: SecureStorageService(),
+        httpClient: MockClient((request) async {
+          throw http.ClientException('network down');
+        }),
+      );
+
+      await expectLater(
+        service.login('joao', 'secret', serverUrl: 'https://example.test'),
+        throwsA(
+          isA<AppException>().having(
+            (exception) => exception.code,
+            'code',
+            AppErrorCode.loginError,
+          ),
+        ),
+      );
+    });
+
+    test('verifyMfa exchanges tokens after a successful code', () async {
+      final storage = SecureStorageService();
+      final service = AuthService(
+        storage: storage,
+        httpClient: MockClient((request) async {
+          if (request.url.path == ApiConstants.tokenEndpoint) {
+            return http.Response(
+              '{"mfa_required":true,"username":"joao"}',
+              200,
+            );
+          }
+          if (request.url.path == ApiConstants.mfaVerifyEndpoint) {
+            return http.Response('{"session_id":"session-1"}', 200);
+          }
+          if (request.url.path ==
+              '${ApiConstants.idpSessionTokenExchangeEndpoint}/session-1/tokens') {
+            return http.Response(
+              '{"access_token":"access-1","refresh_token":"refresh-1","session_id":"session-2","expires_in":3600}',
+              200,
+            );
+          }
+          fail('Unexpected request to ${request.url}');
+        }),
+      );
+
+      await service.login('joao', 'secret', serverUrl: 'https://example.test');
+      final result = await service.verifyMfa('joao', '123456');
+
+      expect(result.success, isTrue);
+      expect(result.accessToken, 'access-1');
+      expect(await storage.getAccessToken(), 'access-1');
+    });
+
+    test('verifyMfa requires a configured server URL', () async {
+      final service = AuthService(
+        storage: SecureStorageService(),
+        httpClient: MockClient((request) async {
+          fail('No request should be made without a server URL.');
+        }),
+      );
+
+      await expectLater(
+        service.verifyMfa('joao', '123456'),
+        throwsA(
+          isA<AppException>().having(
+            (exception) => exception.code,
+            'code',
+            AppErrorCode.serverUrlNotConfigured,
+          ),
+        ),
+      );
+    });
+
+    test('verifyMfa fails when no PKCE verifier is present', () async {
+      final storage = SecureStorageService();
+      await storage.setServerUrl('https://example.test');
+      final service = AuthService(
+        storage: storage,
+        httpClient: MockClient((request) async {
+          fail('No request should be made without a PKCE verifier.');
+        }),
+      );
+
+      await expectLater(
+        service.verifyMfa('joao', '123456'),
+        throwsA(
+          isA<AppException>().having(
+            (exception) => exception.code,
+            'code',
+            AppErrorCode.pkceVerifierMissingRestartLogin,
+          ),
+        ),
+      );
+    });
+
+    test('verifyMfa maps a rejected code to a typed failure', () async {
+      final storage = SecureStorageService();
+      final service = AuthService(
+        storage: storage,
+        httpClient: MockClient((request) async {
+          if (request.url.path == ApiConstants.tokenEndpoint) {
+            return http.Response('{"mfa_required":true}', 200);
+          }
+          return http.Response('{"detail":"Invalid code"}', 401);
+        }),
+      );
+
+      await service.login('joao', 'secret', serverUrl: 'https://example.test');
+
+      await expectLater(
+        service.verifyMfa('joao', '000000'),
+        throwsA(
+          isA<AppException>()
+              .having(
+                (exception) => exception.code,
+                'code',
+                AppErrorCode.mfaVerificationFailed,
+              )
+              .having(
+                (exception) => exception.details,
+                'details',
+                'Invalid code',
+              ),
+        ),
+      );
+    });
+
+    test('refreshToken stores rotated tokens on success', () async {
+      final storage = SecureStorageService();
+      await storage.setServerUrl('https://example.test');
+      await storage.setAccessToken('access-1');
+      await storage.setRefreshToken('refresh-1');
+      final service = AuthService(
+        storage: storage,
+        httpClient: MockClient((request) async {
+          expect(request.url.path, ApiConstants.refreshEndpoint);
+          expect(request.headers['Authorization'], 'Bearer refresh-1');
+          return http.Response(
+            '{"access_token":"access-2","refresh_token":"refresh-2","session_id":"session-2","expires_in":3600}',
+            200,
+          );
+        }),
+      );
+
+      final refreshed = await service.refreshToken();
+
+      expect(refreshed, isTrue);
+      expect(await storage.getAccessToken(), 'access-2');
+      expect(await storage.getRefreshToken(), 'refresh-2');
+      expect(await storage.getSessionId(), 'session-2');
+    });
+
+    test('refreshToken clears the session without credentials', () async {
+      final storage = SecureStorageService();
+      await storage.setAccessToken('access-1');
+      final service = AuthService(
+        storage: storage,
+        httpClient: MockClient((request) async {
+          fail('No request should be made without a refresh token.');
+        }),
+      );
+
+      final refreshed = await service.refreshToken();
+
+      expect(refreshed, isFalse);
+      expect(await storage.getAccessToken(), isNull);
+    });
+
+    test('refreshToken clears the session on transport errors', () async {
+      final storage = SecureStorageService();
+      await storage.setServerUrl('https://example.test');
+      await storage.setAccessToken('access-1');
+      await storage.setRefreshToken('refresh-1');
+      final service = AuthService(
+        storage: storage,
+        httpClient: MockClient((request) async {
+          throw http.ClientException('network down');
+        }),
+      );
+
+      final refreshed = await service.refreshToken();
+
+      expect(refreshed, isFalse);
+      expect(await storage.getAccessToken(), isNull);
+      expect(await storage.getRefreshToken(), isNull);
+    });
+
+    test('logout succeeds when the server confirms the logout', () async {
+      final storage = SecureStorageService();
+      await storage.setServerUrl('https://example.test');
+      await storage.setAccessToken('access-1');
+      await storage.setRefreshToken('refresh-1');
+      final service = AuthService(
+        storage: storage,
+        httpClient: MockClient((request) async {
+          expect(request.url.path, ApiConstants.logoutEndpoint);
+          return http.Response('', 200);
+        }),
+      );
+
+      final serverLogoutSucceeded = await service.logout();
+
+      expect(serverLogoutSucceeded, isTrue);
+      expect(await storage.getAccessToken(), isNull);
+      expect(await storage.getRefreshToken(), isNull);
+    });
+
+    test('logout clears local tokens without server credentials', () async {
+      final storage = SecureStorageService();
+      await storage.setServerUrl('https://example.test');
+      await storage.setAccessToken('access-1');
+      final service = AuthService(
+        storage: storage,
+        httpClient: MockClient((request) async {
+          fail('No server logout should run without a refresh token.');
+        }),
+      );
+
+      final serverLogoutSucceeded = await service.logout();
+
+      expect(serverLogoutSucceeded, isTrue);
+      expect(await storage.getAccessToken(), isNull);
+    });
+
+    test('isAuthenticated is true for a valid unexpired token', () async {
+      final storage = SecureStorageService();
+      await storage.setAccessToken('access-1');
+      await storage.setAccessTokenExpiresAt(
+        DateTime.now().toUtc().add(const Duration(hours: 1)),
+      );
+      final service = AuthService(
+        storage: storage,
+        httpClient: MockClient((request) async {
+          fail('No refresh should be needed for a valid token.');
+        }),
+      );
+
+      expect(await service.isAuthenticated(), isTrue);
+    });
+
+    test(
+      'isAuthenticated clears the session without a refresh token',
+      () async {
+        final storage = SecureStorageService();
+        await storage.setAccessToken('access-1');
+        await storage.setAccessTokenExpiresAt(
+          DateTime.now().toUtc().subtract(const Duration(minutes: 1)),
+        );
+        final service = AuthService(
+          storage: storage,
+          httpClient: MockClient((request) async {
+            fail('No refresh should run without a refresh token.');
+          }),
+        );
+
+        expect(await service.isAuthenticated(), isFalse);
+        expect(await storage.getAccessToken(), isNull);
+      },
+    );
+
+    test('isAuthenticated refreshes an expiring token', () async {
+      final storage = SecureStorageService();
+      await storage.setServerUrl('https://example.test');
+      await storage.setAccessToken('access-1');
+      await storage.setRefreshToken('refresh-1');
+      await storage.setAccessTokenExpiresAt(
+        DateTime.now().toUtc().add(const Duration(seconds: 30)),
+      );
+      final service = AuthService(
+        storage: storage,
+        httpClient: MockClient((request) async {
+          return http.Response(
+            '{"access_token":"access-2","refresh_token":"refresh-2","session_id":"session-2","expires_in":3600}',
+            200,
+          );
+        }),
+      );
+
+      expect(await service.isAuthenticated(), isTrue);
+      expect(await storage.getAccessToken(), 'access-2');
+    });
+
+    test('isAuthenticated clears the session when refresh fails', () async {
+      final storage = SecureStorageService();
+      await storage.setServerUrl('https://example.test');
+      await storage.setAccessToken('access-1');
+      await storage.setRefreshToken('refresh-1');
+      await storage.setAccessTokenExpiresAt(
+        DateTime.now().toUtc().subtract(const Duration(minutes: 1)),
+      );
+      final service = AuthService(
+        storage: storage,
+        httpClient: MockClient((request) async {
+          return http.Response('{"detail":"Expired"}', 401);
+        }),
+      );
+
+      expect(await service.isAuthenticated(), isFalse);
+      expect(await storage.getAccessToken(), isNull);
+      expect(await storage.getRefreshToken(), isNull);
+    });
   });
 }

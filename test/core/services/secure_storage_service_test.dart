@@ -44,5 +44,69 @@ void main() {
       expect(await storage.getSessionId(), isNull);
       expect(await storage.getAccessTokenExpiresAt(), isNull);
     });
+
+    test('returns null expiry for an unparsable stored value', () async {
+      final storage = SecureStorageService();
+      await storage.write(key: 'access_token_expires_at', value: 'not-a-date');
+
+      expect(await storage.getAccessTokenExpiresAt(), isNull);
+    });
+
+    test('treats a missing expiry as not expiring soon', () async {
+      final storage = SecureStorageService();
+
+      expect(await storage.isAccessTokenExpiringSoon(), isFalse);
+    });
+
+    test('reports authentication based on a stored access token', () async {
+      final storage = SecureStorageService();
+
+      expect(await storage.isAuthenticated(), isFalse);
+
+      await storage.setAccessToken('access-1');
+      expect(await storage.isAuthenticated(), isTrue);
+    });
+
+    test('round-trips server, map, and username preferences', () async {
+      final storage = SecureStorageService();
+
+      await storage.setServerUrl('https://example.test');
+      await storage.setUsername('joao');
+      await storage.setTileServerUrl('https://tiles.test/{z}/{x}/{y}.png');
+      await storage.setTileServerAttribution('OpenStreetMap');
+      await storage.setMapBackgroundColor('#102030');
+
+      expect(await storage.getServerUrl(), 'https://example.test');
+      expect(await storage.getUsername(), 'joao');
+      expect(
+        await storage.getTileServerUrl(),
+        'https://tiles.test/{z}/{x}/{y}.png',
+      );
+      expect(await storage.getTileServerAttribution(), 'OpenStreetMap');
+      expect(await storage.getMapBackgroundColor(), '#102030');
+
+      await storage.deleteServerUrl();
+      await storage.deleteUsername();
+      await storage.deleteTileServerUrl();
+      await storage.deleteTileServerAttribution();
+      await storage.deleteMapBackgroundColor();
+
+      expect(await storage.getServerUrl(), isNull);
+      expect(await storage.getUsername(), isNull);
+      expect(await storage.getTileServerUrl(), isNull);
+      expect(await storage.getTileServerAttribution(), isNull);
+      expect(await storage.getMapBackgroundColor(), isNull);
+    });
+
+    test('deleteAll removes every stored value', () async {
+      final storage = SecureStorageService();
+      await storage.setServerUrl('https://example.test');
+      await storage.setAccessToken('access-1');
+
+      await storage.deleteAll();
+
+      expect(await storage.getServerUrl(), isNull);
+      expect(await storage.getAccessToken(), isNull);
+    });
   });
 }

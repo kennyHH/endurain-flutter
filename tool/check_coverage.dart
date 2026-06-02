@@ -27,11 +27,34 @@ void main(List<String> arguments) {
     '${summary.includedFiles} files',
   );
 
+  var failed = false;
+
   if (summary.percent < options.minimumLineCoverage) {
     stderr.writeln(
       'Coverage is below the required '
       '${options.minimumLineCoverage.toStringAsFixed(2)}% threshold.',
     );
+    failed = true;
+  }
+
+  if (options.minimumFileLineCoverage > 0) {
+    final offenders = summary.filesBelow(options.minimumFileLineCoverage);
+    if (offenders.isNotEmpty) {
+      stderr.writeln(
+        'The following files are below the required per-file '
+        '${options.minimumFileLineCoverage.toStringAsFixed(2)}% threshold:',
+      );
+      for (final file in offenders) {
+        stderr.writeln(
+          '  ${file.percent.toStringAsFixed(2)}% '
+          '(${file.hitLines}/${file.totalLines}) ${file.path}',
+        );
+      }
+      failed = true;
+    }
+  }
+
+  if (failed) {
     exitCode = 1;
   }
 }
@@ -40,16 +63,19 @@ class CoverageOptions {
   const CoverageOptions({
     required this.lcovPath,
     required this.minimumLineCoverage,
+    required this.minimumFileLineCoverage,
     required this.excludePatterns,
   });
 
   final String lcovPath;
   final double minimumLineCoverage;
+  final double minimumFileLineCoverage;
   final List<String> excludePatterns;
 
   static CoverageOptions parse(List<String> arguments) {
     var lcovPath = 'coverage/lcov.info';
     var minimumLineCoverage = 0.0;
+    var minimumFileLineCoverage = 0.0;
     final excludePatterns = <String>[];
 
     for (var index = 0; index < arguments.length; index += 1) {
@@ -62,6 +88,12 @@ class CoverageOptions {
             _fail('Missing value for --min-line-coverage.');
           }
           minimumLineCoverage = double.parse(arguments[index]);
+        case '--min-file-line-coverage':
+          index += 1;
+          if (index >= arguments.length) {
+            _fail('Missing value for --min-file-line-coverage.');
+          }
+          minimumFileLineCoverage = double.parse(arguments[index]);
         case '--exclude':
           index += 1;
           if (index >= arguments.length) {
@@ -82,6 +114,7 @@ class CoverageOptions {
     return CoverageOptions(
       lcovPath: lcovPath,
       minimumLineCoverage: minimumLineCoverage,
+      minimumFileLineCoverage: minimumFileLineCoverage,
       excludePatterns: excludePatterns,
     );
   }
@@ -96,10 +129,25 @@ class CoverageOptions {
     stderr.writeln(
       'Usage: dart run tool/check_coverage.dart '
       '[--min-line-coverage 75] '
+      '[--min-file-line-coverage 60] '
       '[--exclude "lib/l10n/app_localizations*.dart"] '
       '[coverage/lcov.info]',
     );
   }
+}
+
+class FileCoverage {
+  const FileCoverage({
+    required this.path,
+    required this.hitLines,
+    required this.totalLines,
+  });
+
+  final String path;
+  final int hitLines;
+  final int totalLines;
+
+  double get percent => totalLines == 0 ? 100 : hitLines * 100 / totalLines;
 }
 
 class CoverageSummary {
@@ -107,13 +155,25 @@ class CoverageSummary {
     required this.hitLines,
     required this.totalLines,
     required this.includedFiles,
+    this.files = const <FileCoverage>[],
   });
 
   final int hitLines;
   final int totalLines;
   final int includedFiles;
+  final List<FileCoverage> files;
 
   double get percent => hitLines * 100 / totalLines;
+
+  /// Files with at least one executable line whose coverage is below
+  /// [threshold], sorted from lowest to highest coverage.
+  List<FileCoverage> filesBelow(double threshold) {
+    final offenders = files
+        .where((file) => file.totalLines > 0 && file.percent < threshold)
+        .toList();
+    offenders.sort((a, b) => a.percent.compareTo(b.percent));
+    return offenders;
+  }
 
   static CoverageSummary fromLcov(
     List<String> lines, {
@@ -124,10 +184,31 @@ class CoverageSummary {
     var hitLines = 0;
     var totalLines = 0;
     var includedFiles = 0;
+    final files = <FileCoverage>[];
+    String? currentFile;
+    var currentHit = 0;
+    var currentTotal = 0;
+
+    void flushCurrentFile() {
+      if (currentFile != null && includeCurrentFile) {
+        files.add(
+          FileCoverage(
+            path: currentFile!,
+            hitLines: currentHit,
+            totalLines: currentTotal,
+          ),
+        );
+      }
+      currentFile = null;
+      currentHit = 0;
+      currentTotal = 0;
+    }
 
     for (final line in lines) {
       if (line.startsWith('SF:')) {
+        flushCurrentFile();
         final filePath = line.substring(3);
+        currentFile = filePath;
         includeCurrentFile = !excludeMatchers.any(
           (matcher) => matcher.hasMatch(filePath),
         );
@@ -142,16 +223,23 @@ class CoverageSummary {
       }
 
       if (line.startsWith('LH:')) {
-        hitLines += int.parse(line.substring(3));
+        final value = int.parse(line.substring(3));
+        hitLines += value;
+        currentHit += value;
       } else if (line.startsWith('LF:')) {
-        totalLines += int.parse(line.substring(3));
+        final value = int.parse(line.substring(3));
+        totalLines += value;
+        currentTotal += value;
       }
     }
+
+    flushCurrentFile();
 
     return CoverageSummary(
       hitLines: hitLines,
       totalLines: totalLines,
       includedFiles: includedFiles,
+      files: files,
     );
   }
 

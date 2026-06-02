@@ -176,6 +176,105 @@ void main() {
 
       expect(find.text('Logged out'), findsOneWidget);
     });
+
+    testWidgets('honors a custom error dialog title', (tester) async {
+      await tester.pumpWidget(
+        _DialogTestApp(
+          builder: (context) => ElevatedButton(
+            onPressed: () => DialogUtils.showErrorDialog(
+              context,
+              const AppException(AppErrorCode.sessionExpired),
+              title: 'Custom title',
+            ),
+            child: const Text('Show error'),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Show error'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Custom title'), findsOneWidget);
+      expect(find.text(l10n.error), findsNothing);
+    });
+
+    testWidgets('shows cupertino error dialogs', (tester) async {
+      PlatformUtils.debugIsApplePlatformOverride = true;
+
+      await tester.pumpWidget(
+        _DialogTestApp(
+          builder: (context) => ElevatedButton(
+            onPressed: () => DialogUtils.showErrorDialog(
+              context,
+              const AppException(AppErrorCode.sessionExpired),
+            ),
+            child: const Text('Show error'),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Show error'));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.errorSessionExpired), findsOneWidget);
+
+      await tester.tap(find.text(l10n.ok));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.errorSessionExpired), findsNothing);
+    });
+
+    testWidgets('shows cupertino confirmation dialogs', (tester) async {
+      PlatformUtils.debugIsApplePlatformOverride = true;
+      late Future<bool> result;
+
+      await tester.pumpWidget(
+        _DialogTestApp(
+          builder: (context) => ElevatedButton(
+            onPressed: () {
+              result = DialogUtils.showConfirmDialog(
+                context,
+                title: 'Discard recording?',
+                message: 'This cannot be undone.',
+                confirmText: 'Discard',
+                isDestructive: true,
+              );
+            },
+            child: const Text('Show confirm'),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Show confirm'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Discard'));
+      await tester.pumpAndSettle();
+
+      expect(await result, isTrue);
+    });
+
+    testWidgets('shows cupertino message dialogs', (tester) async {
+      PlatformUtils.debugIsApplePlatformOverride = true;
+
+      await tester.pumpWidget(
+        _DialogTestApp(
+          builder: (context) => ElevatedButton(
+            onPressed: () => DialogUtils.showMessage(context, 'Logged out'),
+            child: const Text('Show message'),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Show message'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Logged out'), findsOneWidget);
+
+      await tester.tap(find.text(l10n.ok));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Logged out'), findsNothing);
+    });
   });
 }
 

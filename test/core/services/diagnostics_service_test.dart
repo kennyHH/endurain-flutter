@@ -83,6 +83,81 @@ void main() {
       expect(breadcrumbs.last, containsPair('event', 'three'));
     });
 
+    group('redaction security regressions', () {
+      const redactionCases = <String, _RedactionCase>{
+        'bearer tokens': _RedactionCase(
+          input: 'request header Bearer abc123.def-456_ghi end',
+          mustNotContain: ['abc123.def-456_ghi'],
+          mustContain: 'Bearer <redacted>',
+        ),
+        'password assignments': _RedactionCase(
+          input: 'login failed password=hunter2 retrying',
+          mustNotContain: ['hunter2'],
+          mustContain: 'password=<redacted>',
+        ),
+        'secret assignments': _RedactionCase(
+          input: 'client secret: s3cr3t-value',
+          mustNotContain: ['s3cr3t-value'],
+          mustContain: 'secret=<redacted>',
+        ),
+        'session assignments': _RedactionCase(
+          input: 'session=ABCDEF0123456789',
+          mustNotContain: ['ABCDEF0123456789'],
+          mustContain: 'session=<redacted>',
+        ),
+        'cookie assignments': _RedactionCase(
+          input: 'cookie: sid=topsecretcookie',
+          mustNotContain: ['topsecretcookie'],
+          mustContain: 'cookie=<redacted>',
+        ),
+        'query string parameters': _RedactionCase(
+          input: 'GET /api/v1?access_token=leaky&user=bob',
+          mustNotContain: ['leaky', 'bob'],
+          mustContain: '=<redacted>',
+        ),
+        'home directory paths': _RedactionCase(
+          input: 'failed reading /Users/jane/secret/data.gpx',
+          mustNotContain: ['/Users/jane'],
+          mustContain: '<path>',
+        ),
+        'ios container paths': _RedactionCase(
+          input: 'wrote /private/var/containers/Bundle/file.gpx',
+          mustNotContain: ['/private/var/containers'],
+          mustContain: '<path>',
+        ),
+        'gps coordinates': _RedactionCase(
+          input: 'position 41.123456, -8.678901 captured',
+          mustNotContain: ['41.123456', '-8.678901'],
+          mustContain: '<coordinates>',
+        ),
+      };
+
+      redactionCases.forEach((name, redactionCase) {
+        test('redacts $name', () async {
+          final service = DiagnosticsService(
+            supportDirectoryProvider: () async => tempDirectory,
+          );
+          await service.initialize();
+
+          service.recordBreadcrumbSync(
+            'security.regression',
+            details: {'payload': redactionCase.input},
+          );
+
+          final report = await service.readReportText();
+          expect(report, isNotNull);
+          expect(report, contains(redactionCase.mustContain));
+          for (final leaked in redactionCase.mustNotContain) {
+            expect(
+              report,
+              isNot(contains(leaked)),
+              reason: '$name leaked "$leaked" into diagnostics report',
+            );
+          }
+        });
+      });
+    });
+
     test('clear removes the report', () async {
       final service = DiagnosticsService(
         supportDirectoryProvider: () async => tempDirectory,
@@ -95,4 +170,16 @@ void main() {
       expect(await service.readReportText(), isNull);
     });
   });
+}
+
+class _RedactionCase {
+  const _RedactionCase({
+    required this.input,
+    required this.mustNotContain,
+    required this.mustContain,
+  });
+
+  final String input;
+  final List<String> mustNotContain;
+  final String mustContain;
 }
