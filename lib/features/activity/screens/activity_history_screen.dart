@@ -180,7 +180,7 @@ class _HistoryMessage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(message, textAlign: TextAlign.center),
+            AdaptiveEmptyStateText(message: message),
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: UIConstants.paddingStandard),
               AdaptiveButton(

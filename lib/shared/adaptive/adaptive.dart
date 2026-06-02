@@ -6,6 +6,7 @@ export 'adaptive_app.dart';
 export 'adaptive_back_button.dart';
 export 'adaptive_bottom_navigation.dart';
 export 'adaptive_button.dart';
+export 'adaptive_empty_state_text.dart';
 export 'adaptive_floating_action_button.dart';
 export 'adaptive_icon.dart';
 export 'adaptive_list_section.dart';

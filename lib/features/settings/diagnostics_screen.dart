@@ -68,10 +68,7 @@ class _DiagnosticsScreenState extends State<DiagnosticsScreen> {
           final report = snapshot.data;
           if (report == null || report.isEmpty) {
             return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(UIConstants.paddingStandard),
-                child: Text(l10n.diagnosticsEmpty, textAlign: TextAlign.center),
-              ),
+              child: AdaptiveEmptyStateText(message: l10n.diagnosticsEmpty),
             );
           }
 

@@ -24,6 +24,23 @@ void main() {
     expect(find.text(l10n.diagnosticsEmpty), findsOneWidget);
   });
 
+  testWidgets('DiagnosticsScreen empty state is visible on iOS dark mode', (
+    tester,
+  ) async {
+    _useIosDarkMode(tester);
+
+    await tester.pumpWidget(
+      AdaptiveApp(
+        title: 'Test',
+        home: DiagnosticsScreen(diagnostics: _FakeDiagnosticsStore()),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    _expectBrightCupertinoText(tester, l10n.diagnosticsEmpty);
+  });
+
   testWidgets('DiagnosticsScreen shows captured report actions', (
     tester,
   ) async {
@@ -120,6 +137,29 @@ void main() {
       expect(rawReportWidth, greaterThanOrEqualTo(copyTileWidth - 0.5));
     },
   );
+}
+
+void _useIosDarkMode(WidgetTester tester) {
+  PlatformUtils.debugIsApplePlatformOverride = true;
+  tester.binding.platformDispatcher.platformBrightnessTestValue =
+      Brightness.dark;
+  addTearDown(() {
+    PlatformUtils.debugResetOverrides();
+    tester.binding.platformDispatcher.clearPlatformBrightnessTestValue();
+  });
+}
+
+void _expectBrightCupertinoText(WidgetTester tester, String text) {
+  final finder = find.text(text);
+  final textWidget = tester.widget<Text>(finder);
+  final color = textWidget.style?.color;
+
+  expect(color, isNotNull);
+  final resolvedColor = CupertinoDynamicColor.resolve(
+    color!,
+    tester.element(finder),
+  );
+  expect(resolvedColor.computeLuminance(), greaterThan(0.5));
 }
 
 class _FakeDiagnosticsStore implements DiagnosticsStore {
