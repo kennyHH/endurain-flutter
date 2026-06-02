@@ -23,11 +23,50 @@ void main() {
 
       expect(gpx, startsWith('<?xml version="1.0" encoding="UTF-8"?>'));
       expect(gpx, contains('<gpx version="1.1" creator="Endurain Mobile"'));
+      expect(gpx, contains('  <metadata>'));
+      expect(gpx, contains('    <name>run</name>'));
+      expect(
+        gpx,
+        contains(
+          '    <link href="https://codeberg.org/endurain-project">\n'
+          '      <text>Endurain Project</text>\n'
+          '    </link>',
+        ),
+      );
+      expect(gpx, contains('    <time>2026-05-30T10:00:00.000Z</time>'));
+      expect(
+        gpx,
+        contains(
+          '    <bounds minlat="41.1" minlon="-8.7" '
+          'maxlat="41.2" maxlon="-8.6" />',
+        ),
+      );
       expect(gpx, contains('<name>run</name>'));
+      expect(gpx, contains('<type>run</type>'));
       expect(gpx, contains('<trkpt lat="41.1" lon="-8.6">'));
       expect(gpx, contains('<ele>20.0</ele>'));
       expect(gpx, contains('<time>2026-05-30T10:00:00.000Z</time>'));
       expect(gpx, contains('</gpx>'));
+    });
+
+    test('formats decimal values for GPX output', () {
+      final gpx = builder.build(
+        ActivityRecordingState(
+          status: ActivityRecordingStatus.completed,
+          activityType: ActivityType.ride,
+          points: [
+            _point(
+              latitude: 38.938779999999994,
+              longitude: -8.8569227,
+              elevationMeters: 66,
+            ),
+          ],
+        ),
+      );
+
+      expect(gpx, contains('<type>ride</type>'));
+      expect(gpx, contains('<trkpt lat="38.93878" lon="-8.8569227">'));
+      expect(gpx, contains('<ele>66.0</ele>'));
     });
 
     test('omits elevation when missing', () {
@@ -50,6 +89,7 @@ void main() {
       expect(gpx, contains('<trkseg>'));
       expect(gpx, contains('</trkseg>'));
       expect(gpx, isNot(contains('<trkpt')));
+      expect(gpx, isNot(contains('<bounds')));
     });
 
     test('preserves pause and resume boundaries as separate GPX segments', () {
