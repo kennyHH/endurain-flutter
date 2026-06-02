@@ -22,6 +22,15 @@ String _localizedAppException(AppException error, AppLocalizations l10n) {
     AppErrorCode.activityGpxCleanupFailed => l10n.errorActivityGpxCleanupFailed,
     AppErrorCode.activityGpxFileWriteFailed =>
       l10n.errorActivityGpxFileWriteFailed,
+    AppErrorCode.activityLocalActivityNotFound =>
+      l10n.errorActivityLocalActivityNotFound,
+    AppErrorCode.activityLocalDeleteFailed =>
+      l10n.errorActivityLocalDeleteFailed,
+    AppErrorCode.activityLocalGpxMissing => l10n.errorActivityLocalGpxMissing,
+    AppErrorCode.activityLocalLoadFailed => l10n.errorActivityLocalLoadFailed,
+    AppErrorCode.activityLocalRecordInvalid =>
+      l10n.errorActivityLocalRecordInvalid,
+    AppErrorCode.activityLocalSaveFailed => l10n.errorActivityLocalSaveFailed,
     AppErrorCode.activityUploadFailed =>
       details == null
           ? l10n.errorActivityUploadFailed

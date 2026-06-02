@@ -4,6 +4,8 @@ import 'package:endurain/l10n/app_localizations.dart';
 import 'package:endurain/core/services/app_scope.dart';
 import 'package:endurain/core/services/diagnostics_service.dart';
 import 'package:endurain/core/services/package_info_service.dart';
+import 'package:endurain/features/activity/repositories/activity_retention_settings_repository.dart';
+import 'package:endurain/features/activity/screens/activity_history_screen.dart';
 import 'package:endurain/features/settings/diagnostics_screen.dart';
 import 'package:endurain/features/settings/server_settings_screen.dart';
 import 'package:endurain/core/constants/ui_constants.dart';
@@ -15,11 +17,13 @@ class SettingsScreen extends StatefulWidget {
     this.onLogout,
     this.packageInfoService,
     this.diagnostics,
+    this.activityRetentionSettings,
   });
 
   final VoidCallback? onLogout;
   final PackageInfoService? packageInfoService;
   final DiagnosticsStore? diagnostics;
+  final ActivityRetentionSettingsRepository? activityRetentionSettings;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -27,7 +31,9 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   String _version = '';
+  bool _retainUploadedGpx = true;
   late final PackageInfoService _packageInfoService;
+  late final ActivityRetentionSettingsRepository _activityRetentionSettings;
 
   @override
   void initState() {
@@ -35,7 +41,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _packageInfoService =
         widget.packageInfoService ??
         AppScope.servicesOf(context, listen: false).packageInfo;
+    _activityRetentionSettings =
+        widget.activityRetentionSettings ??
+        AppScope.servicesOf(context, listen: false).activityRetentionSettings;
     _loadVersion();
+    _loadActivityRetentionSetting();
   }
 
   Future<void> _loadVersion() async {
@@ -47,6 +57,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
             '© ${UIConstants.copyrightStartYear} - $currentYear Endurain • ${packageInfo.version}';
       });
     }
+  }
+
+  Future<void> _loadActivityRetentionSetting() async {
+    final retainUploadedGpx = await _activityRetentionSettings
+        .isRetainUploadedGpxEnabled();
+    if (mounted) {
+      setState(() {
+        _retainUploadedGpx = retainUploadedGpx;
+      });
+    }
+  }
+
+  Future<void> _setRetainUploadedGpx(bool value) async {
+    setState(() {
+      _retainUploadedGpx = value;
+    });
+    await _activityRetentionSettings.setRetainUploadedGpxEnabled(value);
   }
 
   @override
@@ -76,6 +103,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ServerSettingsScreen(onLogout: widget.onLogout),
                         );
                       },
+                    ),
+                    AdaptiveListTile(
+                      leading: const AdaptiveIcon(
+                        materialIcon: Icons.history,
+                        cupertinoIcon: CupertinoIcons.time,
+                      ),
+                      title: l10n.activityHistoryTitle,
+                      subtitle: l10n.activityHistorySettingsSubtitle,
+                      onTap: () {
+                        adaptivePush<void>(
+                          context,
+                          (context) => const ActivityHistoryScreen(),
+                        );
+                      },
+                    ),
+                    AdaptiveSwitchListTile(
+                      title: l10n.activityRetainUploadedGpx,
+                      subtitle: l10n.activityRetainUploadedGpxSubtitle,
+                      value: _retainUploadedGpx,
+                      onChanged: _setRetainUploadedGpx,
                     ),
                     AdaptiveListTile(
                       leading: const AdaptiveIcon(

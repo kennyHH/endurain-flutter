@@ -3,18 +3,21 @@ import 'dart:io';
 
 import 'package:endurain/core/models/app_exception.dart';
 import 'package:endurain/core/services/location_service.dart';
+import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/features/activity/controllers/activity_recording_controller.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_upload_state.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
+import 'package:endurain/features/activity/models/local_activity_record.dart';
+import 'package:endurain/features/activity/repositories/activity_retention_settings_repository.dart';
+import 'package:endurain/features/activity/repositories/local_activity_repository.dart';
 import 'package:endurain/features/activity/services/activity_gpx_builder.dart';
-import 'package:endurain/features/activity/services/activity_gpx_file_writer.dart';
 import 'package:endurain/features/activity/services/activity_recording_service.dart';
 import 'package:endurain/features/activity/services/activity_upload_service.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 
 import '../../../helpers/recording_location_platform_adapter.dart';
-import 'package:http/http.dart' as http;
 
 void main() {
   group('ActivityRecordingController', () {
@@ -49,27 +52,44 @@ void main() {
       expect(controller.selectedActivityType, ActivityType.run);
     });
 
-    test('generates GPX when a valid recording completes', () async {
-      final adapter = RecordingLocationPlatformAdapter();
-      final service = ActivityRecordingService(
-        locationService: LocationService(platformAdapter: adapter),
-      );
-      final controller = ActivityRecordingController(recordingService: service);
-      addTearDown(controller.dispose);
+    test(
+      'generates GPX and retained local record when recording completes',
+      () async {
+        final adapter = RecordingLocationPlatformAdapter();
+        final tempDirectory = await Directory.systemTemp.createTemp(
+          'endurain_local_complete_',
+        );
+        addTearDown(() => tempDirectory.deleteSync(recursive: true));
+        final repository = _repositoryFor(tempDirectory);
+        final service = ActivityRecordingService(
+          locationService: LocationService(platformAdapter: adapter),
+        );
+        final controller = ActivityRecordingController(
+          recordingService: service,
+          localActivityRepository: repository,
+          localActivityIdProvider: () => 'local_complete',
+        );
+        addTearDown(controller.dispose);
 
-      await controller.start(ActivityType.run);
-      adapter.addPosition(recordingPosition(latitude: 41.1, longitude: -8.6));
-      await pumpEventQueue();
-      await controller.stop();
-      await pumpEventQueue();
+        await controller.start(ActivityType.run);
+        adapter.addPosition(recordingPosition(latitude: 41.1, longitude: -8.6));
+        await pumpEventQueue();
+        await controller.stop();
+        await controller.uploadCompletedGpx();
 
-      expect(controller.state.status, ActivityRecordingStatus.completed);
-      expect(controller.completedGpx, contains('<gpx'));
-      expect(
-        controller.completedGpx,
-        contains('<trkpt lat="41.1" lon="-8.6">'),
-      );
-    });
+        final records = await repository.list();
+        expect(controller.state.status, ActivityRecordingStatus.completed);
+        expect(controller.completedGpx, contains('<gpx'));
+        expect(
+          controller.completedGpx,
+          contains('<trkpt lat="41.1" lon="-8.6">'),
+        );
+        expect(controller.state.localActivityId, 'local_complete');
+        expect(records, hasLength(1));
+        expect(records.single.id, 'local_complete');
+        expect(await repository.hasGpx(records.single), isTrue);
+      },
+    );
 
     test('does not generate GPX for discarded recordings', () async {
       final adapter = RecordingLocationPlatformAdapter();
@@ -129,21 +149,15 @@ void main() {
       expect(controller.uploadStatus, ActivityUploadStatus.idle);
     });
 
-    test('fails upload without a temp file when config is missing', () async {
+    test('surfaces local save failures before upload starts', () async {
       final adapter = RecordingLocationPlatformAdapter();
-      final tempDirectory = await Directory.systemTemp.createTemp(
-        'endurain_upload_missing_',
-      );
-      addTearDown(() => tempDirectory.deleteSync(recursive: true));
       final service = ActivityRecordingService(
         locationService: LocationService(platformAdapter: adapter),
       );
       final controller = ActivityRecordingController(
         recordingService: service,
-        gpxFileWriter: ActivityGpxFileWriter(
-          temporaryDirectoryProvider: () async => tempDirectory,
-          uniqueSuffixProvider: () => 'missing',
-        ),
+        localActivityRepository: _ThrowingLocalActivityRepository(),
+        uploadService: _uploadServiceReturning(201),
       );
       addTearDown(controller.dispose);
 
@@ -151,29 +165,39 @@ void main() {
       adapter.addPosition(recordingPosition());
       await pumpEventQueue();
       await controller.stop();
-      await controller.uploadCompletedGpx();
 
+      expect(controller.state.status, ActivityRecordingStatus.failed);
+      expect(
+        controller.state.lastErrorKey,
+        ActivityRecordingErrorKeys.localSaveFailed,
+      );
       expect(controller.uploadStatus, ActivityUploadStatus.failed);
-      expect(tempDirectory.listSync(), isEmpty);
+      expect(
+        controller.uploadError,
+        isA<AppException>().having(
+          (exception) => exception.code,
+          'code',
+          AppErrorCode.activityLocalSaveFailed,
+        ),
+      );
     });
 
     test(
-      'maps temporary GPX write failures without exposing file paths',
+      'marks retained record uploaded and keeps GPX after successful upload',
       () async {
         final adapter = RecordingLocationPlatformAdapter();
         final tempDirectory = await Directory.systemTemp.createTemp(
-          'endurain_upload_write_failed_',
+          'endurain_upload_success_',
         );
         addTearDown(() => tempDirectory.deleteSync(recursive: true));
+        final repository = _repositoryFor(tempDirectory);
         final service = ActivityRecordingService(
           locationService: LocationService(platformAdapter: adapter),
         );
         final controller = ActivityRecordingController(
           recordingService: service,
-          gpxFileWriter: _ThrowingGpxFileWriter(
-            temporaryDirectory: tempDirectory,
-            failWrite: true,
-          ),
+          localActivityRepository: repository,
+          localActivityIdProvider: () => 'upload_success',
           uploadService: _uploadServiceReturning(201),
         );
         addTearDown(controller.dispose);
@@ -184,35 +208,30 @@ void main() {
         await controller.stop();
         await controller.uploadCompletedGpx();
 
-        expect(controller.uploadStatus, ActivityUploadStatus.failed);
-        expect(
-          controller.uploadError,
-          isA<AppException>().having(
-            (exception) => exception.code,
-            'code',
-            AppErrorCode.activityGpxFileWriteFailed,
-          ),
-        );
-        expect(tempDirectory.listSync(), isEmpty);
+        final record = (await repository.list()).single;
+        expect(controller.uploadStatus, ActivityUploadStatus.uploaded);
+        expect(record.uploadStatus, LocalActivityUploadStatus.uploaded);
+        expect(record.uploadedAt, isNotNull);
+        expect(record.lastUploadErrorCode, isNull);
+        expect(await repository.hasGpx(record), isTrue);
       },
     );
 
-    test('deletes temporary GPX after successful upload', () async {
+    test('marks auth failures with safe local upload error code', () async {
       final adapter = RecordingLocationPlatformAdapter();
       final tempDirectory = await Directory.systemTemp.createTemp(
-        'endurain_upload_success_',
+        'endurain_upload_auth_failed_',
       );
       addTearDown(() => tempDirectory.deleteSync(recursive: true));
+      final repository = _repositoryFor(tempDirectory);
       final service = ActivityRecordingService(
         locationService: LocationService(platformAdapter: adapter),
       );
       final controller = ActivityRecordingController(
         recordingService: service,
-        gpxFileWriter: ActivityGpxFileWriter(
-          temporaryDirectoryProvider: () async => tempDirectory,
-          uniqueSuffixProvider: () => 'success',
-        ),
-        uploadService: _uploadServiceReturning(201),
+        localActivityRepository: repository,
+        localActivityIdProvider: () => 'upload_auth_failed',
+        uploadService: _uploadServiceReturning(401),
       );
       addTearDown(controller.dispose);
 
@@ -222,67 +241,62 @@ void main() {
       await controller.stop();
       await controller.uploadCompletedGpx();
 
-      expect(controller.uploadStatus, ActivityUploadStatus.uploaded);
-      expect(tempDirectory.listSync(), isEmpty);
+      final record = (await repository.list()).single;
+      expect(controller.uploadStatus, ActivityUploadStatus.failed);
+      expect(record.uploadStatus, LocalActivityUploadStatus.failed);
+      expect(record.lastUploadErrorCode, AppErrorCode.sessionExpired);
+      expect(await repository.hasGpx(record), isTrue);
     });
 
-    test('keeps uploaded GPX explicit when cleanup fails', () async {
+    test(
+      'clearCompleted resets active state and preserves local record',
+      () async {
+        final adapter = RecordingLocationPlatformAdapter();
+        final tempDirectory = await Directory.systemTemp.createTemp(
+          'endurain_clear_completed_',
+        );
+        addTearDown(() => tempDirectory.deleteSync(recursive: true));
+        final repository = _repositoryFor(tempDirectory);
+        final service = ActivityRecordingService(
+          locationService: LocationService(platformAdapter: adapter),
+        );
+        final controller = ActivityRecordingController(
+          recordingService: service,
+          localActivityRepository: repository,
+          localActivityIdProvider: () => 'clear_completed',
+          uploadService: _uploadServiceReturning(201),
+        );
+        addTearDown(controller.dispose);
+
+        await controller.start(ActivityType.run);
+        adapter.addPosition(recordingPosition());
+        await pumpEventQueue();
+        await controller.stop();
+        await controller.uploadCompletedGpx();
+        await controller.clearCompleted();
+
+        final records = await repository.list();
+        expect(controller.state.status, ActivityRecordingStatus.idle);
+        expect(controller.completedGpx, isNull);
+        expect(records, hasLength(1));
+        expect(await repository.hasGpx(records.single), isTrue);
+      },
+    );
+
+    test('discard deletes retained local record and GPX', () async {
       final adapter = RecordingLocationPlatformAdapter();
       final tempDirectory = await Directory.systemTemp.createTemp(
-        'endurain_upload_cleanup_failed_',
+        'endurain_discard_retained_',
       );
       addTearDown(() => tempDirectory.deleteSync(recursive: true));
+      final repository = _repositoryFor(tempDirectory);
       final service = ActivityRecordingService(
         locationService: LocationService(platformAdapter: adapter),
       );
       final controller = ActivityRecordingController(
         recordingService: service,
-        gpxFileWriter: _ThrowingGpxFileWriter(
-          temporaryDirectory: tempDirectory,
-          failDelete: true,
-        ),
-        uploadService: _uploadServiceReturning(201),
-      );
-      addTearDown(controller.dispose);
-
-      await controller.start(ActivityType.run);
-      adapter.addPosition(recordingPosition());
-      await pumpEventQueue();
-      await controller.stop();
-      await controller.uploadCompletedGpx();
-
-      expect(controller.uploadStatus, ActivityUploadStatus.cleanupFailed);
-      expect(
-        controller.uploadError,
-        isA<AppException>().having(
-          (exception) => exception.code,
-          'code',
-          AppErrorCode.activityGpxCleanupFailed,
-        ),
-      );
-      expect(tempDirectory.listSync(), isNotEmpty);
-
-      await controller.discard();
-
-      expect(controller.uploadStatus, ActivityUploadStatus.cleanupFailed);
-      expect(controller.state.status, ActivityRecordingStatus.completed);
-    });
-
-    test('keeps failed upload file until discard', () async {
-      final adapter = RecordingLocationPlatformAdapter();
-      final tempDirectory = await Directory.systemTemp.createTemp(
-        'endurain_upload_failed_',
-      );
-      addTearDown(() => tempDirectory.deleteSync(recursive: true));
-      final service = ActivityRecordingService(
-        locationService: LocationService(platformAdapter: adapter),
-      );
-      final controller = ActivityRecordingController(
-        recordingService: service,
-        gpxFileWriter: ActivityGpxFileWriter(
-          temporaryDirectoryProvider: () async => tempDirectory,
-          uniqueSuffixProvider: () => 'failed',
-        ),
+        localActivityRepository: repository,
+        localActivityIdProvider: () => 'discard_retained',
         uploadService: _uploadServiceReturning(500),
       );
       addTearDown(controller.dispose);
@@ -292,13 +306,42 @@ void main() {
       await pumpEventQueue();
       await controller.stop();
       await controller.uploadCompletedGpx();
-
-      expect(controller.uploadStatus, ActivityUploadStatus.failed);
-      expect(tempDirectory.listSync(), isNotEmpty);
+      expect(await repository.list(), hasLength(1));
 
       await controller.discard();
 
-      expect(tempDirectory.listSync(), isEmpty);
+      expect(controller.state.status, ActivityRecordingStatus.idle);
+      expect(await repository.list(), isEmpty);
+    });
+
+    test('retention setting removes uploaded GPX but keeps metadata', () async {
+      final adapter = RecordingLocationPlatformAdapter();
+      final tempDirectory = await Directory.systemTemp.createTemp(
+        'endurain_retention_disabled_',
+      );
+      addTearDown(() => tempDirectory.deleteSync(recursive: true));
+      final repository = _repositoryFor(tempDirectory);
+      final service = ActivityRecordingService(
+        locationService: LocationService(platformAdapter: adapter),
+      );
+      final controller = ActivityRecordingController(
+        recordingService: service,
+        localActivityRepository: repository,
+        localActivityIdProvider: () => 'retention_disabled',
+        uploadService: _uploadServiceReturning(201),
+        retentionSettingsRepository: _FakeRetentionSettings(enabled: false),
+      );
+      addTearDown(controller.dispose);
+
+      await controller.start(ActivityType.run);
+      adapter.addPosition(recordingPosition());
+      await pumpEventQueue();
+      await controller.stop();
+      await controller.uploadCompletedGpx();
+
+      final record = (await repository.list()).single;
+      expect(record.uploadStatus, LocalActivityUploadStatus.uploaded);
+      expect(await repository.hasGpx(record), isFalse);
     });
   });
 }
@@ -312,34 +355,33 @@ class _ThrowingGpxBuilder extends ActivityGpxBuilder {
   }
 }
 
-class _ThrowingGpxFileWriter extends ActivityGpxFileWriter {
-  _ThrowingGpxFileWriter({
-    required Directory temporaryDirectory,
-    this.failWrite = false,
-    this.failDelete = false,
-  }) : super(
-         temporaryDirectoryProvider: () async => temporaryDirectory,
-         uniqueSuffixProvider: () => 'throwing',
-       );
-
-  final bool failWrite;
-  final bool failDelete;
+class _ThrowingLocalActivityRepository extends LocalActivityRepository {
+  _ThrowingLocalActivityRepository()
+    : super(supportDirectoryProvider: () async => Directory.systemTemp);
 
   @override
-  Future<File> writeGpx(String gpx) {
-    if (failWrite) {
-      throw const FileSystemException('write failed', '/tmp/private.gpx');
-    }
-    return super.writeGpx(gpx);
+  Future<String> writeGpx({required String id, required String gpx}) {
+    throw const AppException(AppErrorCode.activityLocalSaveFailed);
   }
+}
+
+class _FakeRetentionSettings extends ActivityRetentionSettingsRepository {
+  _FakeRetentionSettings({required this.enabled})
+    : super(storage: SecureStorageService());
+
+  final bool enabled;
 
   @override
-  Future<void> delete(String filePath) {
-    if (failDelete) {
-      throw const FileSystemException('delete failed', '/tmp/private.gpx');
-    }
-    return super.delete(filePath);
-  }
+  Future<bool> isRetainUploadedGpxEnabled() async => enabled;
+
+  @override
+  Future<void> setRetainUploadedGpxEnabled(bool enabled) async {}
+}
+
+LocalActivityRepository _repositoryFor(Directory directory) {
+  return LocalActivityRepository(
+    supportDirectoryProvider: () async => directory,
+  );
 }
 
 ActivityUploadService _uploadServiceReturning(int statusCode) {

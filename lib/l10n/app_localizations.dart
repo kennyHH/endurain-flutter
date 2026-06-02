@@ -170,6 +170,42 @@ abstract class AppLocalizations {
   /// **'Could not prepare the activity upload file'**
   String get errorActivityGpxFileWriteFailed;
 
+  /// Local activity record not found error without exposing storage details - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not find this local activity'**
+  String get errorActivityLocalActivityNotFound;
+
+  /// Local activity delete error without exposing file paths - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete the local activity'**
+  String get errorActivityLocalDeleteFailed;
+
+  /// Local activity GPX missing error without exposing file paths - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'The local GPX file is not available'**
+  String get errorActivityLocalGpxMissing;
+
+  /// Local activity manifest load error without exposing file paths - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load local activities'**
+  String get errorActivityLocalLoadFailed;
+
+  /// Local activity metadata validation error - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save this activity'**
+  String get errorActivityLocalRecordInvalid;
+
+  /// Local activity save error without exposing file paths - Used in: error_localizations.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the activity locally'**
+  String get errorActivityLocalSaveFailed;
+
   /// Generic identity provider loading error - Used in: error_localizations.dart
   ///
   /// In en, this message translates to:
@@ -518,6 +554,12 @@ abstract class AppLocalizations {
   /// **'Could not create the activity GPX file.'**
   String get activityGpxGenerationFailed;
 
+  /// Recording error shown when retained local activity storage fails - Used in: activity_recording_controls.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save this activity on this device.'**
+  String get activityLocalSaveFailed;
+
   /// Button label to open app settings for location permission - Used in: activity_recording_controls.dart
   ///
   /// In en, this message translates to:
@@ -548,11 +590,41 @@ abstract class AppLocalizations {
   /// **'Resume'**
   String get activityResume;
 
-  /// Retry activity upload button label - Used in: activity_upload_status_panel.dart
+  /// Retry activity upload button label - Used in: activity_upload_status_panel.dart, activity_history_screen.dart, activity_details_screen.dart
   ///
   /// In en, this message translates to:
   /// **'Retry upload'**
   String get activityRetryUpload;
+
+  /// Non-destructive completion action after an activity is retained locally - Used in: activity_upload_status_panel.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get activityDone;
+
+  /// Action to open local activity history - Used in: activity_upload_status_panel.dart
+  ///
+  /// In en, this message translates to:
+  /// **'View history'**
+  String get activityViewHistory;
+
+  /// Destructive action for deleting a retained local activity and GPX - Used in: activity_upload_status_panel.dart, map_screen.dart, activity_history_screen.dart, activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Delete local copy'**
+  String get activityDeleteLocal;
+
+  /// Confirmation dialog title for deleting a retained local activity - Used in: map_screen.dart, activity_history_screen.dart, activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Delete local activity?'**
+  String get activityDeleteLocalConfirmTitle;
+
+  /// Confirmation dialog message for deleting a retained local activity - Used in: map_screen.dart, activity_history_screen.dart, activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the local activity record and GPX file from this device.'**
+  String get activityDeleteLocalConfirmMessage;
 
   /// Start recording button label and tooltip - Used in: activity_recording_controls.dart
   ///
@@ -721,6 +793,186 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Uploading'**
   String get activityUploading;
+
+  /// Local activity upload status label - Used in: activity_history_screen.dart, activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get activityUploadStatusPending;
+
+  /// Local activity uploaded status label - Used in: activity_history_screen.dart, activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Uploaded'**
+  String get activityUploadStatusUploaded;
+
+  /// Local activity failed upload status label - Used in: activity_history_screen.dart, activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get activityUploadStatusFailed;
+
+  /// Local activity history screen title and settings navigation label - Used in: activity_history_screen.dart, settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Activity history'**
+  String get activityHistoryTitle;
+
+  /// Settings subtitle for local activity history - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Completed activities saved on this device'**
+  String get activityHistorySettingsSubtitle;
+
+  /// Settings switch label for local uploaded GPX retention - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Keep uploaded GPX files'**
+  String get activityRetainUploadedGpx;
+
+  /// Settings switch subtitle explaining private local GPX retention - Used in: settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Stores completed route files in private app storage after upload.'**
+  String get activityRetainUploadedGpxSubtitle;
+
+  /// Empty state for local activity history - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'No completed activities saved on this device.'**
+  String get activityHistoryEmpty;
+
+  /// Load failure state for local activity history - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load local activities.'**
+  String get activityHistoryLoadFailed;
+
+  /// Refresh action for local activity history - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get activityHistoryRefresh;
+
+  /// List section header for retained local activities - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Local activities'**
+  String get activityHistoryLocalActivities;
+
+  /// Local activity list item title - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'{activityType} • {endedAt}'**
+  String activityHistoryEntryTitle(String activityType, String endedAt);
+
+  /// Local activity list duration line - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Duration: {duration}'**
+  String activityHistoryDuration(String duration);
+
+  /// Local activity list distance line - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Distance: {distance}'**
+  String activityHistoryDistance(String distance);
+
+  /// Local activity list upload status line - Used in: activity_history_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Upload: {status}'**
+  String activityHistoryUploadStatus(String status);
+
+  /// Local activity details screen title - Used in: activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Activity details'**
+  String get activityHistoryDetailsTitle;
+
+  /// Missing local activity details state - Used in: activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'This local activity is no longer available.'**
+  String get activityHistoryDetailsMissing;
+
+  /// Local activity details summary section header - Used in: activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get activityHistorySummary;
+
+  /// Local activity details actions section header - Used in: activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get activityHistoryActions;
+
+  /// Local activity details type label - Used in: activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get activityHistoryType;
+
+  /// Local activity details started time label - Used in: activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Started'**
+  String get activityHistoryStartedAt;
+
+  /// Local activity details ended time label - Used in: activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Ended'**
+  String get activityHistoryEndedAt;
+
+  /// Local activity details duration label - Used in: activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get activityHistoryDurationLabel;
+
+  /// Local activity details distance label - Used in: activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Distance'**
+  String get activityHistoryDistanceLabel;
+
+  /// Local activity details average speed label - Used in: activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Average speed'**
+  String get activityHistoryAverageSpeed;
+
+  /// Local activity details point count label - Used in: activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'GPS points'**
+  String get activityHistoryPointCount;
+
+  /// Local activity details upload status label - Used in: activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Upload'**
+  String get activityHistoryUploadStatusLabel;
+
+  /// Local activity details GPX availability label - Used in: activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'GPX file'**
+  String get activityHistoryGpxStatus;
+
+  /// Local activity details GPX available status - Used in: activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on this device'**
+  String get activityHistoryGpxAvailable;
+
+  /// Local activity details GPX missing status - Used in: activity_details_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Not available on this device'**
+  String get activityHistoryGpxMissing;
 
   /// Map tab label - Used in: app_bottom_nav.dart
   ///

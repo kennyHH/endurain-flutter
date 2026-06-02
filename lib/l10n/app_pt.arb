@@ -57,6 +57,30 @@
   "@errorActivityGpxFileWriteFailed": {
     "description": "Erro ao escrever ficheiro GPX temporário da atividade sem expor caminhos de ficheiros - Usado em: error_localizations.dart"
   },
+  "errorActivityLocalActivityNotFound": "Não foi possível encontrar esta atividade local",
+  "@errorActivityLocalActivityNotFound": {
+    "description": "Erro quando o registo local da atividade não é encontrado sem expor detalhes de armazenamento - Usado em: error_localizations.dart"
+  },
+  "errorActivityLocalDeleteFailed": "Não foi possível apagar a atividade local",
+  "@errorActivityLocalDeleteFailed": {
+    "description": "Erro ao apagar atividade local sem expor caminhos de ficheiros - Usado em: error_localizations.dart"
+  },
+  "errorActivityLocalGpxMissing": "O ficheiro GPX local não está disponível",
+  "@errorActivityLocalGpxMissing": {
+    "description": "Erro de GPX local indisponível sem expor caminhos de ficheiros - Usado em: error_localizations.dart"
+  },
+  "errorActivityLocalLoadFailed": "Não foi possível carregar atividades locais",
+  "@errorActivityLocalLoadFailed": {
+    "description": "Erro ao carregar o manifesto de atividades locais sem expor caminhos de ficheiros - Usado em: error_localizations.dart"
+  },
+  "errorActivityLocalRecordInvalid": "Não foi possível guardar esta atividade",
+  "@errorActivityLocalRecordInvalid": {
+    "description": "Erro de validação dos metadados da atividade local - Usado em: error_localizations.dart"
+  },
+  "errorActivityLocalSaveFailed": "Não foi possível guardar a atividade localmente",
+  "@errorActivityLocalSaveFailed": {
+    "description": "Erro ao guardar atividade local sem expor caminhos de ficheiros - Usado em: error_localizations.dart"
+  },
   "errorFetchIdentityProvidersFailed": "Não foi possível carregar os provedores de identidade",
   "@errorFetchIdentityProvidersFailed": {
     "description": "Erro genérico ao carregar provedores de identidade - Usado em: error_localizations.dart"
@@ -363,6 +387,10 @@
   "@activityGpxGenerationFailed": {
     "description": "Erro exibido quando a geração do GPX falha depois de parar - Usado em: activity_recording_controls.dart"
   },
+  "activityLocalSaveFailed": "Não foi possível guardar esta atividade neste dispositivo.",
+  "@activityLocalSaveFailed": {
+    "description": "Erro exibido quando o armazenamento local da atividade falha - Usado em: activity_recording_controls.dart"
+  },
   "activityOpenSettings": "Abrir definições",
   "@activityOpenSettings": {
     "description": "Rótulo do botão para abrir definições da app para permissão de localização - Usado em: activity_recording_controls.dart"
@@ -385,7 +413,27 @@
   },
   "activityRetryUpload": "Tentar envio novamente",
   "@activityRetryUpload": {
-    "description": "Rótulo do botão de repetir envio da atividade - Usado em: activity_upload_status_panel.dart"
+    "description": "Rótulo do botão de repetir envio da atividade - Usado em: activity_upload_status_panel.dart, activity_history_screen.dart, activity_details_screen.dart"
+  },
+  "activityDone": "Concluído",
+  "@activityDone": {
+    "description": "Ação não destrutiva depois de uma atividade ser guardada localmente - Usado em: activity_upload_status_panel.dart"
+  },
+  "activityViewHistory": "Ver histórico",
+  "@activityViewHistory": {
+    "description": "Ação para abrir o histórico local de atividades - Usado em: activity_upload_status_panel.dart"
+  },
+  "activityDeleteLocal": "Apagar cópia local",
+  "@activityDeleteLocal": {
+    "description": "Ação destrutiva para apagar atividade local e GPX retidos - Usado em: activity_upload_status_panel.dart, map_screen.dart, activity_history_screen.dart, activity_details_screen.dart"
+  },
+  "activityDeleteLocalConfirmTitle": "Apagar atividade local?",
+  "@activityDeleteLocalConfirmTitle": {
+    "description": "Título do diálogo de confirmação para apagar atividade local retida - Usado em: map_screen.dart, activity_history_screen.dart, activity_details_screen.dart"
+  },
+  "activityDeleteLocalConfirmMessage": "Isto remove o registo local da atividade e o ficheiro GPX deste dispositivo.",
+  "@activityDeleteLocalConfirmMessage": {
+    "description": "Mensagem do diálogo de confirmação para apagar atividade local retida - Usado em: map_screen.dart, activity_history_screen.dart, activity_details_screen.dart"
   },
   "activityStart": "Iniciar",
   "@activityStart": {
@@ -498,6 +546,154 @@
   "activityUploading": "A enviar",
   "@activityUploading": {
     "description": "Estado de envio da atividade em curso - Usado em: activity_upload_status_panel.dart"
+  },
+  "activityUploadStatusPending": "Pendente",
+  "@activityUploadStatusPending": {
+    "description": "Rótulo de estado de envio de atividade local - Usado em: activity_history_screen.dart, activity_details_screen.dart"
+  },
+  "activityUploadStatusUploaded": "Enviado",
+  "@activityUploadStatusUploaded": {
+    "description": "Rótulo de atividade local enviada - Usado em: activity_history_screen.dart, activity_details_screen.dart"
+  },
+  "activityUploadStatusFailed": "Falhou",
+  "@activityUploadStatusFailed": {
+    "description": "Rótulo de falha no envio de atividade local - Usado em: activity_history_screen.dart, activity_details_screen.dart"
+  },
+  "activityHistoryTitle": "Histórico de atividades",
+  "@activityHistoryTitle": {
+    "description": "Título do ecrã de histórico local de atividades e rótulo de navegação nas definições - Usado em: activity_history_screen.dart, settings_screen.dart"
+  },
+  "activityHistorySettingsSubtitle": "Atividades concluídas guardadas neste dispositivo",
+  "@activityHistorySettingsSubtitle": {
+    "description": "Subtítulo nas definições para histórico local de atividades - Usado em: settings_screen.dart"
+  },
+  "activityRetainUploadedGpx": "Manter ficheiros GPX enviados",
+  "@activityRetainUploadedGpx": {
+    "description": "Rótulo da opção de retenção local de GPX enviados - Usado em: settings_screen.dart"
+  },
+  "activityRetainUploadedGpxSubtitle": "Guarda ficheiros de percurso concluídos no armazenamento privado da app depois do envio.",
+  "@activityRetainUploadedGpxSubtitle": {
+    "description": "Subtítulo que explica a retenção privada local de GPX - Usado em: settings_screen.dart"
+  },
+  "activityHistoryEmpty": "Não há atividades concluídas guardadas neste dispositivo.",
+  "@activityHistoryEmpty": {
+    "description": "Estado vazio do histórico local de atividades - Usado em: activity_history_screen.dart"
+  },
+  "activityHistoryLoadFailed": "Não foi possível carregar atividades locais.",
+  "@activityHistoryLoadFailed": {
+    "description": "Estado de falha ao carregar histórico local de atividades - Usado em: activity_history_screen.dart"
+  },
+  "activityHistoryRefresh": "Atualizar",
+  "@activityHistoryRefresh": {
+    "description": "Ação para atualizar histórico local de atividades - Usado em: activity_history_screen.dart"
+  },
+  "activityHistoryLocalActivities": "Atividades locais",
+  "@activityHistoryLocalActivities": {
+    "description": "Cabeçalho da lista de atividades locais retidas - Usado em: activity_history_screen.dart"
+  },
+  "activityHistoryEntryTitle": "{activityType} • {endedAt}",
+  "@activityHistoryEntryTitle": {
+    "description": "Título do item de atividade local - Usado em: activity_history_screen.dart",
+    "placeholders": {
+      "activityType": {
+        "type": "String",
+        "example": "Corrida"
+      },
+      "endedAt": {
+        "type": "String",
+        "example": "2026-06-02 14:30"
+      }
+    }
+  },
+  "activityHistoryDuration": "Duração: {duration}",
+  "@activityHistoryDuration": {
+    "description": "Linha de duração da atividade local - Usado em: activity_history_screen.dart",
+    "placeholders": {
+      "duration": {
+        "type": "String",
+        "example": "42:10"
+      }
+    }
+  },
+  "activityHistoryDistance": "Distância: {distance}",
+  "@activityHistoryDistance": {
+    "description": "Linha de distância da atividade local - Usado em: activity_history_screen.dart",
+    "placeholders": {
+      "distance": {
+        "type": "String",
+        "example": "5.20 km"
+      }
+    }
+  },
+  "activityHistoryUploadStatus": "Envio: {status}",
+  "@activityHistoryUploadStatus": {
+    "description": "Linha de estado de envio da atividade local - Usado em: activity_history_screen.dart",
+    "placeholders": {
+      "status": {
+        "type": "String",
+        "example": "Enviado"
+      }
+    }
+  },
+  "activityHistoryDetailsTitle": "Detalhes da atividade",
+  "@activityHistoryDetailsTitle": {
+    "description": "Título do ecrã de detalhes da atividade local - Usado em: activity_details_screen.dart"
+  },
+  "activityHistoryDetailsMissing": "Esta atividade local já não está disponível.",
+  "@activityHistoryDetailsMissing": {
+    "description": "Estado de detalhes de atividade local em falta - Usado em: activity_details_screen.dart"
+  },
+  "activityHistorySummary": "Resumo",
+  "@activityHistorySummary": {
+    "description": "Cabeçalho da secção de resumo dos detalhes da atividade local - Usado em: activity_details_screen.dart"
+  },
+  "activityHistoryActions": "Ações",
+  "@activityHistoryActions": {
+    "description": "Cabeçalho da secção de ações dos detalhes da atividade local - Usado em: activity_details_screen.dart"
+  },
+  "activityHistoryType": "Tipo",
+  "@activityHistoryType": {
+    "description": "Rótulo do tipo nos detalhes da atividade local - Usado em: activity_details_screen.dart"
+  },
+  "activityHistoryStartedAt": "Início",
+  "@activityHistoryStartedAt": {
+    "description": "Rótulo da hora de início nos detalhes da atividade local - Usado em: activity_details_screen.dart"
+  },
+  "activityHistoryEndedAt": "Fim",
+  "@activityHistoryEndedAt": {
+    "description": "Rótulo da hora de fim nos detalhes da atividade local - Usado em: activity_details_screen.dart"
+  },
+  "activityHistoryDurationLabel": "Duração",
+  "@activityHistoryDurationLabel": {
+    "description": "Rótulo da duração nos detalhes da atividade local - Usado em: activity_details_screen.dart"
+  },
+  "activityHistoryDistanceLabel": "Distância",
+  "@activityHistoryDistanceLabel": {
+    "description": "Rótulo da distância nos detalhes da atividade local - Usado em: activity_details_screen.dart"
+  },
+  "activityHistoryAverageSpeed": "Velocidade média",
+  "@activityHistoryAverageSpeed": {
+    "description": "Rótulo da velocidade média nos detalhes da atividade local - Usado em: activity_details_screen.dart"
+  },
+  "activityHistoryPointCount": "Pontos GPS",
+  "@activityHistoryPointCount": {
+    "description": "Rótulo da contagem de pontos nos detalhes da atividade local - Usado em: activity_details_screen.dart"
+  },
+  "activityHistoryUploadStatusLabel": "Envio",
+  "@activityHistoryUploadStatusLabel": {
+    "description": "Rótulo do estado de envio nos detalhes da atividade local - Usado em: activity_details_screen.dart"
+  },
+  "activityHistoryGpxStatus": "Ficheiro GPX",
+  "@activityHistoryGpxStatus": {
+    "description": "Rótulo de disponibilidade do GPX nos detalhes da atividade local - Usado em: activity_details_screen.dart"
+  },
+  "activityHistoryGpxAvailable": "Guardado neste dispositivo",
+  "@activityHistoryGpxAvailable": {
+    "description": "Estado de GPX disponível nos detalhes da atividade local - Usado em: activity_details_screen.dart"
+  },
+  "activityHistoryGpxMissing": "Não disponível neste dispositivo",
+  "@activityHistoryGpxMissing": {
+    "description": "Estado de GPX em falta nos detalhes da atividade local - Usado em: activity_details_screen.dart"
   },
   "@sectionMap": "=== MAPA (features/map/map_screen.dart) ===",
   "mapTab": "Mapa",

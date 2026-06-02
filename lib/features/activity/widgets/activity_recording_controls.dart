@@ -29,7 +29,9 @@ class ActivityRecordingControls extends StatelessWidget {
     this.uploadStatus = ActivityUploadStatus.idle,
     this.uploadError,
     this.onRetryUpload,
-    this.onDiscard,
+    this.onDone,
+    this.onDelete,
+    this.onViewHistory,
     this.onOpenLocationSettings,
     this.trailingReservedWidth = 0,
   });
@@ -44,7 +46,9 @@ class ActivityRecordingControls extends StatelessWidget {
   final ActivityUploadStatus uploadStatus;
   final Object? uploadError;
   final VoidCallback? onRetryUpload;
-  final VoidCallback? onDiscard;
+  final VoidCallback? onDone;
+  final VoidCallback? onDelete;
+  final VoidCallback? onViewHistory;
   final VoidCallback? onOpenLocationSettings;
   final double trailingReservedWidth;
 
@@ -143,7 +147,9 @@ class ActivityRecordingControls extends StatelessWidget {
                           status: uploadStatus,
                           error: uploadError,
                           onRetry: onRetryUpload,
-                          onDiscard: onDiscard,
+                          onDone: onDone,
+                          onDelete: onDelete,
+                          onViewHistory: onViewHistory,
                         ),
                         const SizedBox(height: 8),
                       ],
@@ -252,6 +258,8 @@ class ActivityRecordingControls extends StatelessWidget {
       ActivityRecordingErrorKeys.emptyRecording => l10n.activityRecordingEmpty,
       ActivityRecordingErrorKeys.gpxGenerationFailed =>
         l10n.activityGpxGenerationFailed,
+      ActivityRecordingErrorKeys.localSaveFailed =>
+        l10n.activityLocalSaveFailed,
       ActivityRecordingErrorKeys.locationPermissionDenied =>
         l10n.activityLocationPermissionDenied,
       ActivityRecordingErrorKeys.locationPermissionDeniedForever =>

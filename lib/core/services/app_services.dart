@@ -9,6 +9,10 @@ import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/services/server_settings_service.dart';
 import 'package:endurain/core/services/sso_service.dart';
 import 'package:endurain/core/services/url_launcher_service.dart';
+import 'package:endurain/features/activity/repositories/activity_retention_settings_repository.dart';
+import 'package:endurain/features/activity/repositories/local_activity_repository.dart';
+import 'package:endurain/features/activity/services/activity_upload_service.dart';
+import 'package:endurain/features/activity/services/local_activity_gpx_storage.dart';
 
 class AppServices {
   AppServices._();
@@ -35,7 +39,19 @@ class AppServices {
     storage: secureStorage,
     authService: auth,
   );
+  late final ActivityUploadService activityUpload = ActivityUploadService(
+    apiClient: apiClient,
+    config: const ActivityUploadConfig.endurain(),
+  );
   final LocationService location = LocationService();
+  late final LocalActivityGpxStorage localActivityGpxStorage =
+      LocalActivityGpxStorage();
+  late final LocalActivityRepository localActivities = LocalActivityRepository(
+    gpxStorage: localActivityGpxStorage,
+    diagnostics: diagnostics,
+  );
+  late final ActivityRetentionSettingsRepository activityRetentionSettings =
+      ActivityRetentionSettingsRepository(storage: secureStorage);
   final AppLinksService appLinks = DefaultAppLinksService();
   final UrlLauncherService urlLauncher = const UrlLauncherService();
   final PackageInfoService packageInfo = const PackageInfoService();

@@ -9,11 +9,12 @@ import 'package:endurain/core/services/location_service.dart';
 import 'package:endurain/core/services/location_settings_builder.dart';
 import 'package:endurain/core/services/secure_storage_service.dart';
 import 'package:endurain/core/constants/map_constants.dart';
+import 'package:endurain/core/utils/dialog_utils.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/features/activity/controllers/activity_recording_controller.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
 import 'package:endurain/features/activity/services/activity_recording_service.dart';
-import 'package:endurain/features/activity/services/activity_upload_service.dart';
+import 'package:endurain/features/activity/screens/activity_history_screen.dart';
 import 'package:endurain/features/activity/widgets/activity_recording_controls.dart';
 import 'package:endurain/features/activity/widgets/activity_stop_confirmation_dialog.dart';
 import 'package:endurain/features/map/map_settings_repository.dart';
@@ -86,10 +87,9 @@ class _MapScreenState extends State<MapScreen> with OwnedControllers {
         diagnostics: services.diagnostics,
         locationService: widget.locationService ?? services.location,
       ),
-      uploadService: ActivityUploadService(
-        apiClient: services.apiClient,
-        config: const ActivityUploadConfig.endurain(),
-      ),
+      uploadService: services.activityUpload,
+      localActivityRepository: services.localActivities,
+      retentionSettingsRepository: services.activityRetentionSettings,
     );
   }
 
@@ -207,6 +207,25 @@ class _MapScreenState extends State<MapScreen> with OwnedControllers {
     await _activityController.start(type);
   }
 
+  Future<void> _deleteCompletedActivity() async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await DialogUtils.showConfirmDialog(
+      context,
+      title: l10n.activityDeleteLocalConfirmTitle,
+      message: l10n.activityDeleteLocalConfirmMessage,
+      confirmText: l10n.activityDeleteLocal,
+      isDestructive: true,
+    );
+    if (!mounted || !confirmed) {
+      return;
+    }
+    await _activityController.discard();
+  }
+
+  void _openActivityHistory() {
+    adaptivePush<void>(context, (context) => const ActivityHistoryScreen());
+  }
+
   /// Build map options with common configuration
   MapOptions _buildMapOptions() {
     return MapOptions(
@@ -307,7 +326,9 @@ class _MapScreenState extends State<MapScreen> with OwnedControllers {
             uploadStatus: _activityController.uploadStatus,
             uploadError: _activityController.uploadError,
             onRetryUpload: _activityController.uploadCompletedGpx,
-            onDiscard: _activityController.discard,
+            onDone: _activityController.clearCompleted,
+            onDelete: _deleteCompletedActivity,
+            onViewHistory: _openActivityHistory,
             onOpenLocationSettings: _activityController.openLocationSettings,
           ),
         ],

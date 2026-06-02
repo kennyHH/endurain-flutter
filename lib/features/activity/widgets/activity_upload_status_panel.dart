@@ -11,13 +11,17 @@ class ActivityUploadStatusPanel extends StatelessWidget {
     required this.status,
     required this.error,
     required this.onRetry,
-    required this.onDiscard,
+    required this.onDone,
+    required this.onDelete,
+    this.onViewHistory,
   });
 
   final ActivityUploadStatus status;
   final Object? error;
   final VoidCallback? onRetry;
-  final VoidCallback? onDiscard;
+  final VoidCallback? onDone;
+  final VoidCallback? onDelete;
+  final VoidCallback? onViewHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +54,16 @@ class ActivityUploadStatusPanel extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
+              if (status == ActivityUploadStatus.uploaded)
+                AdaptiveButton(
+                  label: l10n.activityDone,
+                  onPressed: onDone,
+                  icon: const AdaptiveIcon(
+                    materialIcon: Icons.check,
+                    cupertinoIcon: CupertinoIcons.check_mark,
+                    size: 20,
+                  ),
+                ),
               if (status == ActivityUploadStatus.failed)
                 AdaptiveButton(
                   label: l10n.activityRetryUpload,
@@ -60,9 +74,20 @@ class ActivityUploadStatusPanel extends StatelessWidget {
                     size: 20,
                   ),
                 ),
+              if (onViewHistory != null)
+                AdaptiveButton(
+                  label: l10n.activityViewHistory,
+                  onPressed: onViewHistory,
+                  variant: AdaptiveButtonVariant.secondary,
+                  icon: const AdaptiveIcon(
+                    materialIcon: Icons.history,
+                    cupertinoIcon: CupertinoIcons.time,
+                    size: 20,
+                  ),
+                ),
               AdaptiveButton(
-                label: l10n.activityDiscard,
-                onPressed: onDiscard,
+                label: l10n.activityDeleteLocal,
+                onPressed: onDelete,
                 destructive: true,
                 variant: AdaptiveButtonVariant.secondary,
                 icon: const AdaptiveIcon(

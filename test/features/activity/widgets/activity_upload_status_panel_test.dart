@@ -8,24 +8,31 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('ActivityUploadStatusPanel', () {
-    testWidgets('shows uploading state without retry', (tester) async {
+    testWidgets('shows uploading state without actions', (tester) async {
       await tester.pumpWidget(
         const _TestApp(
           child: ActivityUploadStatusPanel(
             status: ActivityUploadStatus.uploading,
             error: null,
             onRetry: null,
-            onDiscard: null,
+            onDone: null,
+            onDelete: null,
           ),
         ),
       );
 
       expect(find.text(AppLocalizationsEn().activityUploading), findsOneWidget);
       expect(find.text(AppLocalizationsEn().activityRetryUpload), findsNothing);
+      expect(find.text(AppLocalizationsEn().activityDone), findsNothing);
+      expect(find.text(AppLocalizationsEn().activityDeleteLocal), findsNothing);
     });
 
-    testWidgets('shows uploaded state with discard action', (tester) async {
-      var discarded = false;
+    testWidgets('shows uploaded state with non-destructive done action', (
+      tester,
+    ) async {
+      var done = false;
+      var viewedHistory = false;
+      var deleted = false;
 
       await tester.pumpWidget(
         _TestApp(
@@ -33,22 +40,38 @@ void main() {
             status: ActivityUploadStatus.uploaded,
             error: null,
             onRetry: null,
-            onDiscard: () => discarded = true,
+            onDone: () => done = true,
+            onDelete: () => deleted = true,
+            onViewHistory: () => viewedHistory = true,
           ),
         ),
       );
 
       expect(find.text(AppLocalizationsEn().activityUploaded), findsOneWidget);
-      await tester.tap(find.text(AppLocalizationsEn().activityDiscard));
+      expect(find.text(AppLocalizationsEn().activityDone), findsOneWidget);
+      expect(
+        find.text(AppLocalizationsEn().activityViewHistory),
+        findsOneWidget,
+      );
+      expect(
+        find.text(AppLocalizationsEn().activityDeleteLocal),
+        findsOneWidget,
+      );
 
-      expect(discarded, isTrue);
+      await tester.tap(find.text(AppLocalizationsEn().activityDone));
+      await tester.tap(find.text(AppLocalizationsEn().activityViewHistory));
+      await tester.tap(find.text(AppLocalizationsEn().activityDeleteLocal));
+
+      expect(done, isTrue);
+      expect(viewedHistory, isTrue);
+      expect(deleted, isTrue);
     });
 
-    testWidgets('shows failed state with retry and discard actions', (
+    testWidgets('shows failed state with retry and delete actions', (
       tester,
     ) async {
       var retried = false;
-      var discarded = false;
+      var deleted = false;
 
       await tester.pumpWidget(
         _TestApp(
@@ -56,7 +79,8 @@ void main() {
             status: ActivityUploadStatus.failed,
             error: const AppException(AppErrorCode.activityUploadNotConfigured),
             onRetry: () => retried = true,
-            onDiscard: () => discarded = true,
+            onDone: null,
+            onDelete: () => deleted = true,
           ),
         ),
       );
@@ -71,22 +95,23 @@ void main() {
       );
 
       await tester.tap(find.text(AppLocalizationsEn().activityRetryUpload));
-      await tester.tap(find.text(AppLocalizationsEn().activityDiscard));
+      await tester.tap(find.text(AppLocalizationsEn().activityDeleteLocal));
 
       expect(retried, isTrue);
-      expect(discarded, isTrue);
+      expect(deleted, isTrue);
     });
 
     testWidgets('shows cleanup failure without retry action', (tester) async {
-      var discarded = false;
+      var deleted = false;
 
       await tester.pumpWidget(
         _TestApp(
           child: ActivityUploadStatusPanel(
             status: ActivityUploadStatus.cleanupFailed,
-            error: const AppException(AppErrorCode.activityGpxCleanupFailed),
+            error: const AppException(AppErrorCode.activityLocalDeleteFailed),
             onRetry: () {},
-            onDiscard: () => discarded = true,
+            onDone: null,
+            onDelete: () => deleted = true,
           ),
         ),
       );
@@ -96,14 +121,14 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.text(AppLocalizationsEn().errorActivityGpxCleanupFailed),
+        find.text(AppLocalizationsEn().errorActivityLocalDeleteFailed),
         findsOneWidget,
       );
       expect(find.text(AppLocalizationsEn().activityRetryUpload), findsNothing);
 
-      await tester.tap(find.text(AppLocalizationsEn().activityDiscard));
+      await tester.tap(find.text(AppLocalizationsEn().activityDeleteLocal));
 
-      expect(discarded, isTrue);
+      expect(deleted, isTrue);
     });
   });
 }

@@ -1,27 +1,42 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:endurain/core/models/app_exception.dart';
 import 'package:endurain/core/services/location_settings_builder.dart';
 import 'package:endurain/features/activity/models/activity_recording_state.dart';
 import 'package:endurain/features/activity/models/activity_upload_state.dart';
 import 'package:endurain/features/activity/models/activity_type.dart';
+import 'package:endurain/features/activity/models/local_activity_record.dart';
+import 'package:endurain/features/activity/repositories/activity_retention_settings_repository.dart';
+import 'package:endurain/features/activity/repositories/local_activity_repository.dart';
 import 'package:endurain/features/activity/services/activity_gpx_builder.dart';
-import 'package:endurain/features/activity/services/activity_gpx_file_writer.dart';
 import 'package:endurain/features/activity/services/activity_recording_service.dart';
 import 'package:endurain/features/activity/services/activity_upload_service.dart';
+import 'package:endurain/features/activity/services/local_activity_summary_builder.dart';
 import 'package:flutter/foundation.dart';
 
 class ActivityRecordingController extends ChangeNotifier {
   ActivityRecordingController({
     ActivityRecordingService? recordingService,
     ActivityGpxBuilder gpxBuilder = const ActivityGpxBuilder(),
-    ActivityGpxFileWriter? gpxFileWriter,
     ActivityUploadService? uploadService,
+    LocalActivityRepository? localActivityRepository,
+    LocalActivitySummaryBuilder? localActivitySummaryBuilder,
+    ActivityRetentionSettingsRepository? retentionSettingsRepository,
+    String Function()? localActivityIdProvider,
+    DateTime Function()? now,
     bool ownsService = true,
   }) : _recordingService = recordingService ?? ActivityRecordingService(),
        _gpxBuilder = gpxBuilder,
-       _gpxFileWriter = gpxFileWriter ?? ActivityGpxFileWriter(),
        _uploadService = uploadService ?? ActivityUploadService(),
+       _localActivityRepository =
+           localActivityRepository ?? LocalActivityRepository(),
+       _localActivitySummaryBuilder =
+           localActivitySummaryBuilder ?? LocalActivitySummaryBuilder(),
+       _retentionSettingsRepository = retentionSettingsRepository,
+       _localActivityIdProvider =
+           localActivityIdProvider ?? _defaultLocalActivityId,
+       _now = now ?? DateTime.now,
        _ownsService = ownsService {
     _stateSubscription = _recordingService.stateStream.listen((state) {
       _setState(state);
@@ -30,8 +45,12 @@ class ActivityRecordingController extends ChangeNotifier {
 
   final ActivityRecordingService _recordingService;
   final ActivityGpxBuilder _gpxBuilder;
-  final ActivityGpxFileWriter _gpxFileWriter;
   final ActivityUploadService _uploadService;
+  final LocalActivityRepository _localActivityRepository;
+  final LocalActivitySummaryBuilder _localActivitySummaryBuilder;
+  final ActivityRetentionSettingsRepository? _retentionSettingsRepository;
+  final String Function() _localActivityIdProvider;
+  final DateTime Function() _now;
   final bool _ownsService;
   late final StreamSubscription<ActivityRecordingState> _stateSubscription;
   bool _isDisposed = false;
@@ -39,7 +58,8 @@ class ActivityRecordingController extends ChangeNotifier {
   ActivityRecordingState _state = ActivityRecordingState();
   ActivityType _selectedActivityType = ActivityType.run;
   String? _completedGpx;
-  String? _temporaryGpxPath;
+  String? _completedLocalActivityId;
+  LocalActivityRecord? _completedLocalActivityRecord;
   ActivityUploadStatus _uploadStatus = ActivityUploadStatus.idle;
   Object? _uploadError;
   Future<void>? _activeUpload;
@@ -50,6 +70,8 @@ class ActivityRecordingController extends ChangeNotifier {
   ActivityType get selectedActivityType => _selectedActivityType;
 
   String? get completedGpx => _completedGpx;
+
+  String? get completedLocalActivityId => _completedLocalActivityId;
 
   ActivityUploadStatus get uploadStatus => _uploadStatus;
 
@@ -74,8 +96,9 @@ class ActivityRecordingController extends ChangeNotifier {
   }
 
   Future<void> start(ActivityType type) async {
-    await _deleteTemporaryGpx();
     _completedGpx = null;
+    _completedLocalActivityId = null;
+    _completedLocalActivityRecord = null;
     _setUploadState(ActivityUploadStatus.idle);
     selectActivityType(type);
     await _recordingService.start(
@@ -99,34 +122,47 @@ class ActivityRecordingController extends ChangeNotifier {
     await _recordingService.stop();
     final completedState = _recordingService.state;
     if (completedState.status == ActivityRecordingStatus.completed) {
-      try {
-        _completedGpx = _gpxBuilder.build(completedState);
-      } catch (_) {
-        _completedGpx = null;
-        _setState(
-          completedState.copyWith(
-            status: ActivityRecordingStatus.failed,
-            lastErrorKey: ActivityRecordingErrorKeys.gpxGenerationFailed,
-          ),
-        );
+      final gpx = _buildCompletedGpx(completedState);
+      if (gpx == null) {
         return;
       }
-      _setState(completedState);
+      final localRecord = await _saveCompletedActivity(completedState, gpx);
+      if (localRecord == null) {
+        return;
+      }
+      _setState(completedState.copyWith(localActivityId: localRecord.id));
       unawaited(uploadCompletedGpx());
       return;
     }
     _completedGpx = null;
+    _completedLocalActivityId = null;
+    _completedLocalActivityRecord = null;
     _setState(completedState);
   }
 
   Future<void> discard() async {
     try {
-      await _deleteTemporaryGpx();
+      final localActivityId =
+          _completedLocalActivityId ?? _state.localActivityId;
+      if (localActivityId != null) {
+        await _localActivityRepository.delete(localActivityId);
+      }
     } on AppException catch (error) {
       _setUploadState(ActivityUploadStatus.cleanupFailed, error: error);
       return;
     }
     _completedGpx = null;
+    _completedLocalActivityId = null;
+    _completedLocalActivityRecord = null;
+    _setUploadState(ActivityUploadStatus.idle);
+    await _recordingService.discard();
+    _setState(_recordingService.state);
+  }
+
+  Future<void> clearCompleted() async {
+    _completedGpx = null;
+    _completedLocalActivityId = null;
+    _completedLocalActivityRecord = null;
     _setUploadState(ActivityUploadStatus.idle);
     await _recordingService.discard();
     _setState(_recordingService.state);
@@ -136,7 +172,7 @@ class ActivityRecordingController extends ChangeNotifier {
     if (_uploadStatus == ActivityUploadStatus.uploading) {
       return _activeUpload ?? Future<void>.value();
     }
-    if (_completedGpx == null ||
+    if ((_completedLocalActivityId ?? _state.localActivityId) == null ||
         _state.status != ActivityRecordingStatus.completed) {
       return Future<void>.value();
     }
@@ -158,33 +194,187 @@ class ActivityRecordingController extends ChangeNotifier {
     return _recordingService.requestBackgroundTrackingPermission();
   }
 
+  String? _buildCompletedGpx(ActivityRecordingState completedState) {
+    try {
+      final gpx = _gpxBuilder.build(completedState);
+      _completedGpx = gpx;
+      return gpx;
+    } catch (_) {
+      _completedGpx = null;
+      _setState(
+        completedState.copyWith(
+          status: ActivityRecordingStatus.failed,
+          lastErrorKey: ActivityRecordingErrorKeys.gpxGenerationFailed,
+        ),
+      );
+      return null;
+    }
+  }
+
+  Future<LocalActivityRecord?> _saveCompletedActivity(
+    ActivityRecordingState completedState,
+    String gpx,
+  ) async {
+    try {
+      final createdAt = _now().toUtc();
+      final localActivityId = _localActivityIdProvider();
+      final gpxFileName = await _localActivityRepository.writeGpx(
+        id: localActivityId,
+        gpx: gpx,
+      );
+      final localRecord = _localActivitySummaryBuilder.build(
+        state: completedState,
+        id: localActivityId,
+        gpxFileName: gpxFileName,
+        createdAt: createdAt,
+      );
+      await _localActivityRepository.upsert(localRecord);
+      _completedLocalActivityId = localRecord.id;
+      _completedLocalActivityRecord = localRecord;
+      return localRecord;
+    } on AppException catch (error) {
+      _failLocalSave(completedState, error);
+      return null;
+    } catch (error) {
+      _failLocalSave(
+        completedState,
+        AppException(AppErrorCode.activityLocalSaveFailed, cause: error),
+      );
+      return null;
+    }
+  }
+
+  void _failLocalSave(ActivityRecordingState completedState, Object error) {
+    _completedGpx = null;
+    _completedLocalActivityId = null;
+    _completedLocalActivityRecord = null;
+    _setUploadState(ActivityUploadStatus.failed, error: error);
+    _setState(
+      completedState.copyWith(
+        status: ActivityRecordingStatus.failed,
+        lastErrorKey: ActivityRecordingErrorKeys.localSaveFailed,
+      ),
+    );
+  }
+
   Future<void> _uploadCompletedGpx() async {
     _setUploadState(ActivityUploadStatus.uploading);
+    LocalActivityRecord? record;
+    DateTime? attemptedAt;
     try {
+      record = await _completedRecordForUpload();
+      attemptedAt = _now().toUtc();
+      record = record.copyWith(
+        uploadStatus: LocalActivityUploadStatus.pending,
+        updatedAt: attemptedAt,
+        lastUploadAttemptAt: attemptedAt,
+        lastUploadErrorCode: null,
+      );
+      await _localActivityRepository.upsert(record);
+      _completedLocalActivityRecord = record;
+
       if (!_uploadService.isConfigured) {
         throw const AppException(AppErrorCode.activityUploadNotConfigured);
       }
-      final filePath = await _ensureTemporaryGpxFile();
+      final filePath = await _localActivityRepository.readGpxFilePath(record);
       await _uploadService.uploadGpx(
         ActivityUploadRequest(
           filePath: filePath,
           activityType: _state.activityType ?? _selectedActivityType,
         ),
       );
-      try {
-        await _deleteTemporaryGpx();
-      } on AppException catch (error) {
-        _setUploadState(ActivityUploadStatus.cleanupFailed, error: error);
-        return;
+      final uploadedAt = _now().toUtc();
+      record = record.copyWith(
+        uploadStatus: LocalActivityUploadStatus.uploaded,
+        updatedAt: uploadedAt,
+        uploadedAt: uploadedAt,
+        lastUploadAttemptAt: attemptedAt,
+        lastUploadErrorCode: null,
+      );
+      await _localActivityRepository.upsert(record);
+      _completedLocalActivityRecord = record;
+      if (!await _shouldRetainUploadedGpx()) {
+        try {
+          await _localActivityRepository.deleteGpx(record);
+        } on AppException catch (error) {
+          _setUploadState(ActivityUploadStatus.cleanupFailed, error: error);
+          return;
+        }
       }
       _setUploadState(ActivityUploadStatus.uploaded);
     } catch (error) {
+      if (record != null) {
+        await _tryMarkUploadFailed(
+          record,
+          error,
+          attemptedAt ?? _now().toUtc(),
+        );
+      }
       _uploadError = error;
       _setUploadState(ActivityUploadStatus.failed, error: error);
     }
   }
 
+  Future<LocalActivityRecord> _completedRecordForUpload() async {
+    final localActivityId = _completedLocalActivityId ?? _state.localActivityId;
+    if (localActivityId == null) {
+      throw const AppException(AppErrorCode.activityLocalActivityNotFound);
+    }
+    final cachedRecord = _completedLocalActivityRecord;
+    if (cachedRecord != null && cachedRecord.id == localActivityId) {
+      return cachedRecord;
+    }
+    final record = await _localActivityRepository.get(localActivityId);
+    if (record == null) {
+      throw const AppException(AppErrorCode.activityLocalActivityNotFound);
+    }
+    _completedLocalActivityRecord = record;
+    return record;
+  }
+
+  Future<void> _tryMarkUploadFailed(
+    LocalActivityRecord record,
+    Object error,
+    DateTime attemptedAt,
+  ) async {
+    try {
+      final updatedAt = _now().toUtc();
+      final failedRecord = record.copyWith(
+        uploadStatus: LocalActivityUploadStatus.failed,
+        updatedAt: updatedAt,
+        lastUploadAttemptAt: attemptedAt,
+        lastUploadErrorCode: _safeUploadErrorCode(error),
+      );
+      await _localActivityRepository.upsert(failedRecord);
+      _completedLocalActivityRecord = failedRecord;
+    } catch (_) {
+      return;
+    }
+  }
+
+  AppErrorCode _safeUploadErrorCode(Object error) {
+    return error is AppException
+        ? error.code
+        : AppErrorCode.activityUploadFailed;
+  }
+
+  Future<bool> _shouldRetainUploadedGpx() async {
+    return await _retentionSettingsRepository?.isRetainUploadedGpxEnabled() ??
+        true;
+  }
+
   void _setState(ActivityRecordingState state) {
+    if (_state.status == ActivityRecordingStatus.failed &&
+        _state.lastErrorKey == ActivityRecordingErrorKeys.localSaveFailed &&
+        (state.status == ActivityRecordingStatus.stopping ||
+            state.status == ActivityRecordingStatus.completed)) {
+      return;
+    }
+    if (state.status == ActivityRecordingStatus.completed &&
+        state.localActivityId == null &&
+        _state.localActivityId != null) {
+      state = state.copyWith(localActivityId: _state.localActivityId);
+    }
     _state = state;
     _notifyListeners();
   }
@@ -193,45 +383,6 @@ class ActivityRecordingController extends ChangeNotifier {
     _uploadStatus = status;
     _uploadError = error;
     _notifyListeners();
-  }
-
-  Future<String> _ensureTemporaryGpxFile() async {
-    final existingPath = _temporaryGpxPath;
-    if (existingPath != null) {
-      return existingPath;
-    }
-    final gpx = _completedGpx;
-    if (gpx == null) {
-      throw StateError('No completed GPX is available.');
-    }
-    try {
-      final file = await _gpxFileWriter.writeGpx(gpx);
-      _temporaryGpxPath = file.path;
-      return file.path;
-    } catch (error) {
-      throw AppException(AppErrorCode.activityGpxFileWriteFailed, cause: error);
-    }
-  }
-
-  Future<void> _deleteTemporaryGpx() async {
-    final filePath = _temporaryGpxPath;
-    if (filePath == null) {
-      return;
-    }
-    try {
-      await _gpxFileWriter.delete(filePath);
-      _temporaryGpxPath = null;
-    } catch (error) {
-      throw AppException(AppErrorCode.activityGpxCleanupFailed, cause: error);
-    }
-  }
-
-  Future<void> _tryDeleteTemporaryGpx() async {
-    try {
-      await _deleteTemporaryGpx();
-    } catch (_) {
-      return;
-    }
   }
 
   void _notifyListeners() {
@@ -244,10 +395,15 @@ class ActivityRecordingController extends ChangeNotifier {
   void dispose() {
     _isDisposed = true;
     unawaited(_stateSubscription.cancel());
-    unawaited(_tryDeleteTemporaryGpx());
     if (_ownsService) {
       _recordingService.dispose();
     }
     super.dispose();
+  }
+
+  static String _defaultLocalActivityId() {
+    final timestamp = DateTime.now().toUtc().microsecondsSinceEpoch;
+    final random = Random().nextInt(1 << 32).toRadixString(16);
+    return 'activity_${timestamp}_$random';
   }
 }

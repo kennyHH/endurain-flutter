@@ -1,3 +1,5 @@
+import 'package:endurain/core/services/secure_storage_service.dart';
+import 'package:endurain/features/activity/repositories/activity_retention_settings_repository.dart';
 import 'package:endurain/core/services/package_info_service.dart';
 import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/features/settings/settings_screen.dart';
@@ -19,10 +21,11 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      const AdaptiveApp(
+      AdaptiveApp(
         title: 'Test',
         home: SettingsScreen(
-          packageInfoService: _FakePackageInfoService(version: '1.2.3'),
+          packageInfoService: const _FakePackageInfoService(version: '1.2.3'),
+          activityRetentionSettings: _FakeActivityRetentionSettings(),
         ),
       ),
     );
@@ -31,9 +34,26 @@ void main() {
 
     expect(find.text(l10n.settingsScreen), findsOneWidget);
     expect(find.text(l10n.serverSettings), findsOneWidget);
+    expect(find.text(l10n.activityHistoryTitle), findsOneWidget);
+    expect(find.text(l10n.activityRetainUploadedGpx), findsOneWidget);
     expect(find.text(l10n.diagnostics), findsOneWidget);
     expect(find.textContaining('Endurain • 1.2.3'), findsOneWidget);
   });
+}
+
+class _FakeActivityRetentionSettings
+    extends ActivityRetentionSettingsRepository {
+  _FakeActivityRetentionSettings() : super(storage: SecureStorageService());
+
+  var retainUploadedGpx = true;
+
+  @override
+  Future<bool> isRetainUploadedGpxEnabled() async => retainUploadedGpx;
+
+  @override
+  Future<void> setRetainUploadedGpxEnabled(bool enabled) async {
+    retainUploadedGpx = enabled;
+  }
 }
 
 class _FakePackageInfoService extends PackageInfoService {

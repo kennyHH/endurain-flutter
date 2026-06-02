@@ -1,6 +1,12 @@
 enum AppErrorCode {
   activityGpxCleanupFailed,
   activityGpxFileWriteFailed,
+  activityLocalActivityNotFound,
+  activityLocalDeleteFailed,
+  activityLocalGpxMissing,
+  activityLocalLoadFailed,
+  activityLocalRecordInvalid,
+  activityLocalSaveFailed,
   activityUploadFailed,
   activityUploadNotConfigured,
   fetchIdentityProvidersFailed,

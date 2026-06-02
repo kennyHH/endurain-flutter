@@ -352,7 +352,7 @@ void main() {
       tester,
     ) async {
       var retried = false;
-      var discarded = false;
+      var deleted = false;
 
       await tester.pumpWidget(
         _TestApp(
@@ -368,7 +368,7 @@ void main() {
             onStop: null,
             uploadStatus: ActivityUploadStatus.failed,
             onRetryUpload: () => retried = true,
-            onDiscard: () => discarded = true,
+            onDelete: () => deleted = true,
           ),
         ),
       );
@@ -379,10 +379,10 @@ void main() {
       );
 
       await tester.tap(find.text(AppLocalizationsEn().activityRetryUpload));
-      await tester.tap(find.text(AppLocalizationsEn().activityDiscard));
+      await tester.tap(find.text(AppLocalizationsEn().activityDeleteLocal));
 
       expect(retried, isTrue);
-      expect(discarded, isTrue);
+      expect(deleted, isTrue);
     });
   });
 }

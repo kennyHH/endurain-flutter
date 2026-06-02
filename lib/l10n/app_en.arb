@@ -57,6 +57,30 @@
   "@errorActivityGpxFileWriteFailed": {
     "description": "Activity GPX temporary file write error without exposing file paths - Used in: error_localizations.dart"
   },
+  "errorActivityLocalActivityNotFound": "Could not find this local activity",
+  "@errorActivityLocalActivityNotFound": {
+    "description": "Local activity record not found error without exposing storage details - Used in: error_localizations.dart"
+  },
+  "errorActivityLocalDeleteFailed": "Could not delete the local activity",
+  "@errorActivityLocalDeleteFailed": {
+    "description": "Local activity delete error without exposing file paths - Used in: error_localizations.dart"
+  },
+  "errorActivityLocalGpxMissing": "The local GPX file is not available",
+  "@errorActivityLocalGpxMissing": {
+    "description": "Local activity GPX missing error without exposing file paths - Used in: error_localizations.dart"
+  },
+  "errorActivityLocalLoadFailed": "Could not load local activities",
+  "@errorActivityLocalLoadFailed": {
+    "description": "Local activity manifest load error without exposing file paths - Used in: error_localizations.dart"
+  },
+  "errorActivityLocalRecordInvalid": "Could not save this activity",
+  "@errorActivityLocalRecordInvalid": {
+    "description": "Local activity metadata validation error - Used in: error_localizations.dart"
+  },
+  "errorActivityLocalSaveFailed": "Could not save the activity locally",
+  "@errorActivityLocalSaveFailed": {
+    "description": "Local activity save error without exposing file paths - Used in: error_localizations.dart"
+  },
   "errorFetchIdentityProvidersFailed": "Could not load identity providers",
   "@errorFetchIdentityProvidersFailed": {
     "description": "Generic identity provider loading error - Used in: error_localizations.dart"
@@ -363,6 +387,10 @@
   "@activityGpxGenerationFailed": {
     "description": "Recording error shown when GPX generation fails after stopping - Used in: activity_recording_controls.dart"
   },
+  "activityLocalSaveFailed": "Could not save this activity on this device.",
+  "@activityLocalSaveFailed": {
+    "description": "Recording error shown when retained local activity storage fails - Used in: activity_recording_controls.dart"
+  },
   "activityOpenSettings": "Open settings",
   "@activityOpenSettings": {
     "description": "Button label to open app settings for location permission - Used in: activity_recording_controls.dart"
@@ -385,7 +413,27 @@
   },
   "activityRetryUpload": "Retry upload",
   "@activityRetryUpload": {
-    "description": "Retry activity upload button label - Used in: activity_upload_status_panel.dart"
+    "description": "Retry activity upload button label - Used in: activity_upload_status_panel.dart, activity_history_screen.dart, activity_details_screen.dart"
+  },
+  "activityDone": "Done",
+  "@activityDone": {
+    "description": "Non-destructive completion action after an activity is retained locally - Used in: activity_upload_status_panel.dart"
+  },
+  "activityViewHistory": "View history",
+  "@activityViewHistory": {
+    "description": "Action to open local activity history - Used in: activity_upload_status_panel.dart"
+  },
+  "activityDeleteLocal": "Delete local copy",
+  "@activityDeleteLocal": {
+    "description": "Destructive action for deleting a retained local activity and GPX - Used in: activity_upload_status_panel.dart, map_screen.dart, activity_history_screen.dart, activity_details_screen.dart"
+  },
+  "activityDeleteLocalConfirmTitle": "Delete local activity?",
+  "@activityDeleteLocalConfirmTitle": {
+    "description": "Confirmation dialog title for deleting a retained local activity - Used in: map_screen.dart, activity_history_screen.dart, activity_details_screen.dart"
+  },
+  "activityDeleteLocalConfirmMessage": "This removes the local activity record and GPX file from this device.",
+  "@activityDeleteLocalConfirmMessage": {
+    "description": "Confirmation dialog message for deleting a retained local activity - Used in: map_screen.dart, activity_history_screen.dart, activity_details_screen.dart"
   },
   "activityStart": "Start",
   "@activityStart": {
@@ -498,6 +546,154 @@
   "activityUploading": "Uploading",
   "@activityUploading": {
     "description": "Activity uploading status label - Used in: activity_upload_status_panel.dart"
+  },
+  "activityUploadStatusPending": "Pending",
+  "@activityUploadStatusPending": {
+    "description": "Local activity upload status label - Used in: activity_history_screen.dart, activity_details_screen.dart"
+  },
+  "activityUploadStatusUploaded": "Uploaded",
+  "@activityUploadStatusUploaded": {
+    "description": "Local activity uploaded status label - Used in: activity_history_screen.dart, activity_details_screen.dart"
+  },
+  "activityUploadStatusFailed": "Failed",
+  "@activityUploadStatusFailed": {
+    "description": "Local activity failed upload status label - Used in: activity_history_screen.dart, activity_details_screen.dart"
+  },
+  "activityHistoryTitle": "Activity history",
+  "@activityHistoryTitle": {
+    "description": "Local activity history screen title and settings navigation label - Used in: activity_history_screen.dart, settings_screen.dart"
+  },
+  "activityHistorySettingsSubtitle": "Completed activities saved on this device",
+  "@activityHistorySettingsSubtitle": {
+    "description": "Settings subtitle for local activity history - Used in: settings_screen.dart"
+  },
+  "activityRetainUploadedGpx": "Keep uploaded GPX files",
+  "@activityRetainUploadedGpx": {
+    "description": "Settings switch label for local uploaded GPX retention - Used in: settings_screen.dart"
+  },
+  "activityRetainUploadedGpxSubtitle": "Stores completed route files in private app storage after upload.",
+  "@activityRetainUploadedGpxSubtitle": {
+    "description": "Settings switch subtitle explaining private local GPX retention - Used in: settings_screen.dart"
+  },
+  "activityHistoryEmpty": "No completed activities saved on this device.",
+  "@activityHistoryEmpty": {
+    "description": "Empty state for local activity history - Used in: activity_history_screen.dart"
+  },
+  "activityHistoryLoadFailed": "Could not load local activities.",
+  "@activityHistoryLoadFailed": {
+    "description": "Load failure state for local activity history - Used in: activity_history_screen.dart"
+  },
+  "activityHistoryRefresh": "Refresh",
+  "@activityHistoryRefresh": {
+    "description": "Refresh action for local activity history - Used in: activity_history_screen.dart"
+  },
+  "activityHistoryLocalActivities": "Local activities",
+  "@activityHistoryLocalActivities": {
+    "description": "List section header for retained local activities - Used in: activity_history_screen.dart"
+  },
+  "activityHistoryEntryTitle": "{activityType} • {endedAt}",
+  "@activityHistoryEntryTitle": {
+    "description": "Local activity list item title - Used in: activity_history_screen.dart",
+    "placeholders": {
+      "activityType": {
+        "type": "String",
+        "example": "Run"
+      },
+      "endedAt": {
+        "type": "String",
+        "example": "2026-06-02 14:30"
+      }
+    }
+  },
+  "activityHistoryDuration": "Duration: {duration}",
+  "@activityHistoryDuration": {
+    "description": "Local activity list duration line - Used in: activity_history_screen.dart",
+    "placeholders": {
+      "duration": {
+        "type": "String",
+        "example": "42:10"
+      }
+    }
+  },
+  "activityHistoryDistance": "Distance: {distance}",
+  "@activityHistoryDistance": {
+    "description": "Local activity list distance line - Used in: activity_history_screen.dart",
+    "placeholders": {
+      "distance": {
+        "type": "String",
+        "example": "5.20 km"
+      }
+    }
+  },
+  "activityHistoryUploadStatus": "Upload: {status}",
+  "@activityHistoryUploadStatus": {
+    "description": "Local activity list upload status line - Used in: activity_history_screen.dart",
+    "placeholders": {
+      "status": {
+        "type": "String",
+        "example": "Uploaded"
+      }
+    }
+  },
+  "activityHistoryDetailsTitle": "Activity details",
+  "@activityHistoryDetailsTitle": {
+    "description": "Local activity details screen title - Used in: activity_details_screen.dart"
+  },
+  "activityHistoryDetailsMissing": "This local activity is no longer available.",
+  "@activityHistoryDetailsMissing": {
+    "description": "Missing local activity details state - Used in: activity_details_screen.dart"
+  },
+  "activityHistorySummary": "Summary",
+  "@activityHistorySummary": {
+    "description": "Local activity details summary section header - Used in: activity_details_screen.dart"
+  },
+  "activityHistoryActions": "Actions",
+  "@activityHistoryActions": {
+    "description": "Local activity details actions section header - Used in: activity_details_screen.dart"
+  },
+  "activityHistoryType": "Type",
+  "@activityHistoryType": {
+    "description": "Local activity details type label - Used in: activity_details_screen.dart"
+  },
+  "activityHistoryStartedAt": "Started",
+  "@activityHistoryStartedAt": {
+    "description": "Local activity details started time label - Used in: activity_details_screen.dart"
+  },
+  "activityHistoryEndedAt": "Ended",
+  "@activityHistoryEndedAt": {
+    "description": "Local activity details ended time label - Used in: activity_details_screen.dart"
+  },
+  "activityHistoryDurationLabel": "Duration",
+  "@activityHistoryDurationLabel": {
+    "description": "Local activity details duration label - Used in: activity_details_screen.dart"
+  },
+  "activityHistoryDistanceLabel": "Distance",
+  "@activityHistoryDistanceLabel": {
+    "description": "Local activity details distance label - Used in: activity_details_screen.dart"
+  },
+  "activityHistoryAverageSpeed": "Average speed",
+  "@activityHistoryAverageSpeed": {
+    "description": "Local activity details average speed label - Used in: activity_details_screen.dart"
+  },
+  "activityHistoryPointCount": "GPS points",
+  "@activityHistoryPointCount": {
+    "description": "Local activity details point count label - Used in: activity_details_screen.dart"
+  },
+  "activityHistoryUploadStatusLabel": "Upload",
+  "@activityHistoryUploadStatusLabel": {
+    "description": "Local activity details upload status label - Used in: activity_details_screen.dart"
+  },
+  "activityHistoryGpxStatus": "GPX file",
+  "@activityHistoryGpxStatus": {
+    "description": "Local activity details GPX availability label - Used in: activity_details_screen.dart"
+  },
+  "activityHistoryGpxAvailable": "Saved on this device",
+  "@activityHistoryGpxAvailable": {
+    "description": "Local activity details GPX available status - Used in: activity_details_screen.dart"
+  },
+  "activityHistoryGpxMissing": "Not available on this device",
+  "@activityHistoryGpxMissing": {
+    "description": "Local activity details GPX missing status - Used in: activity_details_screen.dart"
   },
   "@sectionMap": "=== MAP (features/map/map_screen.dart) ===",
   "mapTab": "Map",

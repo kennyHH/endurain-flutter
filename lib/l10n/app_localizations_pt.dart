@@ -50,6 +50,30 @@ class AppLocalizationsPt extends AppLocalizations {
       'Não foi possível preparar o ficheiro de envio da atividade';
 
   @override
+  String get errorActivityLocalActivityNotFound =>
+      'Não foi possível encontrar esta atividade local';
+
+  @override
+  String get errorActivityLocalDeleteFailed =>
+      'Não foi possível apagar a atividade local';
+
+  @override
+  String get errorActivityLocalGpxMissing =>
+      'O ficheiro GPX local não está disponível';
+
+  @override
+  String get errorActivityLocalLoadFailed =>
+      'Não foi possível carregar atividades locais';
+
+  @override
+  String get errorActivityLocalRecordInvalid =>
+      'Não foi possível guardar esta atividade';
+
+  @override
+  String get errorActivityLocalSaveFailed =>
+      'Não foi possível guardar a atividade localmente';
+
+  @override
   String get errorFetchIdentityProvidersFailed =>
       'Não foi possível carregar os provedores de identidade';
 
@@ -268,6 +292,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'Não foi possível criar o ficheiro GPX da atividade.';
 
   @override
+  String get activityLocalSaveFailed =>
+      'Não foi possível guardar esta atividade neste dispositivo.';
+
+  @override
   String get activityOpenSettings => 'Abrir definições';
 
   @override
@@ -284,6 +312,22 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get activityRetryUpload => 'Tentar envio novamente';
+
+  @override
+  String get activityDone => 'Concluído';
+
+  @override
+  String get activityViewHistory => 'Ver histórico';
+
+  @override
+  String get activityDeleteLocal => 'Apagar cópia local';
+
+  @override
+  String get activityDeleteLocalConfirmTitle => 'Apagar atividade local?';
+
+  @override
+  String get activityDeleteLocalConfirmMessage =>
+      'Isto remove o registo local da atividade e o ficheiro GPX deste dispositivo.';
 
   @override
   String get activityStart => 'Iniciar';
@@ -375,6 +419,109 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get activityUploading => 'A enviar';
+
+  @override
+  String get activityUploadStatusPending => 'Pendente';
+
+  @override
+  String get activityUploadStatusUploaded => 'Enviado';
+
+  @override
+  String get activityUploadStatusFailed => 'Falhou';
+
+  @override
+  String get activityHistoryTitle => 'Histórico de atividades';
+
+  @override
+  String get activityHistorySettingsSubtitle =>
+      'Atividades concluídas guardadas neste dispositivo';
+
+  @override
+  String get activityRetainUploadedGpx => 'Manter ficheiros GPX enviados';
+
+  @override
+  String get activityRetainUploadedGpxSubtitle =>
+      'Guarda ficheiros de percurso concluídos no armazenamento privado da app depois do envio.';
+
+  @override
+  String get activityHistoryEmpty =>
+      'Não há atividades concluídas guardadas neste dispositivo.';
+
+  @override
+  String get activityHistoryLoadFailed =>
+      'Não foi possível carregar atividades locais.';
+
+  @override
+  String get activityHistoryRefresh => 'Atualizar';
+
+  @override
+  String get activityHistoryLocalActivities => 'Atividades locais';
+
+  @override
+  String activityHistoryEntryTitle(String activityType, String endedAt) {
+    return '$activityType • $endedAt';
+  }
+
+  @override
+  String activityHistoryDuration(String duration) {
+    return 'Duração: $duration';
+  }
+
+  @override
+  String activityHistoryDistance(String distance) {
+    return 'Distância: $distance';
+  }
+
+  @override
+  String activityHistoryUploadStatus(String status) {
+    return 'Envio: $status';
+  }
+
+  @override
+  String get activityHistoryDetailsTitle => 'Detalhes da atividade';
+
+  @override
+  String get activityHistoryDetailsMissing =>
+      'Esta atividade local já não está disponível.';
+
+  @override
+  String get activityHistorySummary => 'Resumo';
+
+  @override
+  String get activityHistoryActions => 'Ações';
+
+  @override
+  String get activityHistoryType => 'Tipo';
+
+  @override
+  String get activityHistoryStartedAt => 'Início';
+
+  @override
+  String get activityHistoryEndedAt => 'Fim';
+
+  @override
+  String get activityHistoryDurationLabel => 'Duração';
+
+  @override
+  String get activityHistoryDistanceLabel => 'Distância';
+
+  @override
+  String get activityHistoryAverageSpeed => 'Velocidade média';
+
+  @override
+  String get activityHistoryPointCount => 'Pontos GPS';
+
+  @override
+  String get activityHistoryUploadStatusLabel => 'Envio';
+
+  @override
+  String get activityHistoryGpxStatus => 'Ficheiro GPX';
+
+  @override
+  String get activityHistoryGpxAvailable => 'Guardado neste dispositivo';
+
+  @override
+  String get activityHistoryGpxMissing => 'Não disponível neste dispositivo';
 
   @override
   String get mapTab => 'Mapa';

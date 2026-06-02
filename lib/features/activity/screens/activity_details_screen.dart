@@ -1,0 +1,297 @@
+import 'package:endurain/core/constants/ui_constants.dart';
+import 'package:endurain/core/services/app_scope.dart';
+import 'package:endurain/core/utils/dialog_utils.dart';
+import 'package:endurain/features/activity/controllers/local_activity_history_controller.dart';
+import 'package:endurain/features/activity/models/local_activity_record.dart';
+import 'package:endurain/features/activity/repositories/activity_retention_settings_repository.dart';
+import 'package:endurain/features/activity/repositories/local_activity_repository.dart';
+import 'package:endurain/features/activity/services/activity_stats_formatter.dart';
+import 'package:endurain/features/activity/services/activity_upload_service.dart';
+import 'package:endurain/features/activity/widgets/activity_type_label.dart';
+import 'package:endurain/l10n/app_localizations.dart';
+import 'package:endurain/shared/adaptive/adaptive.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+
+class ActivityDetailsScreen extends StatefulWidget {
+  const ActivityDetailsScreen({
+    super.key,
+    required this.recordId,
+    this.controller,
+    this.repository,
+    this.uploadService,
+    this.retentionSettingsRepository,
+  });
+
+  final String recordId;
+  final LocalActivityHistoryController? controller;
+  final LocalActivityRepository? repository;
+  final ActivityUploadService? uploadService;
+  final ActivityRetentionSettingsRepository? retentionSettingsRepository;
+
+  @override
+  State<ActivityDetailsScreen> createState() => _ActivityDetailsScreenState();
+}
+
+class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
+  late final LocalActivityHistoryController _controller;
+  late final bool _ownsController;
+
+  @override
+  void initState() {
+    super.initState();
+    _ownsController = widget.controller == null;
+    _controller = widget.controller ?? _createController();
+    if (_ownsController) {
+      _controller.load();
+    }
+  }
+
+  LocalActivityHistoryController _createController() {
+    final services = AppScope.servicesOf(context, listen: false);
+    return LocalActivityHistoryController(
+      repository: widget.repository ?? services.localActivities,
+      uploadService: widget.uploadService ?? services.activityUpload,
+      retentionSettingsRepository:
+          widget.retentionSettingsRepository ??
+          services.activityRetentionSettings,
+    );
+  }
+
+  @override
+  void dispose() {
+    if (_ownsController) {
+      _controller.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _retry(LocalActivityRecord record) async {
+    try {
+      await _controller.retryUpload(record.id);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      await DialogUtils.showErrorDialog(context, error);
+    }
+  }
+
+  Future<void> _delete(LocalActivityRecord record) async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await DialogUtils.showConfirmDialog(
+      context,
+      title: l10n.activityDeleteLocalConfirmTitle,
+      message: l10n.activityDeleteLocalConfirmMessage,
+      confirmText: l10n.activityDeleteLocal,
+      isDestructive: true,
+    );
+    if (!mounted || !confirmed) {
+      return;
+    }
+    try {
+      await _controller.delete(record.id);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      await DialogUtils.showErrorDialog(context, error);
+      return;
+    }
+    if (mounted) {
+      Navigator.pop(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return AdaptiveScaffold(
+      title: l10n.activityHistoryDetailsTitle,
+      body: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          final record = _controller.recordById(widget.recordId);
+          if (_controller.isLoading && record == null) {
+            return const Center(child: AdaptiveLoadingIndicator());
+          }
+          if (record == null) {
+            return _DetailsMessage(message: l10n.activityHistoryDetailsMissing);
+          }
+
+          return ListView(
+            padding: const EdgeInsets.all(UIConstants.paddingStandard),
+            children: [
+              _SummarySection(record: record, controller: _controller),
+              const SizedBox(height: UIConstants.paddingStandard),
+              _ActionsSection(
+                record: record,
+                isBusy: _controller.isBusy(record.id),
+                onRetry:
+                    record.uploadStatus == LocalActivityUploadStatus.uploaded
+                    ? null
+                    : () => _retry(record),
+                onDelete: () => _delete(record),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _DetailsMessage extends StatelessWidget {
+  const _DetailsMessage({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(UIConstants.paddingStandard),
+        child: Text(message, textAlign: TextAlign.center),
+      ),
+    );
+  }
+}
+
+class _SummarySection extends StatelessWidget {
+  const _SummarySection({required this.record, required this.controller});
+
+  final LocalActivityRecord record;
+  final LocalActivityHistoryController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    const formatter = ActivityStatsFormatter();
+
+    return AdaptiveListSection(
+      header: l10n.activityHistorySummary,
+      children: [
+        AdaptiveListTile(
+          title: l10n.activityHistoryType,
+          subtitle: record.activityType.localizedLabel(l10n),
+        ),
+        AdaptiveListTile(
+          title: l10n.activityHistoryStartedAt,
+          subtitle: _formatDateTime(record.startedAt),
+        ),
+        AdaptiveListTile(
+          title: l10n.activityHistoryEndedAt,
+          subtitle: _formatDateTime(record.endedAt),
+        ),
+        AdaptiveListTile(
+          title: l10n.activityHistoryDurationLabel,
+          subtitle: formatter.formatDuration(record.elapsedDurationSeconds),
+        ),
+        AdaptiveListTile(
+          title: l10n.activityHistoryDistanceLabel,
+          subtitle: formatter.formatDistance(record.distanceMeters),
+        ),
+        AdaptiveListTile(
+          title: l10n.activityHistoryAverageSpeed,
+          subtitle: formatter.formatSpeed(record.averageSpeedMetersPerSecond),
+        ),
+        AdaptiveListTile(
+          title: l10n.activityHistoryPointCount,
+          subtitle: record.pointCount.toString(),
+        ),
+        AdaptiveListTile(
+          title: l10n.activityHistoryUploadStatusLabel,
+          subtitle: _uploadStatusLabel(l10n, record.uploadStatus),
+        ),
+        FutureBuilder<bool>(
+          future: controller.hasGpx(record),
+          builder: (context, snapshot) {
+            final hasGpx = snapshot.data ?? false;
+            return AdaptiveListTile(
+              title: l10n.activityHistoryGpxStatus,
+              subtitle: hasGpx
+                  ? l10n.activityHistoryGpxAvailable
+                  : l10n.activityHistoryGpxMissing,
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionsSection extends StatelessWidget {
+  const _ActionsSection({
+    required this.record,
+    required this.isBusy,
+    required this.onRetry,
+    required this.onDelete,
+  });
+
+  final LocalActivityRecord record;
+  final bool isBusy;
+  final VoidCallback? onRetry;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return AdaptiveListSection(
+      header: l10n.activityHistoryActions,
+      children: [
+        if (isBusy)
+          const Padding(
+            padding: EdgeInsets.all(UIConstants.paddingStandard),
+            child: Center(child: AdaptiveLoadingIndicator()),
+          )
+        else ...[
+          if (onRetry != null)
+            AdaptiveListTile(
+              leading: const AdaptiveIcon(
+                materialIcon: Icons.refresh,
+                cupertinoIcon: CupertinoIcons.refresh,
+              ),
+              title: l10n.activityRetryUpload,
+              onTap: onRetry,
+            ),
+          AdaptiveListTile(
+            leading: const AdaptiveIcon(
+              materialIcon: Icons.delete_outline,
+              cupertinoIcon: CupertinoIcons.delete,
+            ),
+            title: l10n.activityDeleteLocal,
+            destructive: true,
+            onTap: onDelete,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+String _uploadStatusLabel(
+  AppLocalizations l10n,
+  LocalActivityUploadStatus status,
+) {
+  return switch (status) {
+    LocalActivityUploadStatus.pending => l10n.activityUploadStatusPending,
+    LocalActivityUploadStatus.uploaded => l10n.activityUploadStatusUploaded,
+    LocalActivityUploadStatus.failed => l10n.activityUploadStatusFailed,
+  };
+}
+
+String _formatDateTime(DateTime value) {
+  final local = value.toLocal();
+  final date = [
+    local.year.toString().padLeft(4, '0'),
+    local.month.toString().padLeft(2, '0'),
+    local.day.toString().padLeft(2, '0'),
+  ].join('-');
+  final time = [
+    local.hour.toString().padLeft(2, '0'),
+    local.minute.toString().padLeft(2, '0'),
+  ].join(':');
+  return '$date $time';
+}
