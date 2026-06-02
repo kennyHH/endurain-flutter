@@ -119,6 +119,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       },
                     ),
                     AdaptiveSwitchListTile(
+                      leading: const AdaptiveIcon(
+                        materialIcon: Icons.description,
+                        cupertinoIcon: CupertinoIcons.doc_text,
+                      ),
                       title: l10n.activityRetainUploadedGpx,
                       subtitle: l10n.activityRetainUploadedGpxSubtitle,
                       value: _retainUploadedGpx,

@@ -5,6 +5,7 @@ import 'package:endurain/core/utils/platform_utils.dart';
 import 'package:endurain/features/settings/settings_screen.dart';
 import 'package:endurain/l10n/app_localizations_en.dart';
 import 'package:endurain/shared/adaptive/adaptive.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -36,6 +37,7 @@ void main() {
     expect(find.text(l10n.serverSettings), findsOneWidget);
     expect(find.text(l10n.activityHistoryTitle), findsOneWidget);
     expect(find.text(l10n.activityRetainUploadedGpx), findsOneWidget);
+    expect(find.byIcon(Icons.description), findsOneWidget);
     expect(find.text(l10n.diagnostics), findsOneWidget);
     expect(find.textContaining('Endurain • 1.2.3'), findsOneWidget);
   });
