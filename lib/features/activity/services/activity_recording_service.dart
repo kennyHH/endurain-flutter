@@ -91,7 +91,9 @@ class ActivityRecordingService {
       );
       return;
     }
-    _backgroundConfig = backgroundConfig;
+    if (backgroundConfig != null) {
+      _backgroundConfig = backgroundConfig;
+    }
     final backgroundErrorKey = await _backgroundTrackingErrorKey();
     if (backgroundErrorKey != null) {
       _recordBreadcrumb(

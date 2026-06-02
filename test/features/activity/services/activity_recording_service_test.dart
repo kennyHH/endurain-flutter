@@ -80,6 +80,32 @@ void main() {
       expect(adapter.lastPositionStreamSettings, isA<AndroidSettings>());
     });
 
+    test('uses configured background tracking for recording starts', () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+
+      final adapter = RecordingLocationPlatformAdapter(
+        permission: LocationPermission.always,
+      );
+      final service = ActivityRecordingService(
+        locationService: LocationService(platformAdapter: adapter),
+      );
+      service.configureBackgroundTracking(
+        const BackgroundLocationConfig(
+          notificationTitle: 'Recording activity',
+          notificationText: 'Tracking your location.',
+        ),
+      );
+      addTearDown(service.dispose);
+
+      await service.start(activityType: ActivityType.run);
+
+      expect(adapter.lastPositionStreamSettings, isA<AppleSettings>());
+      final settings = adapter.lastPositionStreamSettings! as AppleSettings;
+      expect(settings.allowBackgroundLocationUpdates, isTrue);
+      expect(settings.pauseLocationUpdatesAutomatically, isFalse);
+    });
+
     test('requires always permission for background tracking on iOS', () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       addTearDown(() => debugDefaultTargetPlatformOverride = null);

@@ -58,7 +58,9 @@ void main() {
         expect(settings, isA<AppleSettings>());
         final apple = settings as AppleSettings;
         expect(apple.allowBackgroundLocationUpdates, isTrue);
+        expect(apple.showBackgroundLocationIndicator, isTrue);
         expect(apple.pauseLocationUpdatesAutomatically, isFalse);
+        expect(apple.activityType, ActivityType.fitness);
       }
     });
 
