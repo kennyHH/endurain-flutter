@@ -5,6 +5,8 @@ import 'package:endurain/l10n/app_localizations.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+const double _activityTypePickerHeight = 56;
+
 class ActivityTypePicker extends StatelessWidget {
   const ActivityTypePicker({
     super.key,
@@ -31,11 +33,15 @@ class ActivityTypePicker extends StatelessWidget {
     }
 
     return DropdownButtonFormField<ActivityType>(
+      key: const ValueKey('activityTypePickerMaterialField'),
       initialValue: selectedType,
       isExpanded: true,
       decoration: InputDecoration(
         labelText: l10n.activityTypeLabel,
         border: const OutlineInputBorder(),
+        constraints: const BoxConstraints.tightFor(
+          height: _activityTypePickerHeight,
+        ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
       items: ActivityType.values

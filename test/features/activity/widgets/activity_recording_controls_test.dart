@@ -67,9 +67,7 @@ void main() {
         ),
       );
 
-      final pickerRect = tester.getRect(
-        find.byType(DropdownButtonFormField<ActivityType>),
-      );
+      final pickerRect = tester.getRect(find.byType(InputDecorator));
       final startRect = tester.getRect(
         find.byKey(const ValueKey('activityStartButton')),
       );
