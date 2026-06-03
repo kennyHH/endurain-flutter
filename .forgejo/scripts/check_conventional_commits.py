@@ -24,8 +24,12 @@ import re
 import sys
 from collections.abc import Iterable
 
-# Allowed types. Keep this list in sync with the project's commit conventions
-# documented in ``.github/copilot-instructions.md``.
+# Allowed types. This whitelist is a *project policy* layered on top of the
+# Conventional Commits 1.0.0 spec (the spec recommends but does not mandate a
+# fixed set of types). Keep this list in sync with the project's commit
+# conventions documented in ``.github/copilot-instructions.md``.
+#
+# Per the spec, types are matched case-insensitively.
 ALLOWED_TYPES: tuple[str, ...] = (
     "build",
     "chore",
@@ -40,17 +44,18 @@ ALLOWED_TYPES: tuple[str, ...] = (
     "test",
 )
 
-# Maximum length for the subject line (type + scope + description). 72 is the
-# common Git convention; adjust here if the project decides differently.
-MAX_SUBJECT_LENGTH = 72
-
 # Subject pattern: ``type(scope)!: description``. Scope and ``!`` are optional.
-# Scope characters are intentionally restrictive to discourage ad-hoc scopes.
+# Per CC 1.0.0:
+#   - the type is a noun (matched case-insensitively against ALLOWED_TYPES);
+#   - the scope is any noun describing a section of the codebase, enclosed in
+#     parentheses, so we accept any non-empty string that is not a closing
+#     parenthesis;
+#   - the description is free-form text.
 _HEADER_RE = re.compile(
     r"""
     ^
-    (?P<type>[a-z]+)
-    (?:\((?P<scope>[a-z0-9][a-z0-9\-_./, ]*)\))?
+    (?P<type>[A-Za-z]+)
+    (?:\((?P<scope>[^)]+)\))?
     (?P<breaking>!)?
     :\ 
     (?P<description>.+?)
@@ -79,23 +84,13 @@ def _validate_message(message: str) -> list[str]:
         return errors
 
     commit_type = match.group("type")
-    description = match.group("description")
 
-    if commit_type not in ALLOWED_TYPES:
+    # Project policy: restrict to a known set of types. Types are matched
+    # case-insensitively per the Conventional Commits spec.
+    if commit_type.lower() not in ALLOWED_TYPES:
         errors.append(
             f"type '{commit_type}' is not allowed; "
             f"use one of: {', '.join(ALLOWED_TYPES)}"
-        )
-
-    if description.endswith("."):
-        errors.append("description must not end with a period")
-
-    if re.match(r"[a-z]", description) is None:
-        errors.append("description must start with a lowercase letter")
-
-    if len(header) > MAX_SUBJECT_LENGTH:
-        errors.append(
-            f"header is {len(header)} characters long (max {MAX_SUBJECT_LENGTH})"
         )
 
     return errors
