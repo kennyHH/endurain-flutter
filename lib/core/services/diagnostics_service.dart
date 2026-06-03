@@ -158,6 +158,7 @@ class DiagnosticsEvents {
   const DiagnosticsEvents._();
 
   static const String appStarted = 'app.started';
+  static const String appLifecycleChanged = 'app.lifecycle_changed';
   static const String activityStartRequested = 'activity.start_requested';
   static const String activityStarted = 'activity.started';
   static const String activityStartFailed = 'activity.start_failed';
@@ -170,6 +171,8 @@ class DiagnosticsEvents {
   static const String activityLocalManifestRecovered =
       'activity.local_manifest_recovered';
   static const String activityPointMilestone = 'activity.point_milestone';
+  static const String activityLocationStreamDone =
+      'activity.location_stream_done';
 }
 
 class DiagnosticsService implements DiagnosticsStore {

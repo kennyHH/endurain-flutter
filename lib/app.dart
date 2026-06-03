@@ -3,6 +3,7 @@ import 'package:endurain/core/navigation/app_routes.dart';
 import 'package:endurain/core/services/app_scope.dart';
 import 'package:endurain/core/services/app_services.dart';
 import 'package:endurain/core/services/auth_service.dart';
+import 'package:endurain/core/services/diagnostics_service.dart';
 import 'package:endurain/features/auth/auth_session_controller.dart';
 import 'package:endurain/features/auth/login_screen.dart';
 import 'package:endurain/shared/adaptive/adaptive.dart';
@@ -18,7 +19,7 @@ class App extends StatefulWidget {
   State<App> createState() => _AppState();
 }
 
-class _AppState extends State<App> {
+class _AppState extends State<App> with WidgetsBindingObserver {
   late final AppServices _services;
   late final AuthSessionController _sessionController;
   late final bool _ownsSessionController;
@@ -27,6 +28,7 @@ class _AppState extends State<App> {
   void initState() {
     super.initState();
     _services = AppServices.instance;
+    WidgetsBinding.instance.addObserver(this);
     _ownsSessionController = widget.sessionController == null;
     _sessionController =
         widget.sessionController ??
@@ -39,11 +41,21 @@ class _AppState extends State<App> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _sessionController.removeListener(_handleSessionChanged);
     if (_ownsSessionController) {
       _sessionController.dispose();
     }
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    _services.diagnostics.recordBreadcrumbSync(
+      DiagnosticsEvents.appLifecycleChanged,
+      details: {'state': state.name},
+    );
   }
 
   void _handleSessionChanged() {

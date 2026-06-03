@@ -49,6 +49,7 @@ class ActivityRecordingService {
   DateTime? _recordingSegmentStartedAt;
   int _elapsedBeforeCurrentSegmentSeconds = 0;
   int _lastBreadcrumbPointCount = 0;
+  DateTime? _lastPointAt;
   bool _isDisposed = false;
   BackgroundLocationConfig? _backgroundConfig;
 
@@ -116,6 +117,7 @@ class ActivityRecordingService {
     _recordingSegmentStartedAt = startedAt;
     _elapsedBeforeCurrentSegmentSeconds = 0;
     _lastBreadcrumbPointCount = 0;
+    _lastPointAt = null;
     _emit(
       ActivityRecordingState(
         status: ActivityRecordingStatus.recording,
@@ -170,6 +172,7 @@ class ActivityRecordingService {
     final elapsedDurationSeconds = _currentElapsedDurationSeconds();
     _elapsedBeforeCurrentSegmentSeconds = elapsedDurationSeconds;
     _recordingSegmentStartedAt = null;
+    _lastPointAt = null;
     _cancelElapsedTimer();
     final cancelPositionSubscription = _cancelPositionSubscription();
     _emit(
@@ -332,7 +335,11 @@ class ActivityRecordingService {
             background: _backgroundConfig,
             distanceFilter: LocationDistanceFilters.recordingMeters,
           )
-          .listen(_recordPosition, onError: _handlePositionError);
+          .listen(
+            _recordPosition,
+            onError: _handlePositionError,
+            onDone: _handlePositionStreamDone,
+          );
     } catch (error, stackTrace) {
       _diagnostics.recordErrorSync(
         error,
@@ -353,18 +360,24 @@ class ActivityRecordingService {
     if (_state.status != ActivityRecordingStatus.recording) {
       return;
     }
+    final receivedAt = _now();
+    final previousPointAt = _lastPointAt;
+    _lastPointAt = receivedAt;
     _emit(_state.addPoint(ActivityTrackPoint.fromPosition(position)));
     final pointCount = _state.points.length;
     if (pointCount == 1 || pointCount - _lastBreadcrumbPointCount >= 25) {
       _lastBreadcrumbPointCount = pointCount;
+      final secondsSinceLastPoint = previousPointAt == null
+          ? null
+          : receivedAt.difference(previousPointAt).inSeconds;
       _recordBreadcrumb(
         DiagnosticsEvents.activityPointMilestone,
         details: {
           'pointCount': pointCount,
           'segmentCount': _state.segments.length,
           'elapsedSeconds': _state.elapsedDurationSeconds,
-        },
-      );
+          'secondsSinceLastPoint': ?secondsSinceLastPoint,
+        },      );
     }
   }
 
@@ -375,6 +388,16 @@ class ActivityRecordingService {
       source: DiagnosticsSources.activityLocationStream,
     );
     _fail(ActivityRecordingErrorKeys.locationStreamFailed);
+  }
+
+  void _handlePositionStreamDone() {
+    _recordBreadcrumb(
+      DiagnosticsEvents.activityLocationStreamDone,
+      details: {
+        'status': _state.status.name,
+        'pointCount': _state.points.length,
+      },
+    );
   }
 
   Future<String?> _locationErrorKey() async {

@@ -48,6 +48,12 @@ class RecordingLocationPlatformAdapter implements LocationPlatformAdapter {
     _controllers.last.addError(error);
   }
 
+  /// Closes the most recent position stream so the service's `onDone`
+  /// handler fires, mirroring an OS-side stream shutdown.
+  Future<void> closeStream() {
+    return _controllers.last.close();
+  }
+
   @override
   Future<LocationPermission> checkPermission() async {
     return permission;
