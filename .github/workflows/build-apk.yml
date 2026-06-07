@@ -11,6 +11,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Needed to create/update releases and move tags
+permissions:
+  contents: write
+
 jobs:
   build-debug:
     name: Build Debug APK
@@ -29,7 +33,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.38.0'
+          flutter-version: '3.44.1'
           channel: stable
           cache: true
 
@@ -42,9 +46,31 @@ jobs:
       - name: Build debug APK
         run: flutter build apk --debug
 
-      - name: Upload debug APK
+      # Keep artifact available in the Actions tab as well
+      - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: debug-apk-${{ github.run_number }}
           path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 14
+
+      # Move the 'latest' tag to the current commit so the
+      # release action can attach the APK to it
+      - name: Update 'latest' tag
+        if: github.event_name != 'pull_request'
+        run: |
+          git tag -f latest
+          git push -f origin latest
+
+      # Create or update the rolling "Latest Debug Build" release
+      - name: Publish to GitHub Releases
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest Debug Build
+          body: |
+            Automated debug build from commit ${{ github.sha }}.
+            Built on ${{ github.run_started_at }}.
+          prerelease: true
+          files: build/app/outputs/flutter-apk/app-debug.apk
